@@ -30,6 +30,7 @@ import {
 } from "@/lib/create/pieces";
 // import { OUTLINE_BUTTON_SM } from "./buttons";
 import { QualityMenu } from "./quality-menu";
+import { CreditBadge } from "@/components/credits/credit-badge";
 
 /** There is one What to build panel on the page, whichever card opened it. */
 export const PIECES_SHEET_ID = "pieces-sheet";
@@ -78,8 +79,9 @@ export function PiecesBlock({ card }: { card: PiecesCard }) {
       <div className="flex flex-wrap items-center gap-x-[8px] gap-y-[4px]">
         <h4 className="min-w-0 flex-1 text-sm font-semibold text-text-secondary">What to build</h4>
         {any && (
-          <span className="text-sm font-semibold tabular-nums text-text-primary">
-            {creditsLabel(pickCost(pick))} · {aboutTime(pickSeconds(pick))}
+          <span className="inline-flex items-center gap-[6px] text-sm tabular-nums text-text-secondary">
+            <CreditBadge credits={pickCost(pick)} />
+            {aboutTime(pickSeconds(pick))}
           </span>
         )}
         <QualityMenu

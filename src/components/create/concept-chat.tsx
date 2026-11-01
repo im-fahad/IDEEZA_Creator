@@ -20,7 +20,6 @@ import { LockIcon } from "@hugeicons/core-free-icons";
 import {
   aboutTime,
   cleanPick,
-  creditsLabel,
   pickCost,
   pickSeconds,
   pickSummary,
@@ -53,6 +52,7 @@ import { cardFacts, specLine } from "@/lib/spec/format";
 import { asConceptSummary, cleanEdits } from "@/lib/spec/hints";
 import { CONCEPT_COST, useCredits } from "@/lib/create/credits";
 import type { RenderQuality } from "@/lib/create/quality";
+import { CreditBadge } from "@/components/credits/credit-badge";
 import { useManualProjects } from "@/lib/manual/projects";
 import { useGuards } from "@/lib/manual/use-write-guard";
 import {
@@ -1835,7 +1835,7 @@ export function ConceptChat({ chatId }: { chatId: string }) {
         name: gateNames[i] ?? (turn ? sheetNameOf(railState.setup, turn, labels) : id),
         summary: pickSummary(pick),
         detail: kinds.length ? kinds.map((k) => { const l = pieceLine(k, pick[k]); return l.name + l.note; }).join(" · ") : "nothing picked",
-        credits: creditsLabel(pickCost(pick)),
+        credits: pickCost(pick),
         time: aboutTime(pickSeconds(pick)),
         // Edit → the What to build panel, hidden (owner, 2026-11-01):
         // onEdit: railState.setup?.answer ? () => openPieces(id) : undefined,
@@ -2017,21 +2017,36 @@ export function ConceptChat({ chatId }: { chatId: string }) {
                 : target.kind === "blocked"
                   ? `${target.hint}.`
                   : target.kind === "none"
-                    ? `Pick a product above to refine it · ${CONCEPT_COST} credit, or name a new one to add it.`
+                    ? (
+                        <>
+                          Pick a product above to refine it <CreditBadge credits={CONCEPT_COST} className="align-middle" />, or
+                          name a new one to add it.
+                        </>
+                      )
                     : target.kind === "refine"
                     ? // What a sentence here costs, beside what doesn't: the
                       // parts, the size and the power change in the spec,
                       // for nothing, and the image stays — or, once the
-                      // product is built, in the editor.
-                      `Redraws ${target.name}'s image · ${CONCEPT_COST} credit.${
-                        lockedOf(rail.state, target.productId)
-                          ? " Its built spec changes in the editor."
-                          : // A chat from before the question has no spec to edit.
-                            rail.state.setup
-                            ? " Parts, size and power change free in its spec."
-                            : ""
-                      }`
-                    : `Each drawing costs ${CONCEPT_COST} credit.`}
+                      // product is built, in the editor. Each price is the
+                      // same badge the card's buttons carry.
+                      (
+                        <>
+                          Redraws {target.name}&apos;s image <CreditBadge credits={CONCEPT_COST} className="align-middle" />.
+                          {lockedOf(rail.state, target.productId) ? (
+                            " Its built spec changes in the editor."
+                          ) : // A chat from before the question has no spec to edit.
+                          rail.state.setup ? (
+                            <>
+                              {" "}Parts, size and power change in its spec <CreditBadge credits={0} className="align-middle" />.
+                            </>
+                          ) : null}
+                        </>
+                      )
+                    : (
+                        <>
+                          Each drawing <CreditBadge credits={CONCEPT_COST} className="align-middle" />
+                        </>
+                      )}
           </p>
           )}
           </>

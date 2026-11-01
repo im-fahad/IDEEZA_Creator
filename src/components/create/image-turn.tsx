@@ -43,6 +43,7 @@ import { productIdOf } from "@/lib/create/project-state";
 import { ARRIVAL_RING, productCardId, productRetryId } from "./anchors";
 import { useMinuteClock } from "./build-status";
 import { OUTLINE_BUTTON, OUTLINE_BUTTON_OFF } from "./buttons";
+import { CreditBadge } from "@/components/credits/credit-badge";
 import { PiecesBlock, type PiecesCard } from "./pieces-card";
 import {
   CARD_ACTION_ICON,
@@ -228,10 +229,10 @@ export function ImageTurn({
 
       <div aria-hidden className="h-px w-full bg-border" />
 
-      {/* The two that redraw the image, and what each costs under them —
-          beside the free way to change the product, Edit spec, which sits on
-          the Spec title: a maker who types "add a buzzer" into Refine pays
-          for what Edit spec does free. */}
+      {/* The two that redraw the image, each with its price on it — beside
+          the free way to change the product, Edit spec, which sits on the
+          Spec title marked Free: a maker who types "add a buzzer" into
+          Refine pays for what Edit spec does free. */}
       <div className={`flex flex-wrap items-center gap-[8px] ${CARD_ACTION_ROW}`}>
         <button
           type="button"
@@ -247,6 +248,7 @@ export function ImageTurn({
         >
           <Icon icon={MagicWand01Icon} className={CARD_ACTION_ICON} />
           Refine
+          <CreditBadge credits={CONCEPT_COST} />
         </button>
         <button
           type="button"
@@ -272,15 +274,12 @@ export function ImageTurn({
         >
           <Icon icon={Refresh01Icon} className={CARD_ACTION_ICON} />
           Regenerate
+          <CreditBadge credits={CONCEPT_COST} />
         </button>
         {inBuild && !leftOut && <BuiltChip />}
-        {/* A line of its own: beside three buttons it only ever fitted by
-            wrapping somewhere different on every card width. The price
-            never breaks from its unit. */}
-        <p className="basis-full text-sm text-text-tertiary">
-          {spec?.editable ? "Edit spec is free · " : ""}
-          Refine and Regenerate redraw the image, {CONCEPT_COST}&nbsp;credit each
-        </p>
+        {/* The line under the buttons that said what each cost ("Edit spec
+            is free · Refine and Regenerate redraw the image, 1 credit each")
+            is gone: each button carries its own price now. */}
       </div>
     </article>
   );

@@ -31,7 +31,8 @@ import {
   type SetupAnswer,
 } from "@/lib/create/history";
 import { CONCEPT_COST, useCredits } from "@/lib/create/credits";
-import { PIECES, aboutTime, cleanPick, creditsLabel, pickCost, pickSummary, pickedKinds, type PieceQuality } from "@/lib/create/pieces";
+import { PIECES, aboutTime, cleanPick, pickCost, pickSummary, pickedKinds, type PieceQuality } from "@/lib/create/pieces";
+import { CreditBadge } from "@/components/credits/credit-badge";
 import type { ConceptPart } from "@/lib/create/concept";
 import type { RadioPair } from "@/lib/spec/facts";
 import type { ResolvedSpec, SpecEdits } from "@/lib/spec/types";
@@ -514,7 +515,7 @@ export function ChatThread({
                         name: productNameOf(t) ?? `Concept ${labels.get(t.id) ?? "1"}`,
                         summary: pickSummary(pick),
                         detail: kinds.length ? kinds.map((k) => PIECES[k].name).join(" · ") : "nothing picked",
-                        credits: creditsLabel(pickCost(pick)),
+                        credits: pickCost(pick),
                         // Edit → the What to build panel, hidden (owner, 2026-11-01):
                         // onEdit: onOpenPieces ? () => onOpenPieces(productIdOf(t)) : undefined,
                       };
@@ -683,7 +684,7 @@ function BuildAction({
     name: string;
     summary: string;
     detail: string;
-    credits: string;
+    credits: number;
     onEdit?: () => void;
   }[];
   onBuild: () => void;
@@ -720,7 +721,7 @@ function BuildAction({
               <span className="min-w-0 flex-1 text-text-secondary">
                 {l.summary} — {l.detail}
               </span>
-              <span className="tabular-nums text-text-secondary">{l.credits}</span>
+              <CreditBadge credits={l.credits} className="self-center" />
               {l.onEdit && (
                 <button
                   type="button"
@@ -739,7 +740,7 @@ function BuildAction({
         {allReady
           ? `${products < total ? `${products} of ${total}` : products} product${
               (products < total ? total : products) === 1 ? "" : "s"
-            } · ${creditsLabel(cost)} · ${aboutTime(seconds)}`
+            } · ${aboutTime(seconds)}`
           : failedName
             ? "A chosen concept didn't come through"
             : "Waiting for every concept to land"}
@@ -774,6 +775,8 @@ function BuildAction({
           </span>
         )}
         {preparing ? "Preparing the build…" : specBlock ? `Fix ${specBlock}'s size` : label}
+        {/* The build's price, on the button that pays it. */}
+        {!preparing && !specBlock && allReady && <CreditBadge credits={cost} onBrand={!blocked} />}
       </button>
       {/* The reason a disabled button is off, where the keyboard and a touch
           screen can reach it — a title on a disabled button reaches neither. */}

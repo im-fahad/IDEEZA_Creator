@@ -20,6 +20,7 @@ import type { ConceptPart } from "@/lib/create/concept";
 import { cardFacts } from "@/lib/spec/format";
 import type { RadioPair } from "@/lib/spec/facts";
 import type { ResolvedSpec } from "@/lib/spec/types";
+import { CreditBadge } from "@/components/credits/credit-badge";
 import { OUTLINE_BUTTON_SM, OUTLINE_BUTTON_SM_OFF } from "./buttons";
 
 /** The sheet's Length field — where the Build line and the rail's size jump
@@ -161,6 +162,9 @@ export function EditSpecButton({ card }: { card: SpecCard }) {
     >
       <Icon icon={PencilEdit02Icon} size={14} />
       {card.editable ? "Edit spec" : "View spec"}
+      {/* Changing the spec costs nothing — said on the button, beside the
+          Refine and Regenerate that cost a credit. */}
+      {card.editable && <CreditBadge credits={0} />}
     </button>
   );
 }

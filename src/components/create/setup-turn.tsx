@@ -26,6 +26,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { Icon } from "@/components/dashboard/icon";
 import { SelectMenu } from "@/components/ideeza";
+import { CreditBadge } from "@/components/credits/credit-badge";
 import type { Companion } from "@/lib/create/companions";
 import type { SetupAnswer } from "@/lib/create/history";
 
@@ -174,7 +175,9 @@ export function SetupTurn({
           ))}
         </Question>
         <Footer
-          note={`${extra.length + 1} concept${extra.length ? "s" : ""} · ${extra.length + 1} credit${extra.length ? "s" : ""}`}
+          note={`${extra.length + 1} concept${extra.length ? "s" : ""}`}
+          credits={extra.length + 1}
+          spends={!!addTo}
           label={addTo ? "Start drawing" : "Continue"}
           ready
           onGo={() =>
@@ -276,7 +279,9 @@ export function SetupTurn({
         )}
       </Question>
       <Footer
-        note={`${extra.length + 1} concept${extra.length ? "s" : ""} · ${extra.length + 1} credit${extra.length ? "s" : ""}`}
+        note={`${extra.length + 1} concept${extra.length ? "s" : ""}`}
+        credits={extra.length + 1}
+        spends
         label="Start drawing"
         ready={ready}
         reason={choosing ? "Pick a project first" : "Name the project first"}
@@ -411,12 +416,18 @@ function Decided({
 
 function Footer({
   note,
+  credits,
+  spends = false,
   label,
   ready,
   reason,
   onGo,
 }: {
   note: string;
+  /** What drawing these concepts costs — on the button that spends it, or
+   *  beside the note on a step before that one (Continue). */
+  credits?: number;
+  spends?: boolean;
   label: string;
   ready: boolean;
   reason?: string;
@@ -432,9 +443,10 @@ function Footer({
     <div className="flex items-center justify-end gap-[12px] pt-[2px]">
       <span
         id={blocked ? reasonId : undefined}
-        className="text-sm text-text-tertiary"
+        className="inline-flex items-center gap-[6px] text-sm text-text-tertiary"
       >
         {blocked ? reason : note}
+        {!blocked && credits !== undefined && !spends && <CreditBadge credits={credits} />}
       </span>
       <button
         type="button"
@@ -448,6 +460,7 @@ function Footer({
         }
       >
         {label}
+        {credits !== undefined && spends && <CreditBadge credits={credits} onBrand={ready} />}
         <Icon icon={ArrowRight01Icon} size={16} />
       </button>
     </div>

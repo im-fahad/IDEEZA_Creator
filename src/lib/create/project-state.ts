@@ -825,6 +825,10 @@ export type JumpTarget =
 export type NextStep = {
   tone: NextStepTone;
   text: string;
+  /** A price the sentence names, shown as the credit badge after `text`
+   *  (owner, 2026-11-01: one look for every price), then `rest`. */
+  credits?: number;
+  rest?: string;
   target?: JumpTarget;
   /** The button's accessible name: its visible "Show on canvas" first, so
    *  voice control reaches it by what it says (WCAG 2.5.3), then where it goes. */
@@ -927,7 +931,8 @@ export function nextStep(args: {
       }
       return {
         tone: "neutral",
-        text: `Changed since the build. Build again to carry it into the deliverables · ${cost} credits.`,
+        text: "Changed since the build. Build again to carry it into the deliverables",
+        credits: cost,
         target: { kind: "build" },
         targetLabel: "Show on canvas — the Build button",
       };
@@ -968,7 +973,9 @@ export function nextStep(args: {
     const label = n === 1 ? "this product" : `${n} products`;
     return {
       tone: "neutral",
-      text: `Next: build ${label} · ${cost} credits. You have ${balance}.`,
+      text: `Next: build ${label}`,
+      credits: cost,
+      rest: `You have ${balance}.`,
       target: { kind: "build" },
       targetLabel: "Show on canvas — the Build button",
     };
