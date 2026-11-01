@@ -362,10 +362,11 @@ export function projectState(chat: ChatSession, job?: BuildJob | null): ProjectS
   const allReady = selected.length > 0 && selected.every((t) => t.status === "ready");
   const failedChoice = selected.find((t) => t.status === "failed");
 
-  // What to build, per product — absent, every piece (pieces.ts).
+  // What to build, per product — absent, every piece (pieces.ts), at the
+  // Quality the chat was started with on Home.
   const picks = new Map<string, PiecePick>();
-  for (const t of products) picks.set(productIdOf(t), cleanPick(answer?.pieces?.[productIdOf(t)]));
-  const pickOf = (t: AssistantTurn) => picks.get(productIdOf(t)) ?? cleanPick(undefined);
+  for (const t of products) picks.set(productIdOf(t), cleanPick(answer?.pieces?.[productIdOf(t)], chat.quality));
+  const pickOf = (t: AssistantTurn) => picks.get(productIdOf(t)) ?? cleanPick(undefined, chat.quality);
   const cost = selected.reduce((n, t) => n + pickCost(pickOf(t)), 0);
   const seconds = selected.reduce((n, t) => Math.max(n, pickSeconds(pickOf(t))), 0);
   const emptyPick = selected.find((t) => pickedKinds(pickOf(t)).length === 0);

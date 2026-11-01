@@ -38,3 +38,24 @@ export const POLLINATIONS_SIZE: Record<RenderQuality, { width: number; height: n
   medium: { width: 640, height: 480 },
   high: { width: 1024, height: 768 },
 };
+
+/** Home starts the next idea at the Quality picked last (owner,
+ *  2026-11-01). Per browser — a convenience, not a setting — so a blocked or
+ *  empty store just means Medium. */
+export const LAST_QUALITY_KEY = "ideeza:create:quality";
+
+export function readLastQuality(): RenderQuality {
+  try {
+    return cleanQuality(window.localStorage.getItem(LAST_QUALITY_KEY));
+  } catch {
+    return DEFAULT_QUALITY;
+  }
+}
+
+export function saveLastQuality(q: RenderQuality): void {
+  try {
+    window.localStorage.setItem(LAST_QUALITY_KEY, q);
+  } catch {
+    // Nowhere to keep it: the next visit starts at Medium.
+  }
+}

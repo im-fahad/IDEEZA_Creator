@@ -5,9 +5,14 @@
 // can be added later, from the build review or the product page, and is
 // made for what the product already has.
 //
-// The prices are hypothetical — the owner's to set. The whole product at
-// Medium with nothing optimized is 4 credits, today's BUILD_COST, so a
-// maker who changes nothing pays what they always did.
+// The prices are hypothetical — the owner's to set. Each Quality has its
+// own price (owner, 2026-11-01): the PCB, Code and the 3D Module are 1, 2
+// or 3 credits at Low, Medium or High; Assembly and Wiring 1 each at any
+// level; the Parts list free. The whole product is 5, 8 or 11 credits.
+//
+// Quality is one choice per product now (owner, 2026-11-01): it starts at
+// the level picked on Home with the idea, and the card's Quality menu
+// changes it. The panel that picked pieces one by one is hidden for now.
 //
 // Everything a piece needs is added with it, and taking a piece out takes
 // out what needs it, said once in a line: Code and Wiring are made for
@@ -16,8 +21,10 @@
 // with every build, free, and never alone.
 
 import type { BuildItem, BuildItemKind } from "./history";
+import { DEFAULT_QUALITY, type RenderQuality } from "./quality";
 
-export type PieceQuality = "medium" | "high";
+/** The same three levels as Home's Quality. */
+export type PieceQuality = RenderQuality;
 
 /** One piece's choice. Quality is only asked of the pieces that have it;
  *  Optimize of the ones with something to optimize. */
@@ -48,7 +55,7 @@ export type PieceInfo = {
   note?: string;
   /** What this piece is made from — added with it, and it goes with them. */
   needs: BuildItemKind[];
-  /** Medium or High is asked. */
+  /** Its price and time follow the product's Quality. */
   quality: boolean;
   price: Record<PieceQuality, number>;
   /** About how long it takes, in seconds. */
@@ -71,8 +78,8 @@ export const PIECES: Record<BuildItemKind, PieceInfo> = {
     note: "enclosure",
     needs: ["parts"],
     quality: true,
-    price: { medium: 1, high: 2 },
-    seconds: { medium: 30, high: 75 },
+    price: { low: 1, medium: 2, high: 3 },
+    seconds: { low: 20, medium: 30, high: 75 },
     optimize: "Print-ready: wall check, supports",
     optimizeSeconds: 20,
     addsLater: "The enclosure, sized to the board this product already has — the mount points line up.",
@@ -82,8 +89,8 @@ export const PIECES: Record<BuildItemKind, PieceInfo> = {
     sub: "Schematic and routed board, design-rule checked",
     needs: ["parts"],
     quality: true,
-    price: { medium: 1, high: 2 },
-    seconds: { medium: 40, high: 90 },
+    price: { low: 1, medium: 2, high: 3 },
+    seconds: { low: 25, medium: 40, high: 90 },
     optimize: "Smallest board, fewest layers",
     optimizeSeconds: 30,
     addsLater: "The schematic and the routed board, made from this product's parts.",
@@ -93,8 +100,8 @@ export const PIECES: Record<BuildItemKind, PieceInfo> = {
     sub: "Code for the board, ready to flash",
     needs: ["pcb", "parts"],
     quality: true,
-    price: { medium: 1, high: 2 },
-    seconds: { medium: 20, high: 45 },
+    price: { low: 1, medium: 2, high: 3 },
+    seconds: { low: 12, medium: 20, high: 45 },
     optimize: "Low power — longer battery life",
     optimizeSeconds: 15,
     addsLater: "Written for the PCB this product already has, ready to flash.",
@@ -104,8 +111,8 @@ export const PIECES: Record<BuildItemKind, PieceInfo> = {
     sub: "The board and its parts in place, inside the enclosure",
     needs: ["pcb", "3d", "parts"],
     quality: false,
-    price: { medium: 1, high: 1 },
-    seconds: { medium: 25, high: 25 },
+    price: { low: 1, medium: 1, high: 1 },
+    seconds: { low: 25, medium: 25, high: 25 },
     optimize: null,
     optimizeSeconds: 0,
     addsLater: "The whole product put together — the board and its parts inside the enclosure — to check that it all fits.",
@@ -115,8 +122,8 @@ export const PIECES: Record<BuildItemKind, PieceInfo> = {
     sub: "How every part connects, pin by pin",
     needs: ["pcb", "parts"],
     quality: false,
-    price: { medium: 1, high: 1 },
-    seconds: { medium: 15, high: 15 },
+    price: { low: 1, medium: 1, high: 1 },
+    seconds: { low: 15, medium: 15, high: 15 },
     optimize: null,
     optimizeSeconds: 0,
     addsLater: "How every part on the PCB connects, pin by pin.",
@@ -131,32 +138,34 @@ export const PIECES: Record<BuildItemKind, PieceInfo> = {
     note: "included",
     needs: [],
     quality: false,
-    price: { medium: 0, high: 0 },
-    seconds: { medium: 5, high: 5 },
+    price: { low: 0, medium: 0, high: 0 },
+    seconds: { low: 5, medium: 5, high: 5 },
     optimize: null,
     optimizeSeconds: 0,
     addsLater: "Every part of this product — category, name, reference and quantity.",
   },
 };
 
-const choice = (on: boolean): PieceChoice => ({ on, quality: "medium", optimize: false });
+const isQuality = (v: unknown): v is PieceQuality => v === "low" || v === "medium" || v === "high";
 
-/** Every piece, at Medium, nothing optimized — what a build always made. */
-export function defaultPick(): PiecePick {
-  return {
-    pcb: choice(true),
-    code: choice(true),
-    "3d": choice(true),
-    assembly: choice(true),
-    wiring: choice(true),
-    parts: choice(true),
-  };
+/** A piece without levels keeps Medium, which its price ignores. */
+const choice = (kind: BuildItemKind, quality: PieceQuality): PieceChoice => ({
+  on: true,
+  quality: PIECES[kind].quality ? quality : "medium",
+  optimize: false,
+});
+
+/** Every piece, at one Quality — Medium unless the chat was started at
+ *  another — nothing optimized. */
+export function defaultPick(quality: PieceQuality = DEFAULT_QUALITY): PiecePick {
+  return Object.fromEntries(PIECE_KINDS.map((k) => [k, choice(k, quality)])) as PiecePick;
 }
 
 /** A stored pick as it can be used: anything missing or malformed reads as
- *  the default, so a chat from before the panel builds every piece. */
-export function cleanPick(raw: unknown): PiecePick {
-  const out = defaultPick();
+ *  the default, so a chat from before the panel builds every piece — at the
+ *  chat's own Quality (`quality`, from Home) where nothing else was chosen. */
+export function cleanPick(raw: unknown, quality: PieceQuality = DEFAULT_QUALITY): PiecePick {
+  const out = defaultPick(quality);
   if (!raw || typeof raw !== "object") return out;
   for (const kind of PIECE_KINDS) {
     const c = (raw as Record<string, unknown>)[kind];
@@ -164,11 +173,26 @@ export function cleanPick(raw: unknown): PiecePick {
     const r = c as Record<string, unknown>;
     out[kind] = {
       on: r.on !== false,
-      quality: r.quality === "high" && PIECES[kind].quality ? "high" : "medium",
+      quality: !PIECES[kind].quality ? "medium" : isQuality(r.quality) ? r.quality : quality,
       optimize: r.optimize === true && !!PIECES[kind].optimize,
     };
   }
   return withParts(out);
+}
+
+/** One Quality for the whole product: the card's Quality menu. */
+export function withQuality(pick: PiecePick, quality: PieceQuality): PiecePick {
+  const out = { ...pick };
+  for (const k of PIECE_KINDS) if (PIECES[k].quality) out[k] = { ...pick[k], quality };
+  return out;
+}
+
+/** The product's Quality, as its card shows it: the level of its first piece
+ *  that has one, ticked first. */
+export function qualityOf(pick: PiecePick): PieceQuality {
+  const kinds = PIECE_KINDS.filter((k) => PIECES[k].quality);
+  const k = kinds.find((x) => pick[x].on) ?? kinds[0];
+  return pick[k].quality;
 }
 
 /** What a piece costs as chosen. */

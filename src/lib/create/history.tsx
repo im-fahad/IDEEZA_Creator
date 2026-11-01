@@ -474,7 +474,7 @@ function itemsFor(pick: PiecePick | undefined, busy: boolean): BuildItem[] {
           kind,
           status: busy ? ("pending" as const) : ("building" as const),
           progress: 0,
-          ...(p[kind].quality === "high" ? { quality: "high" as const } : null),
+          ...(p[kind].quality !== "medium" ? { quality: p[kind].quality } : null),
           ...(p[kind].optimize ? { optimize: true } : null),
         }
       : { kind, status: "skipped" as const, progress: 0, omitted: true as const },
@@ -640,7 +640,7 @@ function normalizeItems(raw: unknown): BuildItem[] {
         : 0,
       ...(startedAt ? { startedAt: startedAt.value } : null),
       ...(endedAt ? { endedAt: endedAt.value } : null),
-      ...(item.quality === "high" ? { quality: "high" as const } : null),
+      ...(item.quality === "high" || item.quality === "low" ? { quality: item.quality } : null),
       ...(item.optimize === true ? { optimize: true } : null),
       ...(item.omitted === true && item.status === "skipped" ? { omitted: true as const } : null),
     });
@@ -1611,7 +1611,7 @@ export function CreateHistoryProvider({
           kind: it.kind,
           status: busy ? "pending" : "building",
           progress: 0,
-          ...(c.quality === "high" ? { quality: "high" as const } : null),
+          ...(c.quality !== "medium" ? { quality: c.quality } : null),
           ...(c.optimize ? { optimize: true } : null),
         };
       };

@@ -12,13 +12,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   AiMagicIcon,
-  ArrowDown01Icon,
   ArrowRight01Icon,
   Cancel01Icon,
   CodeIcon,
   CpuIcon,
   CubeIcon,
-  DashboardSpeed02Icon,
   ElectricWireIcon,
   Layers01Icon,
   FavouriteIcon,
@@ -37,8 +35,15 @@ import {
   type BuildItemKind,
 } from "@/lib/create/history";
 import { CONCEPT_COST, useCredits } from "@/lib/create/credits";
-import { DEFAULT_QUALITY, QUALITIES, QUALITY_INFO, type RenderQuality } from "@/lib/create/quality";
-import { Menu } from "@/components/ideeza/menu";
+import {
+  DEFAULT_QUALITY,
+  LAST_QUALITY_KEY,
+  readLastQuality,
+  saveLastQuality,
+  type RenderQuality,
+} from "@/lib/create/quality";
+import { creditsLabel, defaultPick, pickCost } from "@/lib/create/pieces";
+import { QualityMenu } from "@/components/create/quality-menu";
 import { useManualProjects } from "@/lib/manual/projects";
 import { useVoiceInput, voiceErrorMessage } from "@/lib/voice/use-voice-input";
 import { VoiceListening } from "@/components/voice/voice-listening";
@@ -91,6 +96,34 @@ function useAddToParam(): string | null {
   );
 }
 
+// The Quality picked last, read where the browser keeps it. The server has
+// no store, so it draws Medium and the client takes over on hydration; a
+// pick in another tab follows here through the storage event.
+const qualityListeners = new Set<() => void>();
+function subscribeQuality(onChange: () => void) {
+  qualityListeners.add(onChange);
+  const onStorage = (e: StorageEvent) => {
+    if (e.key === LAST_QUALITY_KEY) onChange();
+  };
+  window.addEventListener("storage", onStorage);
+  return () => {
+    qualityListeners.delete(onChange);
+    window.removeEventListener("storage", onStorage);
+  };
+}
+function useLastQuality(): [RenderQuality, (q: RenderQuality) => void] {
+  const value = React.useSyncExternalStore(subscribeQuality, readLastQuality, () => DEFAULT_QUALITY);
+  const set = React.useCallback((q: RenderQuality) => {
+    saveLastQuality(q);
+    qualityListeners.forEach((l) => l());
+  }, []);
+  return [value, set];
+}
+
+/** What a product costs to build at each level — the menu says it, since
+ *  the level picked here is the one each product is built at. */
+const buildPrice = (q: RenderQuality) => `Build ${creditsLabel(pickCost(defaultPick(q)))} a product`;
+
 export function WorkspacePrompt() {
   const router = useRouter();
   const { createChat } = useCreateHistory();
@@ -115,9 +148,10 @@ export function WorkspacePrompt() {
   const canRender = !creditsHydrated || balance >= CONCEPT_COST;
   const [mode, setMode] = React.useState<Mode>("ai");
   const [prompt, setPrompt] = React.useState("");
-  // Quality goes with the idea into its chat, and every concept rendered
-  // there uses it (lib/create/quality.ts).
-  const [quality, setQuality] = React.useState<RenderQuality>(DEFAULT_QUALITY);
+  // Quality goes with the idea into its chat: every concept rendered there
+  // uses it, and each product is built at it unless its card changes it
+  // (lib/create/quality.ts). The next idea starts at the one picked last.
+  const [quality, setQuality] = useLastQuality();
   const [refining, setRefining] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
   // Manual-mode modal lives at this level so a click on "Create
@@ -536,7 +570,9 @@ const PromptCard = React.forwardRef<
               icon={Mic01Icon}
               disabled={!voice.supported}
             />
-            {mode === "ai" && <QualityMenu value={quality} onChange={onQuality} />}
+            {mode === "ai" && (
+              <QualityMenu value={quality} onChange={onQuality} variant="toolbar" price={buildPrice} />
+            )}
           </div>
 
           <div className="ml-auto flex shrink-0 items-center gap-[8px]">
@@ -602,43 +638,6 @@ function ToolbarIconButton({
     >
       <Icon icon={icon} />
     </button>
-  );
-}
-
-// Low · Medium · High, beside the mic: the quality this idea's concepts are
-// rendered at. The DS menu in its single-choice form, each level with one
-// plain line on what it trades.
-function QualityMenu({ value, onChange }: { value: RenderQuality; onChange: (q: RenderQuality) => void }) {
-  const label = QUALITY_INFO[value].label;
-  return (
-    <Menu
-      label="Quality"
-      align="start"
-      items={QUALITIES.map((q) => ({
-        id: q,
-        label: QUALITY_INFO[q].label,
-        hint: QUALITY_INFO[q].hint,
-        selected: q === value,
-        onSelect: () => onChange(q),
-      }))}
-      trigger={(props, { open }) => (
-        <button
-          {...props}
-          type="button"
-          aria-label={`Quality: ${label}`}
-          title="How much detail each concept is rendered with"
-          className={cn(
-            "inline-flex h-[40px] items-center gap-[6px] rounded-lg px-[12px] text-md font-medium outline-none transition-colors duration-fast",
-            "focus-visible:ring-2 focus-visible:ring-border-focus",
-            open ? "bg-bg-surface-raised text-text-primary" : "text-text-secondary hover:bg-bg-surface-raised hover:text-text-primary",
-          )}
-        >
-          <Icon icon={DashboardSpeed02Icon} />
-          {label} quality
-          <Icon icon={ArrowDown01Icon} size={16} />
-        </button>
-      )}
-    />
   );
 }
 
