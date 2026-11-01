@@ -26,6 +26,8 @@
 // (Settings › AI & your data) never reaches the Horde: it goes to Pollinations
 // when this deployment has a token, and is refused ("pool-off") when not.
 
+import { HORDE_STEPS, POLLINATIONS_SIZE, cleanQuality, type RenderQuality } from "./quality";
+
 export type Rendered = {
   bytes: Uint8Array;
   contentType: string;
@@ -77,6 +79,8 @@ export type RenderJob = {
   prompt: string;
   seed: string;
   startedAt: number;
+  /** The chat's Quality. Absent on a job from before the choice: Medium. */
+  quality?: RenderQuality;
 };
 
 export type RenderProgress =
@@ -85,15 +89,16 @@ export type RenderProgress =
 
 /** What the person asked for. `volunteerPool: false` keeps the request off
  *  the AI Horde (Settings › AI & your data › Use the volunteer GPU pool). */
-export type RenderOptions = { volunteerPool?: boolean };
+export type RenderOptions = { volunteerPool?: boolean; quality?: RenderQuality };
 
 /** Hand the work to the provider and return at once. The caller polls. */
 export function startRender(prompt: string, seed: string, opts: RenderOptions = {}): Promise<RenderJob> {
-  if (activeProvider() === "pollinations") return pollinationsStart(prompt, seed);
+  const quality = cleanQuality(opts.quality);
+  if (activeProvider() === "pollinations") return pollinationsStart(prompt, seed, quality);
   if (opts.volunteerPool === false) {
     return Promise.reject(new RenderError("pool-off", "the volunteer pool is off and no other image service is set up"));
   }
-  return hordeStart(prompt, seed);
+  return hordeStart(prompt, seed, quality);
 }
 
 /** Has it landed? Throws RenderError when it never will. */
@@ -265,7 +270,7 @@ async function hordeFetch(
   }
 }
 
-function submitBody(prompt: string, seed: string, w: number, h: number) {
+function submitBody(prompt: string, seed: string, w: number, h: number, steps: number) {
   return JSON.stringify({
     prompt: enhance(prompt),
     models: MODELS,
@@ -281,7 +286,7 @@ function submitBody(prompt: string, seed: string, w: number, h: number) {
     params: {
       width: w,
       height: h,
-      steps: 25,
+      steps,
       n: 1,
       cfg_scale: 7,
       karras: true,
@@ -298,18 +303,19 @@ function submitBody(prompt: string, seed: string, w: number, h: number) {
 const SUBMIT_ATTEMPTS = 4;
 const SUBMIT_BACKOFF_MS = 900;
 
-async function hordeStart(prompt: string, seed: string): Promise<RenderJob> {
+async function hordeStart(prompt: string, seed: string, quality: RenderQuality): Promise<RenderJob> {
+  const steps = HORDE_STEPS[quality];
   let res: Response;
   try {
     res = await hordeFetch("/generate/async", {
       method: "POST",
-      body: submitBody(prompt, seed, WIDTH, HEIGHT),
+      body: submitBody(prompt, seed, WIDTH, HEIGHT, steps),
     });
     for (let attempt = 1; attempt < SUBMIT_ATTEMPTS && res.status === 429; attempt += 1) {
       await sleep(SUBMIT_BACKOFF_MS * attempt);
       res = await hordeFetch("/generate/async", {
         method: "POST",
-        body: submitBody(prompt, seed, WIDTH, HEIGHT),
+        body: submitBody(prompt, seed, WIDTH, HEIGHT, steps),
       });
     }
     if (res.status === 403) {
@@ -320,7 +326,7 @@ async function hordeStart(prompt: string, seed: string): Promise<RenderJob> {
       if (/KudosUpfront/i.test(body)) {
         res = await hordeFetch("/generate/async", {
           method: "POST",
-          body: submitBody(prompt, seed, FALLBACK_WIDTH, FALLBACK_HEIGHT),
+          body: submitBody(prompt, seed, FALLBACK_WIDTH, FALLBACK_HEIGHT, steps),
         });
       } else {
         throw new RenderError("unreachable", body.slice(0, 200));
@@ -346,6 +352,7 @@ async function hordeStart(prompt: string, seed: string): Promise<RenderJob> {
     prompt,
     seed,
     startedAt: Date.now(),
+    quality,
   };
 }
 
@@ -408,8 +415,9 @@ async function hordePoll(job: RenderJob): Promise<RenderProgress> {
 
 const POLLINATIONS = "https://image.pollinations.ai/prompt";
 
-export function pollinationsUrl(prompt: string, seed: string): string {
-  return `${POLLINATIONS}/${encodeURIComponent(prompt.slice(0, 400))}?width=640&height=480&nologo=true&model=flux&seed=${seed}`;
+export function pollinationsUrl(prompt: string, seed: string, quality?: RenderQuality): string {
+  const { width, height } = POLLINATIONS_SIZE[cleanQuality(quality)];
+  return `${POLLINATIONS}/${encodeURIComponent(prompt.slice(0, 400))}?width=${width}&height=${height}&nologo=true&model=flux&seed=${seed}`;
 }
 
 /** Pollinations has no job to submit: its URL is deterministic, so the same
@@ -419,6 +427,7 @@ export function pollinationsUrl(prompt: string, seed: string): string {
 async function pollinationsStart(
   prompt: string,
   seed: string,
+  quality: RenderQuality,
 ): Promise<RenderJob> {
   return {
     provider: "pollinations",
@@ -426,13 +435,14 @@ async function pollinationsStart(
     prompt,
     seed,
     startedAt: Date.now(),
+    quality,
   };
 }
 
 const POLLINATIONS_ATTEMPT_MS = 12_000;
 
 async function pollinationsPoll(job: RenderJob): Promise<RenderProgress> {
-  const url = pollinationsUrl(enhance(job.prompt), job.seed);
+  const url = pollinationsUrl(enhance(job.prompt), job.seed, job.quality);
   const seed = job.seed;
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), POLLINATIONS_ATTEMPT_MS);

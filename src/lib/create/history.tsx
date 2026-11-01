@@ -18,6 +18,7 @@ import { reportWrite } from "../storage-status";
 import { stampItemTimes } from "./item-times";
 import { BUILD_COST } from "./credits";
 import type { Companion } from "./companions";
+import type { RenderQuality } from "./quality";
 import type { LinkEdit, NetworkEdits, NetworkReply } from "./network-reply";
 import {
   BRIEF_CHANGES,
@@ -205,6 +206,9 @@ export type ChatSession = {
   turns: ChatTurn[];
   createdAt: number;
   updatedAt: number;
+  /** Quality picked on Home with the idea; every concept render in this
+   *  chat uses it. Absent on chats from before the choice: Medium. */
+  quality?: RenderQuality;
 };
 
 export type BuildItemKind = "3d" | "pcb" | "code" | "assembly" | "wiring" | "parts";
@@ -776,7 +780,7 @@ type Ctx = {
   // Chat ops
   /** `addTo`: the project Home's "Adding to {project}" names (P2-TABS-29) —
    *  the setup question opens on it. */
-  createChat: (initialPrompt: string, opts?: { addTo?: string }) => ChatSession;
+  createChat: (initialPrompt: string, opts?: { addTo?: string; quality?: RenderQuality }) => ChatSession;
   appendUserTurn: (chatId: string, text: string) => void;
   appendAssistantTurn: (
     chatId: string,
@@ -972,7 +976,7 @@ export function CreateHistoryProvider({
   }, [builds, hydrated]);
 
   // ── Chat ops ──────────────────────────────────────────────────
-  const createChat = React.useCallback((initialPrompt: string, opts?: { addTo?: string }) => {
+  const createChat = React.useCallback((initialPrompt: string, opts?: { addTo?: string; quality?: RenderQuality }) => {
     const now = Date.now();
     const addTo = opts?.addTo?.trim();
     const id = makeId("chat");
@@ -995,6 +999,7 @@ export function CreateHistoryProvider({
       ],
       createdAt: now,
       updatedAt: now,
+      ...(opts?.quality ? { quality: opts.quality } : null),
     };
     setChats((arr) => [session, ...arr]);
     return session;

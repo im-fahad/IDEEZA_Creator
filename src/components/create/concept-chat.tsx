@@ -40,6 +40,7 @@ import { rebaseEdits } from "@/lib/spec/edits";
 import { cardFacts, specLine } from "@/lib/spec/format";
 import { asConceptSummary, cleanEdits } from "@/lib/spec/hints";
 import { CONCEPT_COST, useCredits } from "@/lib/create/credits";
+import type { RenderQuality } from "@/lib/create/quality";
 import { useManualProjects } from "@/lib/manual/projects";
 import { useGuards } from "@/lib/manual/use-write-guard";
 import {
@@ -705,6 +706,8 @@ export function ConceptChat({ chatId }: { chatId: string }) {
         prompt: string;
         kind: "fresh" | "refine";
         parentImageUrl?: string;
+        /** The chat's Quality, from Home. */
+        quality?: RenderQuality;
       },
     ) => {
       try {
@@ -984,6 +987,7 @@ export function ConceptChat({ chatId }: { chatId: string }) {
         prompt: turn.prompt,
         kind: turn.kind,
         parentImageUrl,
+        quality: chat.quality,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

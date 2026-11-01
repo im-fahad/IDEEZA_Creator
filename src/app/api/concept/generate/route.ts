@@ -34,6 +34,7 @@ import {
   type RenderJob,
 } from "@/lib/create/image-gen";
 import { put, readMeta } from "@/lib/create/image-store";
+import { cleanQuality } from "@/lib/create/quality";
 
 export const runtime = "nodejs";
 
@@ -150,8 +151,11 @@ export async function POST(req: Request) {
     kind?: unknown;
     parentImageUrl?: unknown;
     pool?: unknown;
+    quality?: unknown;
   };
   const volunteerPool = obj.pool !== "off";
+  // The chat's Quality, from Home. Anything else renders at Medium.
+  const quality = cleanQuality(obj.quality);
   const prompt = String(obj.prompt ?? "").trim();
   const kind = obj.kind === "refine" ? "refine" : "fresh";
   const parentImageUrl =
@@ -198,7 +202,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const job = await startRender(finalPrompt, seed, { volunteerPool });
+    const job = await startRender(finalPrompt, seed, { volunteerPool, quality });
     return NextResponse.json({ job: encodeJob(job) });
   } catch (err) {
     return failed(err);

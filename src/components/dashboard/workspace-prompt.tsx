@@ -12,11 +12,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   AiMagicIcon,
+  ArrowDown01Icon,
   ArrowRight01Icon,
   Cancel01Icon,
   CodeIcon,
   CpuIcon,
   CubeIcon,
+  DashboardSpeed02Icon,
   ElectricWireIcon,
   Layers01Icon,
   FavouriteIcon,
@@ -35,6 +37,8 @@ import {
   type BuildItemKind,
 } from "@/lib/create/history";
 import { CONCEPT_COST, useCredits } from "@/lib/create/credits";
+import { DEFAULT_QUALITY, QUALITIES, QUALITY_INFO, type RenderQuality } from "@/lib/create/quality";
+import { Menu } from "@/components/ideeza/menu";
 import { useManualProjects } from "@/lib/manual/projects";
 import { useVoiceInput, voiceErrorMessage } from "@/lib/voice/use-voice-input";
 import { VoiceListening } from "@/components/voice/voice-listening";
@@ -111,6 +115,9 @@ export function WorkspacePrompt() {
   const canRender = !creditsHydrated || balance >= CONCEPT_COST;
   const [mode, setMode] = React.useState<Mode>("ai");
   const [prompt, setPrompt] = React.useState("");
+  // Quality goes with the idea into its chat, and every concept rendered
+  // there uses it (lib/create/quality.ts).
+  const [quality, setQuality] = React.useState<RenderQuality>(DEFAULT_QUALITY);
   const [refining, setRefining] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
   // Manual-mode modal lives at this level so a click on "Create
@@ -141,7 +148,7 @@ export function WorkspacePrompt() {
     // if the push throws, the catch hands the control back.
     setSubmitting(true);
     try {
-      const session = createChat(trimmed, addTo ? { addTo: addTo.id } : undefined);
+      const session = createChat(trimmed, { quality, ...(addTo ? { addTo: addTo.id } : null) });
       router.push(`/chat/${session.id}`);
     } catch {
       setSubmitting(false);
@@ -238,6 +245,8 @@ export function WorkspacePrompt() {
               onRefine={handleRefine}
               refining={refining}
               canRender={canRender}
+              quality={quality}
+              onQuality={setQuality}
             />
           ) : (
             <BuildManuallyInfo onCreate={() => setProjectModalOpen(true)} />
@@ -392,9 +401,11 @@ const PromptCard = React.forwardRef<
     refining: boolean;
     /** False when the balance cannot cover one concept render. */
     canRender: boolean;
+    quality: RenderQuality;
+    onQuality: (q: RenderQuality) => void;
   }
 >(function PromptCard(
-  { value, onChange, onSubmit, submitting, placeholder, mode, onRefine, refining, canRender },
+  { value, onChange, onSubmit, submitting, placeholder, mode, onRefine, refining, canRender, quality, onQuality },
   ref,
 ) {
   const localRef = React.useRef<HTMLTextAreaElement | null>(null);
@@ -507,11 +518,14 @@ const PromptCard = React.forwardRef<
           className="block w-full resize-none bg-transparent px-[20px] pt-[20px] text-md leading-relaxed text-text-primary outline-none placeholder:text-text-tertiary"
         />
 
-        <div className="flex items-center justify-between gap-[8px] px-[12px] pb-[12px] pt-[4px]">
+        {/* Wraps on a phone: with Quality beside the mic the row is wider
+            than the card, so Enhance and Generate take a second line, still
+            at the right. On anything wider it is the one row it always was. */}
+        <div className="flex flex-wrap items-center justify-between gap-[8px] px-[12px] pb-[12px] pt-[4px]">
           {/* No attach button: it was permanently disabled — the picked file
               was never sent to the generator — so it offered nothing but a
               reason. It comes back when an image can go with the prompt. */}
-          <div className="flex items-center gap-[4px]">
+          <div className="flex shrink-0 items-center gap-[4px]">
             <ToolbarIconButton
               ariaLabel={
                 voice.supported
@@ -522,9 +536,10 @@ const PromptCard = React.forwardRef<
               icon={Mic01Icon}
               disabled={!voice.supported}
             />
+            {mode === "ai" && <QualityMenu value={quality} onChange={onQuality} />}
           </div>
 
-          <div className="flex items-center gap-[8px]">
+          <div className="ml-auto flex shrink-0 items-center gap-[8px]">
             {mode === "ai" && (
               <RefineButton
                 onClick={onRefine}
@@ -587,6 +602,43 @@ function ToolbarIconButton({
     >
       <Icon icon={icon} />
     </button>
+  );
+}
+
+// Low · Medium · High, beside the mic: the quality this idea's concepts are
+// rendered at. The DS menu in its single-choice form, each level with one
+// plain line on what it trades.
+function QualityMenu({ value, onChange }: { value: RenderQuality; onChange: (q: RenderQuality) => void }) {
+  const label = QUALITY_INFO[value].label;
+  return (
+    <Menu
+      label="Quality"
+      align="start"
+      items={QUALITIES.map((q) => ({
+        id: q,
+        label: QUALITY_INFO[q].label,
+        hint: QUALITY_INFO[q].hint,
+        selected: q === value,
+        onSelect: () => onChange(q),
+      }))}
+      trigger={(props, { open }) => (
+        <button
+          {...props}
+          type="button"
+          aria-label={`Quality: ${label}`}
+          title="How much detail each concept is rendered with"
+          className={cn(
+            "inline-flex h-[40px] items-center gap-[6px] rounded-lg px-[12px] text-md font-medium outline-none transition-colors duration-fast",
+            "focus-visible:ring-2 focus-visible:ring-border-focus",
+            open ? "bg-bg-surface-raised text-text-primary" : "text-text-secondary hover:bg-bg-surface-raised hover:text-text-primary",
+          )}
+        >
+          <Icon icon={DashboardSpeed02Icon} />
+          {label} quality
+          <Icon icon={ArrowDown01Icon} size={16} />
+        </button>
+      )}
+    />
   );
 }
 
