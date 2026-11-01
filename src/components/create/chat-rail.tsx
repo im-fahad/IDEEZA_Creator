@@ -62,6 +62,7 @@ import {
 import { PipelineRow, STATE_WORD } from "./build-rail";
 import { useMinuteClock } from "./build-status";
 import { elapsedLabel, relativeLabel, useSecondClock } from "./use-clock";
+import { CreditBadge } from "@/components/credits/credit-badge";
 
 // ─────────────────────────────── the model ───────────────────────────────
 
@@ -416,7 +417,16 @@ function NextStepLine({
         />
       </span>
       <div className="flex min-w-0 flex-col items-start gap-[4px]">
-        <p className="text-sm text-text-primary">{step.text}</p>
+        <p className="text-sm text-text-primary">
+          {step.text}
+          {step.credits !== undefined && (
+            <>
+              {" "}
+              <CreditBadge credits={step.credits} className="align-middle" />
+              {step.rest ? ` · ${step.rest}` : ""}
+            </>
+          )}
+        </p>
         {target && (
           <button
             type="button"

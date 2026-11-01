@@ -31,7 +31,8 @@ import {
   type SetupAnswer,
 } from "@/lib/create/history";
 import { CONCEPT_COST, useCredits } from "@/lib/create/credits";
-import { PIECES, aboutTime, cleanPick, creditsLabel, pickCost, pickSummary, pickedKinds } from "@/lib/create/pieces";
+import { PIECES, aboutTime, cleanPick, pickCost, pickSummary, pickedKinds, type PieceQuality } from "@/lib/create/pieces";
+import { CreditBadge } from "@/components/credits/credit-badge";
 import type { ConceptPart } from "@/lib/create/concept";
 import type { RadioPair } from "@/lib/spec/facts";
 import type { ResolvedSpec, SpecEdits } from "@/lib/spec/types";
@@ -116,8 +117,10 @@ export function ChatThread({
   specSheetFor,
   specDocked = false,
   onOpenSpec,
-  piecesFor,
-  onOpenPieces,
+  // The What to build panel is hidden (owner, 2026-11-01):
+  // piecesFor,
+  // onOpenPieces,
+  onPieceQuality,
   onFocusSpec,
   onSpecChange,
   rereading,
@@ -164,11 +167,14 @@ export function ChatThread({
   specDocked?: boolean;
   /** Selects this product and opens its spec sheet — the card's Edit spec. */
   onOpenSpec?: (productId: string) => void;
-  /** The product the What to build panel is open on (pieces-sheet.tsx). */
-  piecesFor?: string | null;
-  /** Opens a product's What to build panel — the card's, and the Build
-   *  line's, Edit. */
-  onOpenPieces?: (productId: string) => void;
+  // Hidden with the What to build panel (owner, 2026-11-01):
+  // /** The product the What to build panel is open on (pieces-sheet.tsx). */
+  // piecesFor?: string | null;
+  // /** Opens a product's What to build panel — the card's, and the Build
+  //  *  line's, Edit. */
+  // onOpenPieces?: (productId: string) => void;
+  /** Sets a product's Quality — the card's Quality menu, in Edit's place. */
+  onPieceQuality?: (productId: string, quality: PieceQuality) => void;
   /** Opens a product's spec sheet with the keyboard in its size — the Build
    *  line's way to a size that can't be built. */
   onFocusSpec?: (productId: string) => void;
@@ -347,14 +353,15 @@ export function ChatThread({
               : undefined
           }
           pieces={
-            turn.status === "ready" && answer && onOpenPieces
+            turn.status === "ready" && answer && onPieceQuality
               ? {
                   productId: productIdOf(turn),
                   productName: productNameOf(turn) ?? `Concept ${labels.get(turn.id) ?? "1"}`,
-                  pick: picks.get(productIdOf(turn)) ?? cleanPick(undefined),
-                  open: piecesFor === productIdOf(turn),
-                  docked: specDocked,
-                  onEdit: () => onOpenPieces(productIdOf(turn)),
+                  pick: picks.get(productIdOf(turn)) ?? cleanPick(undefined, chat.quality),
+                  onQuality: (q) => onPieceQuality(productIdOf(turn), q),
+                  // open: piecesFor === productIdOf(turn),
+                  // docked: specDocked,
+                  // onEdit: () => onOpenPieces(productIdOf(turn)),
                 }
               : undefined
           }
@@ -508,8 +515,9 @@ export function ChatThread({
                         name: productNameOf(t) ?? `Concept ${labels.get(t.id) ?? "1"}`,
                         summary: pickSummary(pick),
                         detail: kinds.length ? kinds.map((k) => PIECES[k].name).join(" · ") : "nothing picked",
-                        credits: creditsLabel(pickCost(pick)),
-                        onEdit: onOpenPieces ? () => onOpenPieces(productIdOf(t)) : undefined,
+                        credits: pickCost(pick),
+                        // Edit → the What to build panel, hidden (owner, 2026-11-01):
+                        // onEdit: onOpenPieces ? () => onOpenPieces(productIdOf(t)) : undefined,
                       };
                     })
                   : []
@@ -676,7 +684,7 @@ function BuildAction({
     name: string;
     summary: string;
     detail: string;
-    credits: string;
+    credits: number;
     onEdit?: () => void;
   }[];
   onBuild: () => void;
@@ -713,7 +721,7 @@ function BuildAction({
               <span className="min-w-0 flex-1 text-text-secondary">
                 {l.summary} — {l.detail}
               </span>
-              <span className="tabular-nums text-text-secondary">{l.credits}</span>
+              <CreditBadge credits={l.credits} className="self-center" />
               {l.onEdit && (
                 <button
                   type="button"
@@ -732,7 +740,7 @@ function BuildAction({
         {allReady
           ? `${products < total ? `${products} of ${total}` : products} product${
               (products < total ? total : products) === 1 ? "" : "s"
-            } · ${creditsLabel(cost)} · ${aboutTime(seconds)}`
+            } · ${aboutTime(seconds)}`
           : failedName
             ? "A chosen concept didn't come through"
             : "Waiting for every concept to land"}
@@ -767,6 +775,8 @@ function BuildAction({
           </span>
         )}
         {preparing ? "Preparing the build…" : specBlock ? `Fix ${specBlock}'s size` : label}
+        {/* The build's price, on the button that pays it. */}
+        {!preparing && !specBlock && allReady && <CreditBadge credits={cost} onBrand={!blocked} />}
       </button>
       {/* The reason a disabled button is off, where the keyboard and a touch
           screen can reach it — a title on a disabled button reaches neither. */}

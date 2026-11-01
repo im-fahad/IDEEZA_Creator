@@ -33,6 +33,7 @@ import { buildCost, useCredits } from "@/lib/create/credits";
 import { aboutTime } from "@/lib/create/pieces";
 import { useDialogFocus } from "./use-dialog-focus";
 import { BuyCreditsButton, useBuyCredits } from "@/components/credits/buy-credits";
+import { CreditBadge } from "@/components/credits/credit-badge";
 import { BUILD_ESTIMATE_MIN } from "@/lib/create/history";
 import {
   describeFallback,
@@ -162,7 +163,7 @@ export function ConfirmBuildDialog({
     name: string;
     summary: string;
     detail: string;
-    credits: string;
+    credits: number;
     time: string;
     onEdit?: () => void;
   }[];
@@ -298,8 +299,9 @@ export function ConfirmBuildDialog({
               <li key={p.productId} className="flex flex-col gap-[4px] rounded-xl bg-bg-surface-raised px-[14px] py-[12px]">
                 <div className="flex items-baseline gap-[12px]">
                   <span className="min-w-0 flex-1 text-md font-semibold text-text-primary">{p.name}</span>
-                  <span className="shrink-0 text-sm tabular-nums text-text-secondary">
-                    {p.credits} · {p.time}
+                  <span className="inline-flex shrink-0 items-center gap-[6px] self-center text-sm tabular-nums text-text-secondary">
+                    <CreditBadge credits={p.credits} />
+                    {p.time}
                   </span>
                 </div>
                 <div className="flex items-baseline gap-[8px]">
@@ -339,14 +341,13 @@ export function ConfirmBuildDialog({
 
         <div className="flex flex-wrap gap-[8px]">
           {/* The balance on both sides of the spend, so the maker sees what
-              they have and what they will have — not only the price. */}
+              they have and what they will have. The price itself is on Build. */}
           <Chip icon={Coins01Icon}>
-            {cost} credits
             {creditsHydrated
               ? shortOnCredits
-                ? ` · you have ${balance}`
-                : ` · ${balance} → ${balance - cost} after`
-              : ""}
+                ? `You have ${balance} — ${cost - balance} short`
+                : `You have ${balance} → ${balance - cost} after`
+              : `${cost} credits`}
           </Chip>
           <Chip icon={InformationCircleIcon}>
             {seconds ? aboutTime(seconds).replace(/^about/, "About") : TIME_CHIP}
@@ -407,6 +408,8 @@ export function ConfirmBuildDialog({
               <Icon icon={submitting ? Refresh01Icon : FlashIcon} size={16} />
             </span>
             {submitting ? "Starting…" : "Build"}
+            {/* The price on the button that pays it, like the Build line's. */}
+            {!submitting && <CreditBadge credits={cost} onBrand={!shortOnCredits} />}
           </button>
         </div>
       </div>

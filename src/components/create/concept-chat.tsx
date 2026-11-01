@@ -17,9 +17,20 @@
 import * as React from "react";
 import Link from "next/link";
 import { LockIcon } from "@hugeicons/core-free-icons";
-import { aboutTime, cleanPick, creditsLabel, pickCost, pickSeconds, pickSummary, pickedKinds } from "@/lib/create/pieces";
+import {
+  aboutTime,
+  cleanPick,
+  pickCost,
+  pickSeconds,
+  pickSummary,
+  pickedKinds,
+  withQuality,
+  type PieceQuality,
+} from "@/lib/create/pieces";
 import { pieceLine } from "./pieces-card";
-import { PiecesSheet, type PiecesSheetProduct } from "./pieces-sheet";
+// The What to build panel is hidden for now (owner, 2026-11-01); the card's
+// Quality menu took its Edit's place.
+// import { PiecesSheet, type PiecesSheetProduct } from "./pieces-sheet";
 import { Icon } from "@/components/dashboard/icon";
 import {
   conceptBriefOf,
@@ -40,6 +51,8 @@ import { rebaseEdits } from "@/lib/spec/edits";
 import { cardFacts, specLine } from "@/lib/spec/format";
 import { asConceptSummary, cleanEdits } from "@/lib/spec/hints";
 import { CONCEPT_COST, useCredits } from "@/lib/create/credits";
+import type { RenderQuality } from "@/lib/create/quality";
+import { CreditBadge } from "@/components/credits/credit-badge";
 import { useManualProjects } from "@/lib/manual/projects";
 import { useGuards } from "@/lib/manual/use-write-guard";
 import {
@@ -419,8 +432,9 @@ export function ConceptChat({ chatId }: { chatId: string }) {
   // selection, because the rail, the canvas and the build path all open it.
   const [specSheet, setSpecSheet] = React.useState<SheetRequest | null>(null);
   // The What to build panel's product (pieces-sheet.tsx) — its own panel,
-  // where the spec sheet sits; one of the two is open at a time.
-  const [piecesFor, setPiecesFor] = React.useState<string | null>(null);
+  // where the spec sheet sits; one of the two is open at a time. Hidden for
+  // now (owner, 2026-11-01).
+  // const [piecesFor, setPiecesFor] = React.useState<string | null>(null);
   // What the page's announcer says for the sheet: a docked one opening beside
   // the canvas moves no focus, so it is said instead.
   const [sheetNote, setSheetNote] = React.useState<{ text: string; n: number } | null>(null);
@@ -547,7 +561,7 @@ export function ConceptChat({ chatId }: { chatId: string }) {
   const select = React.useCallback((productId: string, open?: SheetFocus) => {
     setFocusedProduct(productId);
     if (open) {
-      setPiecesFor(null);
+      // setPiecesFor(null);
       setSpecSheet((prev) => ({ focus: open, req: (prev?.req ?? 0) + 1 }));
     }
   }, []);
@@ -563,17 +577,18 @@ export function ConceptChat({ chatId }: { chatId: string }) {
   // What to build › Edit — on a card, on the Build line, in the Build
   // dialog: that product's What to build panel, in the spec sheet's place.
   // From the dialog, the dialog closes first; Build opens it again.
-  const openPieces = React.useCallback((productId: string) => {
-    setConfirmFor(null);
-    setSpecSheet(null);
-    setFocusedProduct(productId);
-    setPiecesFor(productId);
-    setPane("work");
-  }, []);
-  const closePieces = React.useCallback(() => {
-    setPiecesFor(null);
-    setFocusedProduct(null);
-  }, []);
+  // Hidden with the panel (owner, 2026-11-01):
+  // const openPieces = React.useCallback((productId: string) => {
+  //   setConfirmFor(null);
+  //   setSpecSheet(null);
+  //   setFocusedProduct(productId);
+  //   setPiecesFor(productId);
+  //   setPane("work");
+  // }, []);
+  // const closePieces = React.useCallback(() => {
+  //   setPiecesFor(null);
+  //   setFocusedProduct(null);
+  // }, []);
   // Change by message, over the page: the sheet goes and the product stays
   // selected, so the composer — whose placeholder names it now — changes it.
   // On a phone the composer is on the Chat tab. The keyboard goes there once
@@ -705,6 +720,8 @@ export function ConceptChat({ chatId }: { chatId: string }) {
         prompt: string;
         kind: "fresh" | "refine";
         parentImageUrl?: string;
+        /** The chat's Quality, from Home. */
+        quality?: RenderQuality;
       },
     ) => {
       try {
@@ -984,6 +1001,7 @@ export function ConceptChat({ chatId }: { chatId: string }) {
         prompt: turn.prompt,
         kind: turn.kind,
         parentImageUrl,
+        quality: chat.quality,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1770,24 +1788,38 @@ export function ConceptChat({ chatId }: { chatId: string }) {
   // whichever path moved the selection or the drawing, and stays closed.
   if (specSheet && !sheetProduct) setSpecSheet(null);
 
+  // A card's Quality menu: every piece of that product at the level picked,
+  // kept with its pick like the panel's choices were. Nothing moves once the
+  // build holds the concepts.
+  const setPieceQuality = React.useCallback(
+    (productId: string, quality: PieceQuality) => {
+      const setupId = railState.setup?.answer ? railState.setup.id : null;
+      if (!chat || !setupId || buildHolds(activeBuild)) return;
+      const pick = railState.picks.get(productId) ?? cleanPick(undefined, chat.quality);
+      setPieces(chat.id, setupId, productId, withQuality(pick, quality));
+    },
+    [railState, chat, activeBuild, setPieces],
+  );
+
   // The What to build panel's product — the pick from the rail's project
-  // model, the one the cards and the Build line read too.
-  const piecesProduct = React.useMemo((): PiecesSheetProduct | null => {
-    // Once the build holds its concepts there is nothing left to pick: a
-    // piece left out is added from the build (Add pieces), so the panel goes.
-    if (!piecesFor || buildHolds(activeBuild)) return null;
-    const turn = sheetTurnOf(railState, piecesFor);
-    if (!turn) return null;
-    const setupId = railState.setup?.answer ? railState.setup.id : null;
-    return {
-      productId: piecesFor,
-      name: sheetNameOf(railState.setup, turn, labels),
-      conceptLabel: labels.get(turn.id) ?? "1",
-      pick: railState.picks.get(piecesFor) ?? cleanPick(undefined),
-      onChange: chat && setupId ? (pick) => setPieces(chat.id, setupId, piecesFor, pick) : undefined,
-    };
-  }, [piecesFor, railState, labels, chat, activeBuild, setPieces]);
-  if (piecesFor && !piecesProduct) setPiecesFor(null);
+  // model, the one the cards and the Build line read too. Hidden with the
+  // panel (owner, 2026-11-01):
+  // const piecesProduct = React.useMemo((): PiecesSheetProduct | null => {
+  //   // Once the build holds its concepts there is nothing left to pick: a
+  //   // piece left out is added from the build (Add pieces), so the panel goes.
+  //   if (!piecesFor || buildHolds(activeBuild)) return null;
+  //   const turn = sheetTurnOf(railState, piecesFor);
+  //   if (!turn) return null;
+  //   const setupId = railState.setup?.answer ? railState.setup.id : null;
+  //   return {
+  //     productId: piecesFor,
+  //     name: sheetNameOf(railState.setup, turn, labels),
+  //     conceptLabel: labels.get(turn.id) ?? "1",
+  //     pick: railState.picks.get(piecesFor) ?? cleanPick(undefined),
+  //     onChange: chat && setupId ? (pick) => setPieces(chat.id, setupId, piecesFor, pick) : undefined,
+  //   };
+  // }, [piecesFor, railState, labels, chat, activeBuild, setPieces]);
+  // if (piecesFor && !piecesProduct) setPiecesFor(null);
 
   // Each product's line in the Build dialog: what it gets, what that costs
   // and takes, and Edit back to its panel.
@@ -1803,12 +1835,13 @@ export function ConceptChat({ chatId }: { chatId: string }) {
         name: gateNames[i] ?? (turn ? sheetNameOf(railState.setup, turn, labels) : id),
         summary: pickSummary(pick),
         detail: kinds.length ? kinds.map((k) => { const l = pieceLine(k, pick[k]); return l.name + l.note; }).join(" · ") : "nothing picked",
-        credits: creditsLabel(pickCost(pick)),
+        credits: pickCost(pick),
         time: aboutTime(pickSeconds(pick)),
-        onEdit: railState.setup?.answer ? () => openPieces(id) : undefined,
+        // Edit → the What to build panel, hidden (owner, 2026-11-01):
+        // onEdit: railState.setup?.answer ? () => openPieces(id) : undefined,
       };
     });
-  }, [confirmFor, companionPlan, pickedCompanions, railState, gateNames, labels, openPieces]);
+  }, [confirmFor, companionPlan, pickedCompanions, railState, gateNames, labels]);
 
   if (!hydrated) {
     return <LoadingShell rootRef={setChatRoot} split={split} />;
@@ -1984,21 +2017,36 @@ export function ConceptChat({ chatId }: { chatId: string }) {
                 : target.kind === "blocked"
                   ? `${target.hint}.`
                   : target.kind === "none"
-                    ? `Pick a product above to refine it · ${CONCEPT_COST} credit, or name a new one to add it.`
+                    ? (
+                        <>
+                          Pick a product above to refine it <CreditBadge credits={CONCEPT_COST} className="align-middle" />, or
+                          name a new one to add it.
+                        </>
+                      )
                     : target.kind === "refine"
                     ? // What a sentence here costs, beside what doesn't: the
                       // parts, the size and the power change in the spec,
                       // for nothing, and the image stays — or, once the
-                      // product is built, in the editor.
-                      `Redraws ${target.name}'s image · ${CONCEPT_COST} credit.${
-                        lockedOf(rail.state, target.productId)
-                          ? " Its built spec changes in the editor."
-                          : // A chat from before the question has no spec to edit.
-                            rail.state.setup
-                            ? " Parts, size and power change free in its spec."
-                            : ""
-                      }`
-                    : `Each drawing costs ${CONCEPT_COST} credit.`}
+                      // product is built, in the editor. Each price is the
+                      // same badge the card's buttons carry.
+                      (
+                        <>
+                          Redraws {target.name}&apos;s image <CreditBadge credits={CONCEPT_COST} className="align-middle" />.
+                          {lockedOf(rail.state, target.productId) ? (
+                            " Its built spec changes in the editor."
+                          ) : // A chat from before the question has no spec to edit.
+                          rail.state.setup ? (
+                            <>
+                              {" "}Parts, size and power change in its spec <CreditBadge credits={0} className="align-middle" />.
+                            </>
+                          ) : null}
+                        </>
+                      )
+                    : (
+                        <>
+                          Each drawing <CreditBadge credits={CONCEPT_COST} className="align-middle" />
+                        </>
+                      )}
           </p>
           )}
           </>
@@ -2044,8 +2092,9 @@ export function ConceptChat({ chatId }: { chatId: string }) {
             specSheetFor={sheetProduct?.productId ?? null}
             specDocked={docked}
             onOpenSpec={(productId) => openSpec(productId, "sheet")}
-            piecesFor={piecesFor}
-            onOpenPieces={openPieces}
+            // piecesFor={piecesFor}
+            // onOpenPieces={openPieces}
+            onPieceQuality={setPieceQuality}
             onFocusSpec={focusSpec}
             onSpecChange={handleSpecChange}
             rereading={rereading}
@@ -2066,13 +2115,15 @@ export function ConceptChat({ chatId }: { chatId: string }) {
         onShowEditor={showEditor}
       />
 
-      {/* What to build — its own panel, in the spec sheet's place. */}
+      {/* What to build — its own panel, in the spec sheet's place. Hidden
+          for now (owner, 2026-11-01): the card's Quality menu took Edit's place.
       <PiecesSheet
         product={piecesProduct}
         docked={docked}
         onClose={closePieces}
         onOpenSpec={(productId) => openSpec(productId, "sheet")}
       />
+      */}
 
       {/* Part 4 §4.4.2 — the products this build covers are chosen here,
           in the same dialog that confirms the build. One decision, one

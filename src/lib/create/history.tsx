@@ -18,6 +18,7 @@ import { reportWrite } from "../storage-status";
 import { stampItemTimes } from "./item-times";
 import { BUILD_COST } from "./credits";
 import type { Companion } from "./companions";
+import type { RenderQuality } from "./quality";
 import type { LinkEdit, NetworkEdits, NetworkReply } from "./network-reply";
 import {
   BRIEF_CHANGES,
@@ -205,6 +206,9 @@ export type ChatSession = {
   turns: ChatTurn[];
   createdAt: number;
   updatedAt: number;
+  /** Quality picked on Home with the idea; every concept render in this
+   *  chat uses it. Absent on chats from before the choice: Medium. */
+  quality?: RenderQuality;
 };
 
 export type BuildItemKind = "3d" | "pcb" | "code" | "assembly" | "wiring" | "parts";
@@ -470,7 +474,7 @@ function itemsFor(pick: PiecePick | undefined, busy: boolean): BuildItem[] {
           kind,
           status: busy ? ("pending" as const) : ("building" as const),
           progress: 0,
-          ...(p[kind].quality === "high" ? { quality: "high" as const } : null),
+          ...(p[kind].quality !== "medium" ? { quality: p[kind].quality } : null),
           ...(p[kind].optimize ? { optimize: true } : null),
         }
       : { kind, status: "skipped" as const, progress: 0, omitted: true as const },
@@ -636,7 +640,7 @@ function normalizeItems(raw: unknown): BuildItem[] {
         : 0,
       ...(startedAt ? { startedAt: startedAt.value } : null),
       ...(endedAt ? { endedAt: endedAt.value } : null),
-      ...(item.quality === "high" ? { quality: "high" as const } : null),
+      ...(item.quality === "high" || item.quality === "low" ? { quality: item.quality } : null),
       ...(item.optimize === true ? { optimize: true } : null),
       ...(item.omitted === true && item.status === "skipped" ? { omitted: true as const } : null),
     });
@@ -776,7 +780,7 @@ type Ctx = {
   // Chat ops
   /** `addTo`: the project Home's "Adding to {project}" names (P2-TABS-29) —
    *  the setup question opens on it. */
-  createChat: (initialPrompt: string, opts?: { addTo?: string }) => ChatSession;
+  createChat: (initialPrompt: string, opts?: { addTo?: string; quality?: RenderQuality }) => ChatSession;
   appendUserTurn: (chatId: string, text: string) => void;
   appendAssistantTurn: (
     chatId: string,
@@ -972,7 +976,7 @@ export function CreateHistoryProvider({
   }, [builds, hydrated]);
 
   // ── Chat ops ──────────────────────────────────────────────────
-  const createChat = React.useCallback((initialPrompt: string, opts?: { addTo?: string }) => {
+  const createChat = React.useCallback((initialPrompt: string, opts?: { addTo?: string; quality?: RenderQuality }) => {
     const now = Date.now();
     const addTo = opts?.addTo?.trim();
     const id = makeId("chat");
@@ -995,6 +999,7 @@ export function CreateHistoryProvider({
       ],
       createdAt: now,
       updatedAt: now,
+      ...(opts?.quality ? { quality: opts.quality } : null),
     };
     setChats((arr) => [session, ...arr]);
     return session;
@@ -1606,7 +1611,7 @@ export function CreateHistoryProvider({
           kind: it.kind,
           status: busy ? "pending" : "building",
           progress: 0,
-          ...(c.quality === "high" ? { quality: "high" as const } : null),
+          ...(c.quality !== "medium" ? { quality: c.quality } : null),
           ...(c.optimize ? { optimize: true } : null),
         };
       };

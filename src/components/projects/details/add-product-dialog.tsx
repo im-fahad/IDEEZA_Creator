@@ -28,6 +28,7 @@ import { useCreateHistory } from "@/lib/create/history";
 import { editorHref } from "@/lib/manual/editor-scope";
 import { PROJECT_NAME_MAX, useManualProjects, type ManualProject } from "@/lib/manual/projects";
 import { cn } from "@/lib/utils";
+import { CreditBadge } from "@/components/credits/credit-badge";
 
 type Step = "choose" | "ai" | "manual";
 
@@ -211,9 +212,14 @@ function BuildWithAi({ project, onBack }: { project: ManualProject; onBack: () =
           {refining ? "Enhancing…" : "Enhance"}
         </Button>
         <p id={costId} className="text-sm text-text-secondary">
-          {canRender
-            ? `1 concept · ${CONCEPT_COST} credit${CONCEPT_COST === 1 ? "" : "s"}${creditsHydrated ? ` · you have ${balance}` : ""}`
-            : `You need ${CONCEPT_COST} credit to start. You have ${balance}.`}
+          {canRender ? (
+            <>
+              1 concept <CreditBadge credits={CONCEPT_COST} className="align-middle" />
+              {creditsHydrated ? ` · you have ${balance}` : ""}
+            </>
+          ) : (
+            `You need ${CONCEPT_COST} credit to start. You have ${balance}.`
+          )}
         </p>
       </div>
       {!canRender && (

@@ -13,15 +13,18 @@ import {
   pickSummary,
   pickedKinds,
   presetOf,
+  qualityOf,
   togglePiece,
   withPreset,
+  withQuality,
 } from "../../.tmp-test/lib/create/pieces.js";
 
 test("the whole product: the editor's five pieces and the Parts list, at Medium", () => {
   const p = defaultPick();
   assert.deepEqual(pickedKinds(p), ["pcb", "code", "3d", "assembly", "wiring", "parts"]);
-  // PCB, Code, 3D Module, Assembly and Wiring at 1 credit each; Parts free.
-  assert.equal(pickCost(p), 5);
+  // PCB, Code and 3D Module at 2 credits each at Medium, Assembly and
+  // Wiring 1 each; Parts free.
+  assert.equal(pickCost(p), 8);
   assert.equal(pickSummary(p), "Whole product");
   assert.equal(aboutTime(pickSeconds(p)), "about 1 min");
 });
@@ -89,10 +92,10 @@ test("a custom pick counts the five pieces a maker picks", () => {
 test("presets, quality and optimize change the cost and the time", () => {
   const pcb = withPreset(defaultPick(), "pcb");
   assert.equal(presetOf(pcb), "pcb");
-  assert.equal(pickCost(pcb), 1);
+  assert.equal(pickCost(pcb), 2);
   assert.equal(aboutTime(pickSeconds(pcb)), "about 45 s");
   const high = { ...pcb, pcb: { ...pcb.pcb, quality: "high", optimize: true } };
-  assert.equal(pickCost(high), 3);
+  assert.equal(pickCost(high), 4);
   // 5 s of parts, then 90 s at High plus 30 s optimizing.
   assert.equal(pickSeconds(high), 125);
   const none = Object.fromEntries(Object.entries(defaultPick()).map(([k, c]) => [k, { ...c, on: false }]));
@@ -111,4 +114,35 @@ test("only a piece the maker left out can be added later", () => {
   // An old build that never had the piece.
   assert.equal(isLeftOut({ kind: "pcb", status: "skipped", progress: 0 }), false);
   assert.equal(isLeftOut({ kind: "pcb", status: "ready", progress: 100 }), false);
+});
+
+test("Low, Medium and High each have their own price", () => {
+  assert.equal(pickCost(withQuality(defaultPick(), "low")), 5);
+  assert.equal(pickCost(withQuality(defaultPick(), "medium")), 8);
+  assert.equal(pickCost(withQuality(defaultPick(), "high")), 11);
+  // Low is quicker, High slower.
+  const sec = (q) => pickSeconds(withQuality(defaultPick(), q));
+  assert.ok(sec("low") < sec("medium") && sec("medium") < sec("high"));
+});
+
+test("a product starts at the Quality its chat was started with on Home", () => {
+  const p = cleanPick(undefined, "high");
+  assert.equal(qualityOf(p), "high");
+  assert.equal(p.pcb.quality, "high");
+  // Pieces without levels keep Medium, which their price ignores.
+  assert.equal(p.wiring.quality, "medium");
+  assert.equal(pickCost(p), 11);
+  // A level chosen on the card wins over the chat's.
+  const chosen = cleanPick({ pcb: { on: true, quality: "low" }, code: { on: true, quality: "low" }, "3d": { on: true, quality: "low" } }, "high");
+  assert.equal(qualityOf(chosen), "low");
+  assert.equal(pickCost(chosen), 5);
+});
+
+test("the card's Quality sets every piece that has one", () => {
+  const p = withQuality(defaultPick(), "low");
+  assert.deepEqual([p.pcb.quality, p.code.quality, p["3d"].quality], ["low", "low", "low"]);
+  assert.equal(p.assembly.quality, "medium");
+  assert.equal(qualityOf(p), "low");
+  // The pieces picked stay picked.
+  assert.deepEqual(pickedKinds(withQuality(withPreset(defaultPick(), "enclosure"), "high")), ["3d", "parts"]);
 });

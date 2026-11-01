@@ -35,6 +35,15 @@ import {
   type BuildItemKind,
 } from "@/lib/create/history";
 import { CONCEPT_COST, useCredits } from "@/lib/create/credits";
+import {
+  DEFAULT_QUALITY,
+  LAST_QUALITY_KEY,
+  readLastQuality,
+  saveLastQuality,
+  type RenderQuality,
+} from "@/lib/create/quality";
+import { creditsLabel, defaultPick, pickCost } from "@/lib/create/pieces";
+import { QualityMenu } from "@/components/create/quality-menu";
 import { useManualProjects } from "@/lib/manual/projects";
 import { useVoiceInput, voiceErrorMessage } from "@/lib/voice/use-voice-input";
 import { VoiceListening } from "@/components/voice/voice-listening";
@@ -87,6 +96,34 @@ function useAddToParam(): string | null {
   );
 }
 
+// The Quality picked last, read where the browser keeps it. The server has
+// no store, so it draws Medium and the client takes over on hydration; a
+// pick in another tab follows here through the storage event.
+const qualityListeners = new Set<() => void>();
+function subscribeQuality(onChange: () => void) {
+  qualityListeners.add(onChange);
+  const onStorage = (e: StorageEvent) => {
+    if (e.key === LAST_QUALITY_KEY) onChange();
+  };
+  window.addEventListener("storage", onStorage);
+  return () => {
+    qualityListeners.delete(onChange);
+    window.removeEventListener("storage", onStorage);
+  };
+}
+function useLastQuality(): [RenderQuality, (q: RenderQuality) => void] {
+  const value = React.useSyncExternalStore(subscribeQuality, readLastQuality, () => DEFAULT_QUALITY);
+  const set = React.useCallback((q: RenderQuality) => {
+    saveLastQuality(q);
+    qualityListeners.forEach((l) => l());
+  }, []);
+  return [value, set];
+}
+
+/** What a product costs to build at each level — the menu says it, since
+ *  the level picked here is the one each product is built at. */
+const buildPrice = (q: RenderQuality) => `Build ${creditsLabel(pickCost(defaultPick(q)))} a product`;
+
 export function WorkspacePrompt() {
   const router = useRouter();
   const { createChat } = useCreateHistory();
@@ -111,6 +148,10 @@ export function WorkspacePrompt() {
   const canRender = !creditsHydrated || balance >= CONCEPT_COST;
   const [mode, setMode] = React.useState<Mode>("ai");
   const [prompt, setPrompt] = React.useState("");
+  // Quality goes with the idea into its chat: every concept rendered there
+  // uses it, and each product is built at it unless its card changes it
+  // (lib/create/quality.ts). The next idea starts at the one picked last.
+  const [quality, setQuality] = useLastQuality();
   const [refining, setRefining] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
   // Manual-mode modal lives at this level so a click on "Create
@@ -141,7 +182,7 @@ export function WorkspacePrompt() {
     // if the push throws, the catch hands the control back.
     setSubmitting(true);
     try {
-      const session = createChat(trimmed, addTo ? { addTo: addTo.id } : undefined);
+      const session = createChat(trimmed, { quality, ...(addTo ? { addTo: addTo.id } : null) });
       router.push(`/chat/${session.id}`);
     } catch {
       setSubmitting(false);
@@ -238,6 +279,8 @@ export function WorkspacePrompt() {
               onRefine={handleRefine}
               refining={refining}
               canRender={canRender}
+              quality={quality}
+              onQuality={setQuality}
             />
           ) : (
             <BuildManuallyInfo onCreate={() => setProjectModalOpen(true)} />
@@ -392,9 +435,11 @@ const PromptCard = React.forwardRef<
     refining: boolean;
     /** False when the balance cannot cover one concept render. */
     canRender: boolean;
+    quality: RenderQuality;
+    onQuality: (q: RenderQuality) => void;
   }
 >(function PromptCard(
-  { value, onChange, onSubmit, submitting, placeholder, mode, onRefine, refining, canRender },
+  { value, onChange, onSubmit, submitting, placeholder, mode, onRefine, refining, canRender, quality, onQuality },
   ref,
 ) {
   const localRef = React.useRef<HTMLTextAreaElement | null>(null);
@@ -507,11 +552,14 @@ const PromptCard = React.forwardRef<
           className="block w-full resize-none bg-transparent px-[20px] pt-[20px] text-md leading-relaxed text-text-primary outline-none placeholder:text-text-tertiary"
         />
 
-        <div className="flex items-center justify-between gap-[8px] px-[12px] pb-[12px] pt-[4px]">
+        {/* Wraps on a phone: with Quality beside the mic the row is wider
+            than the card, so Enhance and Generate take a second line, still
+            at the right. On anything wider it is the one row it always was. */}
+        <div className="flex flex-wrap items-center justify-between gap-[8px] px-[12px] pb-[12px] pt-[4px]">
           {/* No attach button: it was permanently disabled — the picked file
               was never sent to the generator — so it offered nothing but a
               reason. It comes back when an image can go with the prompt. */}
-          <div className="flex items-center gap-[4px]">
+          <div className="flex shrink-0 items-center gap-[4px]">
             <ToolbarIconButton
               ariaLabel={
                 voice.supported
@@ -522,9 +570,12 @@ const PromptCard = React.forwardRef<
               icon={Mic01Icon}
               disabled={!voice.supported}
             />
+            {mode === "ai" && (
+              <QualityMenu value={quality} onChange={onQuality} variant="toolbar" price={buildPrice} />
+            )}
           </div>
 
-          <div className="flex items-center gap-[8px]">
+          <div className="ml-auto flex shrink-0 items-center gap-[8px]">
             {mode === "ai" && (
               <RefineButton
                 onClick={onRefine}

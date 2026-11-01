@@ -29,6 +29,7 @@ import { Icon } from "@/components/dashboard/icon";
 import { useVoiceInput, voiceErrorMessage } from "@/lib/voice/use-voice-input";
 import { VoiceListening } from "@/components/voice/voice-listening";
 import { useDialogFocus } from "./use-dialog-focus";
+import { CreditBadge } from "@/components/credits/credit-badge";
 
 export function ImageEditorModal({
   open,
@@ -177,7 +178,8 @@ export function ImageEditorModal({
               Refine {what}
             </h2>
             <p className="mt-[2px] text-sm text-text-secondary">
-              {`The result lands as Concept ${conceptLabel}.${nextRefineIndex} — the original stays. Each change costs 1 credit.`}
+              {`The result lands as Concept ${conceptLabel}.${nextRefineIndex} — the original stays. Each change `}
+              <CreditBadge credits={1} className="align-middle" />
             </p>
           </div>
           <button
