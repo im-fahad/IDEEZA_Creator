@@ -6,7 +6,7 @@ The coded mobile prototype at `/m`, built from the mobile Figma (`fKXxJ25dXvxWWa
 
 - **One page, two ways to see it.** On a phone `/m` fills the screen (edge to edge, safe-area insets, Add to Home Screen as "IDEEZA"). On a desktop it draws a 375 × 812 phone and runs the same page inside it in an iframe, so the desktop shows exactly what a phone shows; the address bar follows the screen inside, so a reload or a copied link opens the same screen.
 - **Phone chrome in the frame only:** the Figma status bar (live clock, cellular, wifi, battery) and home indicator; on a phone the OS draws them.
-- **Tab bar** (Figma Navbar Container `3070:11343`): Home · Earn Coin · AI (the orb) · Message · Profile, the current tab marked by the border/focus line above it; it stays mounted while you move between tabs. Each tab shows a placeholder naming the phase that builds it (prototype only).
+- **Tab bar** (Figma Navbar Container `3070:11343`): Home · Earn Coin · AI (the orb) · Message · Profile, the current tab marked by the border/focus line above it; it stays mounted while you move between tabs.
 - **Top bar** (Mobile / Top bar): Back (the previous screen, Home when there is none), a centred title, up to 44 px actions on the right.
 
 ## Account (M1)

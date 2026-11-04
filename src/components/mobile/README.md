@@ -10,7 +10,6 @@ The `/m` prototype's own screens and parts, from the mobile Figma (`fKXxJ25dXvxW
 | `status-bar.tsx`, `home-indicator.tsx` | The phone chrome, drawn only in the frame; the safe-area insets on a phone |
 | `top-bar.tsx` | Mobile / Top bar: Back, the title, 44 px actions |
 | `tab-bar.tsx` | Navbar Container: Home · Earn Coin · AI · Message · Profile |
-| `phase-placeholder.tsx` | Prototype only: a tab until its phase is built |
 | `kit/sheet.tsx` | M09 Sheet and M12 ActionSheet: one scrim, Escape, drag to close, focus inside |
 | `kit/confirm-sheet.tsx` | Confirms: neutral, destructive, typed |
 | `kit/report-sheet.tsx` | The Report sheet and its states |
@@ -20,5 +19,13 @@ The `/m` prototype's own screens and parts, from the mobile Figma (`fKXxJ25dXvxW
 | `account/mobile-gate.tsx` | Where the phone may go (way-in, setup, tabs, guest Home), Splash, the Face ID offer |
 | `account/ways-in.tsx`, `account/guest-gate.tsx` | Continue with Apple · Google · Facebook · email, the Demo provider sheet, the guest gate |
 | `account/code-step.tsx`, `account/parts.tsx`, `account/terms-sheet.tsx` | The six-digit code step and Demo email; heading, checklist, alert, Splash; the Terms viewer |
+| `ai/` | The AI tab: start, the concept chat (`use-concept-flow.ts`), build, pieces, history, the build pill (logic: `lib/mobile-ai/flow.ts`) |
+| `feed/` | Home: the Feed's clips, comments, ⋯ menu, share, Saved, Marketplace activity, Global Search, Notifications |
+| `project/`, `project-earn/`, `product/` | My projects and the project page; its Earn side (mint, sell, listing, business plan, money, buying, product video, AR); the product page and its build viewers |
+| `messages/` | The Message tab: inbox, requests, threads, team threads, composer (logic: `lib/messages/phone.ts`, `use-outbox.ts`) |
+| `profile/` | The Profile hub, creator profiles, Edit profile, profile search |
+| `settings/` | Settings and every page under it, Sign-in & security, 2-step, sign out, delete and restore (logic: `lib/account/security.ts`) |
+| `plans/`, `help/` | Plan & pricing, credits, checkout, billing, payment method, Get paid, KYC; Help, contact support, Report a problem, Tutorials |
+| `earn-coin/` | The Earn Coin tab: balance, presale, staking, refer & earn, the wallet-signing sheets every money step uses |
 
 Rules: every popup is a bottom sheet in this one style; tokens only, mapped from the Figma variables; text over video is always white (`status="media"`).
