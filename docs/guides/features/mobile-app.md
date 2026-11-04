@@ -51,6 +51,19 @@ From "Project Details · 2026 update" and the master page's My project, all on t
 - **Publish**: Keep private · Give · Sell; Give and Sell first check every video (readiness), then open the mint. **Versions** and **Review version n** (Save version n); **Team** (Team conversation, Message, Splits); **Network** and the **Add network** wizard (Setup, Method, AI map with the rules fallback, Review, Done; Manual Canvas opens on a computer).
 - **Someone else's project** (a Feed clip's `/m/projects/p1`): the web's sample post read-only (Overview · Products · Media) with the marketplace rows.
 
+## Product details (M4)
+
+From "Product Details · 2026 update" on the web's product, pieces, spec, editions and video stores (`lib/manual/`, `lib/spec/`, `lib/market/`, `lib/video/`); the phone's own helpers are `lib/manual/phone-product.ts`.
+
+- **Product page** (`/m/projects/<id>/products/<productId>`): "{project} · product", the name, "AI build · {date} · All n pieces ready" (Add the rest), the lock line once sold in full, the description with Show more, the version select and its notices, the dismissable "Edit the board, code and 3D on a computer" note; tabs Overview · Build · Media pinned under the top bar; a product with no build shows Activity and Media in one panel; loading bones, "We couldn't load this product" with Try again, "This product isn't in {project}".
+- **Overview**: Activity (newest, + Add, History, NFT activity in Earn › Sell), Specs ("Worked out from the parts.", part changes), Build check with See why (the grouped checks, Open chat).
+- **Build**: each piece in its state (Ready, Failed, Building with progress, Waiting, Not built with + Add) opening its screen; Downloads (firmware, parts list, netlist); **Add pieces** (quality, Optimize, total, Not enough credits → Buy credits through the demo wallet sheet).
+- **Piece screens** (`…/build/<piece>`, view only): PCB and Wiring with pinch to zoom, the Pin to pin table, firmware with line numbers, the parts list with its Summary, the 3D Module and Assembly in the phone's 3D viewer (View in 3D, Fullscreen, Reset, Explode, Front · Side · Top, Systems, What ships, a tapped part's sheet with Isolate); failed pieces offer Rebuild and Open chat; "What this covers" and the piece's file at the foot.
+- **Media**: No video yet (Generate AI video), rendering, failed, "Video ready · Take n to review" with Review, the player, Made from version n, What's in this video, Takes (Use this take, In use, delete asks first); images in the full-screen viewer.
+- **Activity** (`…/activity`): history newest first with ⋮ Edit · Delete, the prices at the time (Physical / Virtual price sheets), proof and links; Add new activity is the project's form for this product.
+- **⋯** (owner): Rename product (an auction keeps it off with the reason; a live listing asks to pause first), Open chat, Preview as others see it, Preview as a contributor, See it on the marketplace.
+- **Buyer side** (`?view=market`, "Testnet demo · shopping as Mira" with Shop as someone else): Media · Overview · Build · Contributors, the Marketplace block (Physical / Virtual NFT, This version / With future updates, royalties), no Code and no files before a purchase, the sticky Copies from / Buy a copy bar; **Buy a copy** through the demo wallet sheet with the web's re-checks, Purchase successful, then "You own copy #n" with every download. **A Feed sample's product** is read as a visitor, Buy off with the sample's reason.
+
 ## Home · Feed, Search, Notifications (M5)
 
 From "Feed · 2026 update" and the master page's Global Search and Notification. Clips are the web's Innovations posts (`lib/innovations/clips.ts`); the phone's own choices live in `lib/innovations/{feed-prefs,search}.ts` and `lib/notifications/phone.ts`.
