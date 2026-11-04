@@ -4,21 +4,21 @@
 // out-of-credits composer, the AI tab's ⋯). The web's one purchase, as a
 // sheet: the same three packs at the plan's discount, the smallest that
 // covers the shortfall picked, paid in test USDT or IDZ through the Demo
-// wallet's own request (components/credits/buy-credits.tsx `pay`), and the
-// credits land in the same commit as its debit. A paused build starts by
+// wallet's own request (components/credits/buy-credits.tsx `pay`, in the
+// kit's wallet sheet KIT-WS), and the credits land in the same commit as its debit. A paused build starts by
 // itself once they cover it (the build simulator watches the balance).
 
 import * as React from "react";
 import { Button } from "@/components/ideeza/button";
 import { Badge } from "@/components/ideeza/badge";
 import { TestnetDemoBadge } from "@/components/ideeza/testnet-demo-badge";
-import { useWalletRequest } from "@/components/wallet/wallet-provider";
 import { creditsLine, orderOf } from "@/components/credits/buy-credits";
 import { useDefaultToken } from "@/lib/account/payment";
 import { CREDIT_PACKS, VALIDITY_MONTHS, coinAmount, packCovering, usd, type PackId } from "@/lib/create/credit-pricing";
 import { useCredits } from "@/lib/create/credits";
 import { useCreditDiscount } from "@/lib/create/plan";
 import { cn } from "@/lib/utils";
+import { useWalletSheet } from "../earn-coin/wallet-sheet";
 import { Sheet } from "../kit/sheet";
 import { useToast } from "../kit/toast";
 
@@ -35,7 +35,7 @@ export function BuyCreditsSheet({ open, onClose, need }: { open: boolean; onClos
 function BuyPanel({ onClose, need }: { onClose: () => void; need?: number }) {
   const { hydrated, balance, purchase } = useCredits();
   const discount = useCreditDiscount();
-  const { request } = useWalletRequest();
+  const { request, sheet } = useWalletSheet();
   const toast = useToast();
   const short = need !== undefined && hydrated ? Math.max(0, need - balance) : 0;
   const [pack, setPack] = React.useState<PackId>(() => packCovering(short).id);
@@ -177,6 +177,8 @@ function BuyPanel({ onClose, need }: { onClose: () => void; need?: number }) {
           {note.text}
         </p>
       )}
+      {/* The wallet's own request rises over this sheet (it portals to the body). */}
+      {sheet}
     </Sheet>
   );
 }
