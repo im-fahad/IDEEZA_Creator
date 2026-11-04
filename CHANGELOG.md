@@ -7,10 +7,10 @@ to build and how to check it is done, and links to its Jira ticket.
 | CL | Change | In the prototype | Jira | Production |
 | --- | --- | --- | --- | --- |
 | [CL-005](#cl-005-each-account-has-its-own-work-a-new-account-starts-fresh) | Each account has its own work; a new account starts fresh | 4 Nov 2026 | None: prototype only | Nothing to build |
-| [CL-004](#cl-004-welcome-offer-50-off-the-first-payment-for-12-hours) | Welcome offer: 50% off the first payment, for 12 hours | 4 Nov 2026 | [PR-9013](https://ideeza.atlassian.net/browse/PR-9013) | To do |
-| [CL-003](#cl-003-landing-page-the-way-into-ideeza) | Landing page, the way into IDEEZA | 4 Nov 2026 | [PR-9009](https://ideeza.atlassian.net/browse/PR-9009) | To do |
-| [CL-002](#cl-002-sign-up-and-sign-in) | Sign up and sign in | 4 Nov 2026 | [PR-9011](https://ideeza.atlassian.net/browse/PR-9011) | To do |
-| [CL-001](#cl-001-products-question-the-total-stays-at-the-bottom-of-the-screen) | Products question: the total stays at the bottom of the screen | 3 Nov 2026 | [PR-9012](https://ideeza.atlassian.net/browse/PR-9012) | To do |
+| [CL-004](#cl-004-welcome-offer-50-off-the-first-payment-for-12-hours) | Welcome offer: 50% off the first payment, for 12 hours | 4 Nov 2026 | [PR-9013](https://ideeza.atlassian.net/browse/PR-9013) | Ready for development |
+| [CL-003](#cl-003-landing-page-the-way-into-ideeza) | Landing page, the way into IDEEZA | 4 Nov 2026 | [PR-9009](https://ideeza.atlassian.net/browse/PR-9009) | Ready for development |
+| [CL-002](#cl-002-sign-up-and-sign-in) | Sign up and sign in | 4 Nov 2026 | [PR-9011](https://ideeza.atlassian.net/browse/PR-9011) | Ready for development |
+| [CL-001](#cl-001-products-question-the-total-stays-at-the-bottom-of-the-screen) | Products question: the total stays at the bottom of the screen | 3 Nov 2026 | [PR-9012](https://ideeza.atlassian.net/browse/PR-9012) | Ready for development |
 
 Each entry is one Story in Jira's IDEEZA-PRODUCT project (PR), under one of two
 epics: [PR-9007](https://ideeza.atlassian.net/browse/PR-9007) **Landing Page, Sign
@@ -55,7 +55,7 @@ docs/changelog/ as <date>-<short-name>-before.png / -after.png.
 
 ## CL-004 Welcome offer: 50% off the first payment, for 12 hours
 
-**In the prototype:** 4 November 2026 · **Jira:** [PR-9013](https://ideeza.atlassian.net/browse/PR-9013) · **Production:** To do
+**In the prototype:** 4 November 2026 · **Jira:** [PR-9013](https://ideeza.atlassian.net/browse/PR-9013) · **Production:** Ready for development
 
 **Screen:** Home (a pop-up after the Welcome), the sidebar's Upgrade card,
 Settings › Plan & pricing (`/settings/plan`), Checkout and the invoice.
@@ -115,7 +115,7 @@ Settings › Plan & pricing (`/settings/plan`), Checkout and the invoice.
 
 ## CL-003 Landing page, the way into IDEEZA
 
-**In the prototype:** 4 November 2026 · **Jira:** [PR-9009](https://ideeza.atlassian.net/browse/PR-9009) · **Production:** To do
+**In the prototype:** 4 November 2026 · **Jira:** [PR-9009](https://ideeza.atlassian.net/browse/PR-9009) · **Production:** Ready for development
 
 **Screen:** the landing page (`/landing`, and `/` for anyone signed out), built
 from the Figma *IDEEZA Website V-2* (frame 18532:46268, 1440 wide, dark mode).
@@ -174,7 +174,7 @@ and its buttons lead through Sign up / Sign in ([CL-002](#cl-002-sign-up-and-sig
 
 ## CL-002 Sign up and sign in
 
-**In the prototype:** 4 November 2026 · **Jira:** [PR-9011](https://ideeza.atlassian.net/browse/PR-9011) · **Production:** To do
+**In the prototype:** 4 November 2026 · **Jira:** [PR-9011](https://ideeza.atlassian.net/browse/PR-9011) · **Production:** Ready for development
 
 **Screen:** Sign up (`/sign-up`), Check your email (`/sign-up/check-email`), the
 one question (`/sign-up/welcome`), Sign in (`/sign-in`, with Forgot password),
@@ -270,7 +270,7 @@ Part 1, without the waitlist (owner, 4 Nov 2026).
 
 ## CL-001 Products question: the total stays at the bottom of the screen
 
-**In the prototype:** 3 November 2026 · **Jira:** [PR-9012](https://ideeza.atlassian.net/browse/PR-9012) · **Production:** To do
+**In the prototype:** 3 November 2026 · **Jira:** [PR-9012](https://ideeza.atlassian.net/browse/PR-9012) · **Production:** Ready for development
 
 **Screen:** Concept chat › canvas › **What should we build?** (the question
 after a prompt that needs more than one product), and the next step, **What
