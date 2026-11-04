@@ -1,9 +1,8 @@
 "use client";
 
-import { AiMagicIcon } from "@hugeicons/core-free-icons";
-import { PhasePlaceholder } from "@/components/mobile/phase-placeholder";
+import { AiStart } from "@/components/mobile/ai/start";
 
-// AI tab (Figma Navbar Container › AI): placeholder until phase M2.
+// AI tab (Figma "AI create · 2026 update" 10706:2, Full AI flow 01–04): the idea, typed or spoken.
 export default function Page() {
-  return <PhasePlaceholder title="AI" icon={AiMagicIcon} phase="M2" />;
+  return <AiStart />;
 }
