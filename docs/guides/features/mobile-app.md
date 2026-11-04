@@ -24,6 +24,20 @@ From "Account · 2026 update" (AU-01…33); the accounts are the web's (`lib/acc
 - **Welcome map**, then Look around first (where they were going) or Start with my idea (AI tab). The Face ID offer comes once per phone after the first sign-in.
 - **Reset password**: email (prefilled from Sign in) → code in neutral words → new password (not the current one, checklist, Sign out of other devices) → signed in where they were, with "Password reset".
 
+## Earn Coin tab (M8)
+
+From the owner's master page (Wallet Balance, Stacking, Refer & Earn, Buy IDEEZA Coin) on the web's IDZ balance, ledger, presale and demo wallet (`lib/wallet/`); staking and referrals are demo logic in `lib/wallet/{staking,referral}.ts`, recorded in the same demo wallet, so every balance agrees.
+
+- **Earn Coin** (`/m/earn`): Buy $IDZ Coin, Stake IDZ, Refer and Earn Coin, each opening its tab (Buy $IDZ · Stake · Refer & Earn); ⋯ holds Wallet balance and the Demo wallet (connect, demo account 1–3, network).
+- **Balance card**: the network chip, the IDZ figure with "= $…" at the one IDZ price, Available · Staked · Ready to claim · Pending, the demo IDZ token address to copy; not connected: "No data found" with Connect Wallet.
+- **Buy $IDZ**: each presale purchase as a card (Txn ID and wallet copy, You paid, date) filtered by Chain Type and Status; "Unlocks in" counts down, then Claim through the wallet sheet, then Claimed.
+- **Buy IDEEZA Coin** (`/m/earn/presale`): the round countdown, Until price increase, Total USD raised (demo), the one price; Buy With Crypto → Connect Wallet (Demo wallet first, the four real wallets Soon, "I don't have a wallet" → Need a wallet?); You get ⇅ You pay, the coin sheet (ETH/USDT/USDC), whitelist discount, gas line, Max and the web's checks; Buy $IDZ through the wallet sheet, then Purchase successful counting down to the claim.
+- **Wallet signing** (KIT-WS-01…05): connect and switch-network sheets, review with the request rows, network fee and risk line (a shortfall disables Confirm with the reason), waiting, confirming; "You cancelled in your wallet" / "That didn't go through" say "Nothing changed." with Try again or Close.
+- **Stake**: each stake as a card with Withdraw (in the grace time and after the lock-up; locked between, with the reason), Staked and Reward, lock-up progress, TXN ID and Claim / Claim in … / Claimed, filtered by Month and Year; paused and blocked contracts show their own states (Get support). A staking day lasts a minute in the demo. "Demo: contract states" in ⋯ sets paused / blocked (prototype only).
+- **Stake List** (`/m/earn/stake/contracts`) searches contracts by name or address; a **contract** (`/m/earn/contract/[id]`) lists its options (Est. APR, lock-up, reward token; closed ones off with the reason); the Stake sheet checks balance, wallet limit, gas and the contract's state, shows the reward over the lock-up and stakes through the wallet. **Stake detail** (`/m/earn/staked/[tx]`) lists each reward share (Claim in … / Ready / Claimed) with Claim All.
+- **Refer & Earn**: Generate Link asks for the wallet first; the campaign card shows the link to copy, Referred Users · $IDZ Earned · Points, the lock-up countdown, then admin approval, Claim all points as IDZ (1 point = 1 IDZ) through the wallet, then Join the next campaign; activity filters by campaign and searches by name. "Simulate a referral" plays a demo creator using the link (prototype only). **Campaign History** (`/m/earn/history`) with a Date Range.
+- **Wallet Balance** (`/m/earn/wallet`): Buy IDZ · Stake IDZ · Import IDZ, every IDZ movement (rewards, mints, credits, presale buy and claim, stake, withdraw) filtered by Chain Type and Transfer Type, 10 at a time with Show more; Import IDZ token shows the contract address, symbol and decimals to copy.
+
 ## Shared kit (M0)
 
 `/m/kit` (prototype only) opens every pattern of the Figma "Shared kit · 2026 update" page:
