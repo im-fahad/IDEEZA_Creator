@@ -153,12 +153,13 @@ export function signedOutHome(accounts: Account[]): "/sign-in" | "/sign-up" {
 /** A path to return to after signing in: this app's own, never Sign in or Sign up again. */
 export function safeNext(raw: string | null | undefined): string {
   if (!raw || !raw.startsWith("/") || raw.startsWith("//") || raw.startsWith("/\\")) return "";
-  return isAuthPath(raw.split(/[?#]/)[0]) ? "" : raw;
+  return isOpenPath(raw.split(/[?#]/)[0]) ? "" : raw;
 }
 
-/** The pages anyone can open. Every other page needs you signed in. */
-export function isAuthPath(pathname: string): boolean {
-  return /^\/(sign-up|sign-in)(\/|$)/.test(pathname);
+/** The pages anyone can open: Sign up, Sign in and the public landing page
+ *  (/landing, feat/landing-page). Every other page needs you signed in. */
+export function isOpenPath(pathname: string): boolean {
+  return /^\/(sign-up|sign-in|landing)(\/|$)/.test(pathname);
 }
 
 /** The one question is asked once, right after verifying, when the link didn't say. */
@@ -468,8 +469,9 @@ export function useAuth(): {
 }
 
 /** Runs in <head> before the first paint: a signed-out visitor to any page but
- *  Sign up / Sign in goes there at once, so no page flashes before the gate.
+ *  the open ones (`isOpenPath`) goes to Sign in or Sign up at once, so no page
+ *  flashes before the gate.
  *  The same rule as `currentAccount` and `signedOutHome`. Sign in carries the
  *  page they opened (`next`), to go on to it; Sign up carries the link's query
  *  (its utm_source). */
-export const AUTH_PREPAINT = `(function(){try{var p=location.pathname;if(/^\\/(sign-up|sign-in)(\\/|$)/.test(p))return;var a=JSON.parse(localStorage.getItem("${ACCOUNTS_KEY}")||"[]"),s=JSON.parse(localStorage.getItem("${SESSION_KEY}")||"null");if(!Array.isArray(a))a=[];var e=s&&typeof s.email==="string"?s.email.trim().toLowerCase():"";for(var i=0;i<a.length;i++)if(a[i]&&e&&a[i].email===e&&a[i].verifiedAt)return;document.documentElement.style.visibility="hidden";location.replace(a.length?"/sign-in"+(p==="/"?"":"?next="+encodeURIComponent(p+location.search)):"/sign-up"+location.search);}catch(x){}})();`;
+export const AUTH_PREPAINT = `(function(){try{var p=location.pathname;if(/^\\/(sign-up|sign-in|landing)(\\/|$)/.test(p))return;var a=JSON.parse(localStorage.getItem("${ACCOUNTS_KEY}")||"[]"),s=JSON.parse(localStorage.getItem("${SESSION_KEY}")||"null");if(!Array.isArray(a))a=[];var e=s&&typeof s.email==="string"?s.email.trim().toLowerCase():"";for(var i=0;i<a.length;i++)if(a[i]&&e&&a[i].email===e&&a[i].verifiedAt)return;document.documentElement.style.visibility="hidden";location.replace(a.length?"/sign-in"+(p==="/"?"":"?next="+encodeURIComponent(p+location.search)):"/sign-up"+location.search);}catch(x){}})();`;
