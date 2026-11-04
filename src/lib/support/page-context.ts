@@ -46,6 +46,27 @@ export type PageRef = {
   productId?: string;
 };
 
+/** The mobile prototype's screens (/m), by their first segment. */
+const MOBILE_PAGES: Record<string, string> = {
+  "": "Home",
+  earn: "Earn Coin",
+  ai: "AI",
+  messages: "Message",
+  profile: "Profile",
+  kit: "Shared kit",
+  welcome: "Welcome",
+  "sign-in": "Sign in",
+  "sign-up": "Create account",
+  verify: "Verify email",
+  reset: "Reset password",
+  "signing-in": "Signing you in",
+  "add-email": "Add your email",
+  link: "Link accounts",
+  handle: "Name and handle",
+  setup: "Your profile",
+  "welcome-map": "Welcome map",
+};
+
 export function pageRefFor(pathname: string, search = ""): PageRef {
   const parts = pathname.split("?")[0].split("#")[0].split("/").filter(Boolean).map(safeDecode);
   const q = new URLSearchParams(search);
@@ -54,6 +75,11 @@ export function pageRefFor(pathname: string, search = ""): PageRef {
   if (parts.length === 0) return { page: "Home", route: "/" };
 
   switch (a) {
+    case "m": {
+      // A screen this table doesn't name yet still reads as itself ("earn-history" → "Earn history").
+      const name = MOBILE_PAGES[b ?? ""] ?? (b ? b.charAt(0).toUpperCase() + b.slice(1).replace(/-/g, " ") : "");
+      return { page: name ? `Mobile › ${name}` : "Mobile", route: b ? `/m/${b}` : "/m" };
+    }
     case "history":
       return { page: q.get("tab") === "builds" ? "History · Builds" : "History", route: "/history" };
     case "chat":

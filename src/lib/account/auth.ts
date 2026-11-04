@@ -179,6 +179,12 @@ export function isOpenPath(pathname: string): boolean {
   return /^\/(sign-up|sign-in|landing)(\/|$)/.test(pathname);
 }
 
+/** The mobile prototype (/m) runs its own way in: Welcome, guest Feed and its
+ *  own Sign in, so the web's gate leaves its pages alone. */
+export function isMobilePath(pathname: string): boolean {
+  return /^\/m(\/|$)/.test(pathname);
+}
+
 /** The one question is asked once, right after verifying, when the link didn't say. */
 export function needsSourceQuestion(account: Account): boolean {
   return !account.source && !account.sourceSkipped;
@@ -391,6 +397,93 @@ export async function createAccount(input: SignUpInput, utmSource: string, now: 
   return writeStoredKey(VERIFY_KEY, { v: 1, email, next: safeNext(next) }).ok ? "ok" : "refused";
 }
 
+/** The phone's Create account (mobile Figma AU-10): only the email and a
+ *  password checked by the phone's own rules (`problem`); the name comes after
+ *  the email is verified, and the consent line carries the minimum age. Like
+ *  `createAccount`, the account waits for its email and nobody is signed in. */
+export async function createPhoneAccount(
+  email: string,
+  password: string,
+  problem: (password: string) => string,
+  now: number,
+  next = "",
+): Promise<CreateResult> {
+  if (!isEmail(email) || problem(password)) return "invalid";
+  const e = normalizeEmail(email);
+  if (accountOf(readAccounts(), e)) return "exists";
+  const salt = newSalt();
+  const saved = saveAccount({
+    v: 1,
+    firstName: "",
+    lastName: "",
+    email: e,
+    passwordHash: await hashPassword(password, salt),
+    salt,
+    birthDate: "",
+    consentAt: now,
+    createdAt: now,
+    verifiedAt: null,
+    source: "",
+    sourceVia: "",
+    sourceOther: "",
+    sourceSkipped: false,
+    nudgeClosed: false,
+    country: "",
+  });
+  if (!saved.ok) return "refused";
+  return writeStoredKey(VERIFY_KEY, { v: 1, email: e, next: safeNext(next) }).ok ? "ok" : "refused";
+}
+
+/** Apple, Google or Facebook vouched for this email (the mobile prototype's
+ *  demo provider sheet stands in for theirs): its account is signed in, and
+ *  an account that has none is made, verified — the provider proved the email —
+ *  with a password nobody knows, until one is added in Sign-in & security. */
+export async function providerSignIn(email: string, name: { first: string; last: string }, now: number): Promise<"in" | "new" | "refused"> {
+  const e = normalizeEmail(email);
+  if (!isEmail(e)) return "refused";
+  const found = accountOf(readAccounts(), e);
+  if (found) {
+    if (found.verifiedAt === null && !saveAccount({ ...found, verifiedAt: now }).ok) return "refused";
+    await comeIn(e, found.verifiedAt === null);
+    return startSession(e, now).ok ? "in" : "refused";
+  }
+  const salt = newSalt();
+  const saved = saveAccount({
+    v: 1,
+    firstName: str(name.first, NAME_PART_MAX),
+    lastName: str(name.last, NAME_PART_MAX),
+    email: e,
+    passwordHash: await hashPassword(newSalt(), salt),
+    salt,
+    birthDate: "",
+    consentAt: now,
+    createdAt: now,
+    verifiedAt: now,
+    source: "",
+    sourceVia: "",
+    sourceOther: "",
+    sourceSkipped: false,
+    nudgeClosed: false,
+    country: deviceCountry(),
+  });
+  if (!saved.ok) return "refused";
+  await comeIn(e, true);
+  return startSession(e, now).ok ? "new" : "refused";
+}
+
+/** Whether `password` is the account's password now (Reset: "That's your current password"). */
+export async function isCurrentPassword(email: string, password: string): Promise<boolean> {
+  const account = accountOf(readAccounts(), email);
+  return !!account && (await hashPassword(password, account.salt)) === account.passwordHash;
+}
+
+/** The signed-in account's name, as the phone's Name and handle step sets it. */
+export function saveAccountName(first: string, last: string): WriteResult {
+  const account = readCurrent();
+  if (!account) return { ok: false };
+  return saveAccount({ ...account, firstName: str(first, NAME_PART_MAX), lastName: str(last, NAME_PART_MAX) });
+}
+
 /** The verify link: marks the waiting account verified, signs it in (a new
  *  account with nothing yet), and fills your profile's name and country where
  *  they are still empty. Reload the page after it. */
@@ -446,10 +539,16 @@ export async function signOut(): Promise<WriteResult> {
 }
 
 /** The reset link: a new password for that email's account, and you're signed
- *  in. Opening the link proves the email, so it counts as verified. */
-export async function resetPassword(email: string, password: string, now: number): Promise<WriteResult> {
+ *  in. Opening the link proves the email, so it counts as verified. `problem`
+ *  is the rules the password is held to (the phone has its own four). */
+export async function resetPassword(
+  email: string,
+  password: string,
+  now: number,
+  problem: (password: string) => string = passwordProblem,
+): Promise<WriteResult> {
   const account = accountOf(readAccounts(), email);
-  if (!account || passwordProblem(password)) return { ok: false };
+  if (!account || problem(password)) return { ok: false };
   const salt = newSalt();
   const saved = saveAccount({ ...account, salt, passwordHash: await hashPassword(password, salt), verifiedAt: account.verifiedAt ?? now });
   if (!saved.ok) return saved;
@@ -514,6 +613,7 @@ export function useAuth(): {
 /** Runs in <head> before the first paint, so no page flashes before the
  *  gate: the same rule as `currentAccount` and `signedOutPath`. A signed-out
  *  visitor to Home's own address (nothing but utm_ tags) sees the landing page;
- *  to any other page but the open ones (`isOpenPath`), Sign in, or Sign up when
- *  this browser has no account, carrying the page they opened (`next`). */
-export const AUTH_PREPAINT = `(function(){try{var p=location.pathname;if(/^\\/(sign-up|sign-in|landing)(\\/|$)/.test(p))return;var a=JSON.parse(localStorage.getItem("${ACCOUNTS_KEY}")||"[]"),s=JSON.parse(localStorage.getItem("${SESSION_KEY}")||"null");if(!Array.isArray(a))a=[];var e=s&&typeof s.email==="string"?s.email.trim().toLowerCase():"";for(var i=0;i<a.length;i++)if(a[i]&&e&&a[i].email===e&&a[i].verifiedAt)return;document.documentElement.style.visibility="hidden";var q=location.search,t=!q||q.slice(1).split("&").every(function(k){return k.indexOf("utm_")===0});location.replace(p==="/"&&t?"/landing"+q:(a.length?"/sign-in":"/sign-up")+"?next="+encodeURIComponent(p+q));}catch(x){}})();`;
+ *  to any other page but the open ones (`isOpenPath`) and the mobile
+ *  prototype's (`isMobilePath`), Sign in, or Sign up when this browser has no
+ *  account, carrying the page they opened (`next`). */
+export const AUTH_PREPAINT = `(function(){try{var p=location.pathname;if(/^\\/(sign-up|sign-in|landing|m)(\\/|$)/.test(p))return;var a=JSON.parse(localStorage.getItem("${ACCOUNTS_KEY}")||"[]"),s=JSON.parse(localStorage.getItem("${SESSION_KEY}")||"null");if(!Array.isArray(a))a=[];var e=s&&typeof s.email==="string"?s.email.trim().toLowerCase():"";for(var i=0;i<a.length;i++)if(a[i]&&e&&a[i].email===e&&a[i].verifiedAt)return;document.documentElement.style.visibility="hidden";var q=location.search,t=!q||q.slice(1).split("&").every(function(k){return k.indexOf("utm_")===0});location.replace(p==="/"&&t?"/landing"+q:(a.length?"/sign-in":"/sign-up")+"?next="+encodeURIComponent(p+q));}catch(x){}})();`;

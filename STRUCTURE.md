@@ -64,6 +64,9 @@ ideeza-creator-panel/
    │  │                      useSignOut, Home's SourceNudge
    │  ├─ dashboard/          sidebar (+ sidebar-account: account / wallet popovers), workspace-prompt (hero), hero-glow (its wash, shared with sign-in), deliverable-icon, command-palette (⌘K)
    │  ├─ landing/            the public landing page /landing: nav, section-header, one file per section (art: public/landing/)
+   │  ├─ mobile/             the /m mobile prototype: phone frame, status bar, top bar, tab bar,
+   │  │                      screen; kit/ = the Shared kit (sheets, menus, confirms, report, toasts, states);
+   │  │                      account/ = the way in (gate, ways in, code step, guest gate)
    │  ├─ credits/            Settings › Plan & pricing (User Panel V2 layouts): pricing-frame (sheet,
    │  │                      breadcrumb, pill tabs), plan-pricing-page, plans-panel, credits-panel,
    │  │                      billing-history, payment-method-panel, plan-banner (+ plan details),
