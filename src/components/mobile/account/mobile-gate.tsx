@@ -8,21 +8,37 @@
 // · the tabs need an account — except Home, which a guest who chose Explore
 //   first may browse; anyone else goes to Welcome, carrying where they were
 //   going. The Shared kit is open to all.
+// Signed in, a sign-in that still owes something goes there first: the 2-step
+// code (AU-07), then Restore for an account set to be deleted (AU-65).
 // Signed in, the Face ID offer comes once per phone, on the first tab screen.
 
 import * as React from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { useAuth } from "@/lib/account/auth";
+import { SESSION_KEY, useAuth } from "@/lib/account/auth";
 import { ENTRY_PATH, SETUP_PATH, mobileNext, readPhone, updatePhone, updatePhoneAccount, usePhone } from "@/lib/account/phone";
+import { owedOf, readDeviceId, useSecurity } from "@/lib/account/security";
+import { parseStored, useStoredKey } from "@/lib/key-store";
 import { Button } from "@/components/ideeza/button";
 import { HomeIndicator } from "../home-indicator";
 import { Sheet } from "../kit/sheet";
 import { StatusBar } from "../status-bar";
 import { SplashBody } from "./parts";
 
+/** The screens a sign-in may owe before the app opens. */
+const OWED_PATH = /^\/m\/(two-step|restore)(\/|$)/;
+
 /** Where the person goes instead of `pathname`, or null when they may stay. */
-function redirectFor(pathname: string, search: string, signedIn: boolean, explored: boolean): string | null {
+function redirectFor(pathname: string, search: string, signedIn: boolean, explored: boolean, owes: "two-step" | "restore" | null): string | null {
   if (/^\/m\/kit(\/|$)/.test(pathname)) return null;
+  const asked = new URLSearchParams(search).get("next");
+  if (signedIn && owes) {
+    if (pathname === `/m/${owes}`) return null;
+    // Never back to Delete account: its steps belong to the session that asked for it.
+    const here = /^\/m\/settings\/delete(\/|$)/.test(pathname) ? "/m" : pathname + search;
+    const after = ENTRY_PATH.test(pathname) || OWED_PATH.test(pathname) ? mobileNext(asked) : here;
+    return `/m/${owes}${after === "/m" ? "" : `?next=${encodeURIComponent(after)}`}`;
+  }
+  if (OWED_PATH.test(pathname)) return signedIn ? mobileNext(asked) : "/m/welcome";
   if (ENTRY_PATH.test(pathname)) {
     // Reset is also reached from Settings; the Shared kit's state demos open signed in too.
     if (!signedIn || /^\/m\/(reset|verify)(\/|$)/.test(pathname) || /[?&](demo|error)=/.test(search)) return null;
@@ -40,9 +56,14 @@ export function MobileGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { hydrated, signedIn, account } = useAuth();
   const { hydrated: phoneRead, phone } = usePhone();
-  // Both are read from this browser, so `ready` is never true on the server.
-  const ready = hydrated && phoneRead;
-  const target = ready ? redirectFor(pathname, window.location.search, signedIn, phone.explored) : null;
+  const { hydrated: securityRead, security } = useSecurity(account?.email);
+  const session = useStoredKey(SESSION_KEY);
+  const sessionAt = (parseStored(session.raw).value as { at?: number } | null)?.at ?? 0;
+  const [openedAt] = React.useState(() => Date.now());
+  // All are read from this browser, so `ready` is never true on the server.
+  const ready = hydrated && phoneRead && securityRead && session.hydrated;
+  const owes = ready && signedIn ? owedOf(security, sessionAt, readDeviceId(), Math.max(openedAt, sessionAt)) : null;
+  const target = ready ? redirectFor(pathname, window.location.search, signedIn, phone.explored, owes) : null;
 
   React.useEffect(() => {
     if (target) router.replace(target);
@@ -50,7 +71,7 @@ export function MobileGate({ children }: { children: React.ReactNode }) {
 
   if (!ready || target) return <Splash />;
 
-  const tabScreen = !ENTRY_PATH.test(pathname) && !SETUP_PATH.test(pathname) && !/^\/m\/kit/.test(pathname);
+  const tabScreen = !ENTRY_PATH.test(pathname) && !SETUP_PATH.test(pathname) && !OWED_PATH.test(pathname) && !/^\/m\/kit/.test(pathname);
   return (
     <>
       {children}

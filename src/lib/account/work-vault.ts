@@ -46,6 +46,10 @@ export const BROWSER_KEYS: ReadonlySet<string> = new Set([
   "ideeza:m:sign-in-tries",
   "ideeza:m:provider",
   "ideeza:m:toast",
+  // Sign-in & security (security.ts): each account's 2-step, devices and
+  // scheduled deletion by email, and this browser's device id.
+  "ideeza:m:security",
+  "ideeza:m:device",
 ]);
 
 /** Where `email`'s work waits while it is signed out. */
