@@ -13,6 +13,7 @@ import Link from "next/link";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowDown01Icon, Menu01Icon, Cancel01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
 import { buttonVariants } from "@/components/ideeza/button";
+import { LANDING_SECONDARY } from "@/components/landing/buttons";
 import { cn } from "@/lib/utils";
 
 type NavLink = { label: string; href?: string };
@@ -141,11 +142,10 @@ function LanguageMenu() {
   );
 }
 
-// Start Project's stroke is a raw Figma colour (#dfd4fe, no variable in the
-// file), the same one the store badges, Explore Projects and the newsletter
-// pill use.
-const START =
-  "rounded-full bg-transparent border-[#dfd4fe] hover:bg-[var(--color-glass-border-subtle)]";
+// Start Project wears the page's one secondary look (landing/buttons.ts), like
+// every Explore button; Figma draws it with a plain #dfd4fe line (owner
+// 2026-11-04: one secondary style on the page).
+const START = LANDING_SECONDARY;
 
 export function LandingNav() {
   const [mobileOpen, setMobileOpen] = React.useState(false);
