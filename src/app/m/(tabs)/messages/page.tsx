@@ -1,9 +1,8 @@
 "use client";
 
-import { Message01Icon } from "@hugeicons/core-free-icons";
-import { PhasePlaceholder } from "@/components/mobile/phase-placeholder";
+import { Inbox } from "@/components/mobile/messages/inbox";
 
-// Message tab (Figma Navbar Container › Message): placeholder until phase M6.
+// Message tab (Figma Navbar Container › Message; People · 2026 update MS-01…08c): Inbox · Requests.
 export default function Page() {
-  return <PhasePlaceholder title="Message" icon={Message01Icon} phase="M6" />;
+  return <Inbox />;
 }
