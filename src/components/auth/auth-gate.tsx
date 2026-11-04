@@ -30,12 +30,11 @@ export function AuthGate() {
   return null;
 }
 
-/** Sign out: the account and every piece of work stay in this browser; Sign in says so. */
+/** Sign out: the account's work is parked in this browser (Sign in says so), and the page
+ *  reloads so nothing of it stays in memory. */
 export function useSignOut(): () => void {
-  const router = useRouter();
   return React.useCallback(() => {
     signingOut = true;
-    signOut();
-    router.replace("/sign-in?signed-out=1");
-  }, [router]);
+    void signOut().then(() => window.location.replace("/sign-in?signed-out=1"));
+  }, []);
 }

@@ -83,7 +83,8 @@ export function SignInForm() {
     if (!password) return document.getElementById(ids.password.id)?.focus();
     setBusy(true);
     const result = await signIn(email, password, Date.now(), arrived.next);
-    if (result === "ok") return router.replace(arrived.next || "/");
+    // A reload, so every store starts from this account's own work.
+    if (result === "ok") return window.location.replace(arrived.next || "/");
     setBusy(false);
     if (result === "unverified") return router.push("/sign-up/check-email");
     setError(result === "refused" ? REFUSED : "That email and password don't match.");
@@ -105,7 +106,7 @@ export function SignInForm() {
     if (passwordProblem(password)) return document.getElementById(ids.password.id)?.focus();
     if (confirm !== password) return document.getElementById(ids.confirm.id)?.focus();
     setBusy(true);
-    if ((await resetPassword(email, password, Date.now())).ok) return router.replace(arrived.next || "/");
+    if ((await resetPassword(email, password, Date.now())).ok) return window.location.replace(arrived.next || "/");
     setBusy(false);
     setError(REFUSED);
   };

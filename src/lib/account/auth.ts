@@ -3,8 +3,9 @@
 // made here in `ideeza:accounts`, who is signed in in `ideeza:session`, the
 // account waiting for its email to be verified in `ideeza:verify` — all
 // through the shared key store so every reader agrees without a reload.
-// Passwords are kept only as salted PBKDF2 hashes. Signing out keeps the
-// accounts and all the work in the browser; signing in again finds it all.
+// Passwords are kept only as salted PBKDF2 hashes. Each account has its own
+// work (work-vault.ts): signing out parks it under the account, signing in
+// brings it back, and a new account starts from nothing.
 //
 // Sign up → the "email" (a Demo card in the app) → verifying signs you in →
 // one question (where you heard of IDEEZA) unless the link already said →
@@ -15,6 +16,7 @@ import * as React from "react";
 import { parseStored, readStoredKey, storedUnreadable, useStoredKey, writeStoredKey, type WriteResult } from "../key-store";
 import { readProfileFields, saveProfile } from "../people/profile-store";
 import { countryCodeOf, countryNameOf } from "./countries";
+import { enterWork, parkWork } from "./work-vault";
 import { ZONE_COUNTRIES } from "./zone-countries";
 
 export const ACCOUNTS_KEY = "ideeza:accounts";
@@ -342,6 +344,19 @@ function readCurrent(): Account | null {
   return currentAccount(readAccounts(), readSession());
 }
 
+/** `email` comes in: whoever is signed in parks their work, and `email`'s comes back. Loose work
+ *  from before accounts kept their own stays with it, unless it is new while others exist: then
+ *  it was the newest other account's. */
+async function comeIn(email: string, isNew: boolean): Promise<void> {
+  const current = readSession()?.email ?? "";
+  if (current === email) return;
+  if (current) await parkWork(current);
+  const others = readAccounts()
+    .filter((a) => a.email !== email && a.verifiedAt !== null)
+    .sort((a, b) => b.createdAt - a.createdAt);
+  await enterWork(email, isNew && others.length ? others[0].email : email);
+}
+
 export type CreateResult = "ok" | "exists" | "invalid" | "refused";
 
 /** Saves a new, unverified account and marks it as the one waiting for its
@@ -376,14 +391,16 @@ export async function createAccount(input: SignUpInput, utmSource: string, now: 
   return writeStoredKey(VERIFY_KEY, { v: 1, email, next: safeNext(next) }).ok ? "ok" : "refused";
 }
 
-/** The verify link: marks the waiting account verified, signs it in, and fills
- *  your profile's name and country where they are still empty. */
-export function verifyEmail(now: number): WriteResult {
+/** The verify link: marks the waiting account verified, signs it in (a new
+ *  account with nothing yet), and fills your profile's name and country where
+ *  they are still empty. Reload the page after it. */
+export async function verifyEmail(now: number): Promise<WriteResult> {
   const account = accountOf(readAccounts(), readVerify());
   if (!account) return { ok: false };
   const country = account.country || deviceCountry();
   const saved = saveAccount({ ...account, verifiedAt: account.verifiedAt ?? now, country });
   if (!saved.ok) return saved;
+  await comeIn(account.email, account.verifiedAt === null);
   const profile = readProfileFields();
   const patch: { name?: string; location?: string } = {};
   if (!profile.name) patch.name = `${account.firstName} ${account.lastName}`.trim();
@@ -411,15 +428,20 @@ export type SignInResult = "ok" | "wrong" | "unverified" | "refused";
 /** One answer for an unknown email and a wrong password alike. An account
  *  whose email isn't verified yet becomes the one waiting, and goes back to
  *  Check your email. */
+/** Signs in with the account's own work. Reload the page after "ok". */
 export async function signIn(email: string, password: string, now: number, next = ""): Promise<SignInResult> {
   const account = accountOf(readAccounts(), email);
   if (!account) return "wrong";
   if ((await hashPassword(password, account.salt)) !== account.passwordHash) return "wrong";
   if (account.verifiedAt === null) return writeStoredKey(VERIFY_KEY, { v: 1, email: account.email, next: safeNext(next) }).ok ? "unverified" : "refused";
+  await comeIn(account.email, false);
   return startSession(account.email, now).ok ? "ok" : "refused";
 }
 
-export function signOut(): WriteResult {
+/** Parks the account's work and signs it out. Reload the page after it. */
+export async function signOut(): Promise<WriteResult> {
+  const email = readSession()?.email;
+  if (email) await parkWork(email);
   return writeStoredKey(SESSION_KEY, null);
 }
 
@@ -430,7 +452,9 @@ export async function resetPassword(email: string, password: string, now: number
   if (!account || passwordProblem(password)) return { ok: false };
   const salt = newSalt();
   const saved = saveAccount({ ...account, salt, passwordHash: await hashPassword(password, salt), verifiedAt: account.verifiedAt ?? now });
-  return saved.ok ? startSession(account.email, now) : saved;
+  if (!saved.ok) return saved;
+  await comeIn(account.email, account.verifiedAt === null);
+  return startSession(account.email, now);
 }
 
 export function answerSource(source: Source, other: string): WriteResult {
