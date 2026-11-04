@@ -2,11 +2,13 @@
 // 18532:53856 (1440 × 1159). At xl and up every layer sits where Figma puts
 // it: the decoration on a 1440 canvas centred on the page, the text on the
 // 1260 content column (Figma x − 90). Below xl the text stacks with the phone
-// between the stat and the store badges, and the glows are left out.
+// between the heading and the store badges, and the glows are left out.
 //
 // No IDEEZA app is in the App Store or Google Play yet, so the two store
 // badges are drawn as in Figma but marked "Coming soon" instead of linking.
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import { SmartPhone01Icon } from "@hugeicons/core-free-icons";
 import { LandingEyebrow } from "@/components/landing/section-header";
 import { cn } from "@/lib/utils";
 
@@ -200,31 +202,9 @@ export function MobileApp() {
           </h2>
         </div>
 
-        {/* Figma 18532:53918 — the 1.6M+ stat (x 1132, 13 px past the column;
-            held inside the window between 1280 and 1306 wide). */}
-        <div className="flex w-full flex-col items-start gap-10 xl:absolute xl:right-[max(-13px,calc((1260px_-_100vw)/2))] xl:top-[218px] xl:w-[231px]">
-          {/* Figma 18532:53919 */}
-          <div className="flex items-center gap-6">
-            {/* Figma 18532:53920 — three 42 px avatars, 27 px apart. */}
-            <div aria-hidden className="relative h-[42px] w-[96px] shrink-0">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`${ASSET}/avatar-1.png`} alt="" width={42} height={42} className="absolute left-0 top-0 size-[42px]" />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`${ASSET}/avatar-2.png`} alt="" width={42} height={42} className="absolute left-[27px] top-0 size-[42px]" />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`${ASSET}/avatar-3.png`} alt="" width={42} height={42} className="absolute left-[54px] top-0 size-[42px]" />
-            </div>
-            {/* Figma 18532:53924 */}
-            <p className="whitespace-nowrap font-display text-6xl font-medium leading-6xl tracking-snug text-[color:var(--color-icon-default)]">
-              1.6M+
-            </p>
-          </div>
-          {/* Figma 18532:53925 — Body/SM Medium */}
-          <p className="w-full text-md font-medium leading-md tracking-normal text-[color:var(--color-text-secondary)]">
-            Trusted to use by millions users <br className="hidden xl:inline" />
-            over 140 countries
-          </p>
-        </div>
+        {/* Figma 18532:53918 — the "1.6M+ / Trusted to use by millions users over
+            140 countries" stat is left out (owner 2026-11-04): the app isn't
+            published, so there is no number to show. */}
 
         {/* The phone in the flow below xl: the same turned image, cropped to
             the phone (it fills about a quarter of the image's width). */}
@@ -236,13 +216,12 @@ export function MobileApp() {
         <div className="flex w-full flex-col items-center gap-[56px] xl:absolute xl:left-[322px] xl:top-[787px] xl:w-[616px]">
           {/* Figma 18532:53928 (gap 28) */}
           <div className="flex w-full flex-col items-center gap-[28px]">
-            {/* Figma 18532:53929 "Overlay+Border" */}
+            {/* Figma 18532:53929 "Overlay+Border" — Figma's "4.7 rating (based on 125
+                reviews)" and its star; the app isn't out yet, so the chip says so. */}
             <div className="flex h-[38px] items-center justify-center gap-5 rounded-[40px] border-solid border border-[var(--color-border-default)] bg-[var(--color-bg-page)] px-7 py-4">
-              {/* Figma 18532:53930 */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`${ASSET}/star.svg`} alt="" width={16} height={16} className="size-[16px] shrink-0" />
+              <HugeiconsIcon icon={SmartPhone01Icon} size={16} color="var(--color-icon-secondary)" strokeWidth={1.5} className="shrink-0" />
               <p className="whitespace-nowrap text-md font-medium leading-md tracking-normal text-[color:var(--color-text-primary)]">
-                4.7 rating (based on 125 reviews)
+                Coming soon to iOS and Android
               </p>
             </div>
             {/* Figma 18532:53933 — Body/XL (20 / 30; the DS has no 30 px line height). */}

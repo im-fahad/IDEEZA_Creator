@@ -1,22 +1,25 @@
-"use client";
-
 // Creator Community — Figma IDEEZA Website V-2, 18714:24927 (1440 × 1376).
 // The centred heading "The Hardware Creator Feed" over a bento of six feed
-// cards (Frame 2147224730, 18714:24938, 1260 × 776): the creator count with
-// its avatar orbit, a creator profile, two "Explore Community" photo cards, the
-// Creators Story carousel and a creator's post.
+// cards (Frame 2147224730, 18714:24938, 1260 × 776): "Worldwide creators" with
+// its avatar orbit, a creator profile, two "Explore Community" photo cards,
+// Creators Story and a post.
 //
 // The cards are UI in code with their photos as images. Their glows are
 // Figma's own SVG exports placed with Figma's geometry (the file's PNG exports
 // of these layers come back flattened onto the section fill, so they could
-// not be stacked or blended). Every card opens the creator feed
-// (/innovations); the Creators Story carousel switches stories, its "+" starts
-// a share from your projects (sharing to Innovations starts on a project).
+// not be stacked or blended).
+//
+// Owner 2026-11-04: the section presents the community to a visitor, so it is
+// a still picture. Only the two "Explore Community" cards are links (to
+// /innovations); the Figma's story carousel, its dots and "+" are left out.
+// It claims nothing the platform can't back yet: no invented names, handles,
+// follower, like or comment counts, no "verified" marks — the cards say what
+// gets built (a category, a project kind) instead. When creators share for
+// real, these cards read featured projects from the feed.
 //
 // At 1280 px and wider the grid is the Figma frame, each card at its Figma
 // x/y; narrower, the cards flow two then one to a row at their Figma heights.
 
-import * as React from "react";
 import Link from "next/link";
 import { LandingSectionHeader } from "@/components/landing/section-header";
 import { cn } from "@/lib/utils";
@@ -121,17 +124,19 @@ const INNER_GLOW =
   "pointer-events-none absolute inset-0 rounded-[inherit] shadow-[inset_0px_-4px_7px_-2px_rgba(178,133,246,0.4),inset_3px_4px_19px_-2px_rgba(148,126,248,0.32)]";
 const TEXT_PRIMARY = "text-[color:var(--color-text-primary)]";
 
-// ── Creators Story carousel (Figma 18714:24939) ─────────────────────────────
-
-type Story = { id: string; image: string; width: number; height: number; author: string; name: string };
-
-const STORIES: Story[] = [
-  { id: "jack", image: "story-abstract.webp", width: 300, height: 400, author: "Author•Ai Engineer", name: "Jack William" },
-  { id: "anderson-vr", image: "story-vr.webp", width: 736, height: 552, author: "Author•Aerorobotic", name: "Anderson William" },
-  { id: "anderson-jet", image: "story-jet.webp", width: 448, height: 448, author: "Author•Aerorobotic", name: "Anderson William" },
-];
+// ── Creators Story (Figma 18714:24939) ──────────────────────────────────────
+// Three stories as the Figma draws them, the middle one in front. Each names
+// the kind of thing built, where the Figma has an author line and a name.
 
 type SlotName = "prev" | "center" | "next";
+type Story = { slot: SlotName; image: string; width: number; height: number; category: string };
+
+const STORIES: Story[] = [
+  { slot: "prev", image: "story-abstract.webp", width: 300, height: 400, category: "AI Engineering" },
+  { slot: "center", image: "story-vr.webp", width: 736, height: 552, category: "VR & Wearables" },
+  { slot: "next", image: "story-jet.webp", width: 448, height: 448, category: "Aerorobotics" },
+];
+
 type Slot = {
   left: number;
   top: number;
@@ -142,8 +147,7 @@ type Slot = {
   z: number;
   overlay: string;
   text: string;
-  author: string;
-  name: string;
+  label: string;
 };
 
 // The three places a story card takes, with their own scale, wash and type.
@@ -160,9 +164,8 @@ const SLOTS: Record<SlotName, Slot> = {
     border: 0.878,
     z: 1,
     overlay: "bg-[image:linear-gradient(-90deg,rgba(204,172,239,0)_15.476%,rgba(202,157,252,0.7)_93.61%)]",
-    text: "left-[7.12px] top-[141.12px] w-[92px]",
-    author: cn("font-regular text-xs leading-xs tracking-normal", TEXT_PRIMARY),
-    name: "font-semibold text-sm leading-xs tracking-wide text-[color:var(--color-bg-ai-subtle)]",
+    text: "left-[7.12px] top-[161.12px] w-[92px]",
+    label: "font-semibold text-sm leading-xs tracking-wide text-[color:var(--color-bg-ai-subtle)]",
   },
   // Figma 18714:24945 — the story in front, 188 × 257.
   center: {
@@ -175,9 +178,8 @@ const SLOTS: Record<SlotName, Slot> = {
     z: 2,
     overlay:
       "bg-[image:linear-gradient(180deg,rgba(204,172,239,0)_29.836%,rgb(195,144,251)_98.873%),linear-gradient(180deg,rgba(204,172,239,0)_50.766%,rgb(193,147,243)_93.327%)]",
-    text: "left-[10.8px] right-[10.8px] top-[203.8px]",
-    author: "font-semibold text-sm leading-xs tracking-wide text-[color:var(--color-bg-ai-subtle)]",
-    name: "font-semibold text-lg leading-lg tracking-wide text-[color:var(--color-bg-overlay)]",
+    text: "left-[10.8px] right-[10.8px] top-[223.8px]",
+    label: "font-semibold text-lg leading-lg tracking-wide text-[color:var(--color-bg-overlay)]",
   },
   // Figma 18714:24949 — the story to the right, 156 × 224.
   next: {
@@ -189,40 +191,20 @@ const SLOTS: Record<SlotName, Slot> = {
     border: 1.045,
     z: 1,
     overlay: "bg-[image:linear-gradient(-90deg,rgba(28,2,56,0)_14.84%,rgba(28,2,56,0.63)_136.5%)]",
-    text: "left-[10.96px] top-[170.96px] w-[132px]",
-    author: "font-semibold text-xs leading-xs tracking-wider text-[color:var(--color-bg-ai-subtle)]",
-    name: "font-semibold text-md leading-md tracking-wide text-[color:var(--color-bg-overlay)]",
+    text: "left-[10.96px] top-[190.96px] w-[132px]",
+    label: "font-semibold text-md leading-md tracking-wide text-[color:var(--color-bg-overlay)]",
   },
 };
 
-function slotOf(index: number, active: number): SlotName {
-  const offset = (index - active + STORIES.length) % STORIES.length;
-  return offset === 0 ? "center" : offset === 1 ? "next" : "prev";
-}
-
 function CreatorsStory() {
-  // Figma shows the middle story in front (the wide middle dot).
-  const [active, setActive] = React.useState(1);
-  const step = (by: number) => setActive((a) => (a + by + STORIES.length) % STORIES.length);
-
   return (
-    <div
-      role="group"
-      aria-roledescription="carousel"
-      aria-label="Creators Story"
-      onKeyDown={(e) => {
-        if (e.key === "ArrowLeft") step(-1);
-        if (e.key === "ArrowRight") step(1);
-      }}
-      className="absolute inset-y-0 left-1/2 ml-[-180.629px] w-[361.258px]"
-    >
-      {STORIES.map((story, i) => {
-        const place = slotOf(i, active);
-        const s = SLOTS[place];
+    <div aria-hidden className="absolute inset-y-0 left-1/2 ml-[-180.629px] w-[361.258px]">
+      {STORIES.map((story) => {
+        const s = SLOTS[story.slot];
         return (
           <div
-            key={story.id}
-            className="absolute overflow-hidden border-solid border-[#dfd4fe] transition-[left,top,width,height,border-radius,border-width] duration-slow ease-standard motion-reduce:transition-none"
+            key={story.slot}
+            className="absolute overflow-hidden border-solid border-[#dfd4fe]"
             style={{ left: s.left, top: s.top, width: s.w, height: s.h, borderRadius: s.radius, borderWidth: s.border, zIndex: s.z }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -233,47 +215,11 @@ function CreatorsStory() {
               height={story.height}
               className="absolute inset-0 size-full max-w-none object-cover"
             />
-            <div aria-hidden className={cn("absolute inset-0", s.overlay)} />
-            <div className={cn("absolute flex flex-col gap-[4px] whitespace-nowrap font-display", s.text)}>
-              <p className={cn("overflow-hidden text-ellipsis", s.author)}>{story.author}</p>
-              <p className={cn("overflow-hidden text-ellipsis", s.name)}>{story.name}</p>
-            </div>
-            {place === "center" ? (
-              <Link
-                href="/innovations"
-                aria-label={`${story.name}'s story — open the creator feed`}
-                className="absolute inset-0 rounded-[inherit] focus-visible:outline-none focus-visible:shadow-[inset_0_0_0_2px_var(--color-border-focus)]"
-              />
-            ) : (
-              <button
-                type="button"
-                aria-label={`Show story ${i + 1} of ${STORIES.length}: ${story.name}`}
-                onClick={() => setActive(i)}
-                className="absolute inset-0 cursor-pointer rounded-[inherit] bg-transparent focus-visible:outline-none focus-visible:shadow-[inset_0_0_0_2px_var(--color-border-focus)]"
-              />
-            )}
+            <div className={cn("absolute inset-0", s.overlay)} />
+            <p className={cn("absolute overflow-hidden text-ellipsis whitespace-nowrap font-display", s.text, s.label)}>{story.category}</p>
           </div>
         );
       })}
-
-      {/* Figma 18714:24957 — the page dots (16 · 24 · 16, 8 apart); the wide one is the story in front. */}
-      <div className="absolute left-[144.63px] top-[349.63px] flex items-center gap-[8px]">
-        {STORIES.map((story, i) => (
-          <button
-            key={story.id}
-            type="button"
-            aria-label={`Story ${i + 1} of ${STORIES.length}: ${story.name}`}
-            aria-current={i === active ? "true" : undefined}
-            onClick={() => setActive(i)}
-            className={cn(
-              "relative h-[6px] cursor-pointer rounded-[20px] p-0 transition-[width,opacity] duration-slow ease-standard after:absolute after:inset-x-[-4px] after:inset-y-[-10px] after:content-[''] focus-visible:outline-none focus-visible:shadow-focus-brand motion-reduce:transition-none",
-              i === active
-                ? "w-[24px] bg-[#aeacfc] shadow-[0px_2.122px_4.245px_0px_rgba(44,20,8,0.35)]" // Figma 18714:24959
-                : "w-[16px] bg-[#b7b5fb] opacity-50 shadow-[0px_2.122px_4.245px_0px_rgba(112,72,37,0.16)]", // Figma 18714:24958 / 24960
-            )}
-          />
-        ))}
-      </div>
     </div>
   );
 }
@@ -339,10 +285,7 @@ export function CreatorCommunity() {
         {/* Figma 18714:24938 — the bento, 1260 × 776. */}
         <div className="grid w-full grid-cols-1 gap-[16px] md:grid-cols-2 xl:relative xl:block xl:h-[776px]">
           {/* Figma 18714:25035 — creator count with the avatar orbit. */}
-          <Link
-            href="/innovations"
-            className={cn(CARD, LINK_CARD, "h-[334px] border-[1.292px] xl:left-[1px] xl:top-0 xl:w-[443px]")}
-          >
+          <div className={cn(CARD, "h-[334px] border-[1.292px] xl:left-[1px] xl:top-0 xl:w-[443px]")}>
             <div
               aria-hidden
               className="pointer-events-none absolute inset-0 bg-[image:linear-gradient(148.95deg,rgba(6,15,29,0.85)_0.89%,rgba(9,23,51,0.85)_90.04%),linear-gradient(184.65deg,rgba(204,172,239,0)_17.7%,rgba(214,180,251,0.48)_101.83%)]"
@@ -381,13 +324,11 @@ export function CreatorCommunity() {
               <img src={`${ASSETS}/avatar-orbit-bottom.png`} alt="" width={41} height={41} className="absolute left-[209.71px] top-[269.71px] size-[41px] max-w-none" />
             </div>
             <span aria-hidden className="pointer-events-none absolute inset-0 rounded-[inherit] shadow-[inset_3px_4px_19px_-2px_rgba(148,126,248,0.32)]" />
-          </Link>
+          </div>
 
-          {/* Figma 18714:24961 "social-media-profile" — a creator's profile. */}
-          <Link
-            href="/innovations"
-            className={cn(CARD, LINK_CARD, "h-[386px] border-[1.292px] xl:left-[459px] xl:top-0 xl:w-[403px]")}
-          >
+          {/* Figma 18714:24961 "social-media-profile" — a creator's profile: the kind of
+              creator and what they build, not a made-up person. */}
+          <div className={cn(CARD, "h-[386px] border-[1.292px] xl:left-[459px] xl:top-0 xl:w-[403px]")}>
             <div
               aria-hidden
               className="pointer-events-none absolute inset-0 bg-[image:linear-gradient(142.59deg,rgba(6,15,29,0.85)_0.89%,rgba(9,23,51,0.85)_90.04%),linear-gradient(185.9deg,rgba(204,172,239,0)_17.7%,rgba(214,180,251,0.48)_101.83%)]"
@@ -418,34 +359,13 @@ export function CreatorCommunity() {
               {/* Figma 18714:24965 */}
               <div className="absolute left-[24px] top-[82px] flex w-[291px] max-w-[calc(100%-48px)] flex-col gap-[24px] font-display">
                 <div className="flex w-full flex-col gap-[28px]">
-                  {/* Figma 18714:24967 — a 41-tall box its two lines overflow, as in Figma. */}
-                  <div className="flex h-[41px] flex-col gap-[4px]">
-                    <div className="flex w-[138px] shrink-0 items-center gap-[4px]">
-                      <span className={cn("overflow-hidden text-ellipsis whitespace-nowrap text-2xl font-semibold leading-2xl tracking-normal", TEXT_PRIMARY)}>
-                        John Snow
-                      </span>
-                      {/* Figma 18714:24970 — verified */}
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={`${ASSETS}/verified.svg`} alt="Verified" width={20} height={20} className="size-[20px] shrink-0" />
-                    </div>
-                    <span className="shrink-0 overflow-hidden text-ellipsis whitespace-nowrap text-md font-regular leading-md tracking-normal text-[color:var(--color-icon-default)]">
-                      @Gotsnow
-                    </span>
-                  </div>
+                  {/* Figma 18714:24967 — the name line (Figma: a name, a verified mark, a handle). */}
+                  <span className={cn("whitespace-nowrap text-2xl font-semibold leading-2xl tracking-normal", TEXT_PRIMARY)}>
+                    Hardware creator
+                  </span>
                   {/* Figma 18714:24973 */}
                   <span className={cn("text-lg font-medium leading-lg tracking-normal", TEXT_PRIMARY)}>
                     Open Source Robot Arm Controller
-                  </span>
-                </div>
-                {/* Figma 18714:24974 */}
-                <div className="flex items-center gap-[28px] whitespace-nowrap">
-                  <span className="flex items-center gap-[5px]">
-                    <span className={cn("text-md font-semibold leading-[1.5] [text-box:trim-both_cap_alphabetic]", TEXT_PRIMARY)}>710k</span>
-                    <span className="text-md font-medium leading-md tracking-normal text-[color:var(--color-icon-default)]">Follower</span>
-                  </span>
-                  <span className="flex items-center gap-[5px]">
-                    <span className={cn("text-md font-semibold leading-[1.5] [text-box:trim-both_cap_alphabetic]", TEXT_PRIMARY)}>71</span>
-                    <span className="text-md font-medium leading-md tracking-normal text-[color:var(--color-icon-default)]">Following</span>
                   </span>
                 </div>
               </div>
@@ -483,7 +403,7 @@ export function CreatorCommunity() {
               </div>
             </div>
             <span aria-hidden className={INNER_GLOW} />
-          </Link>
+          </div>
 
           {/* Figma 18714:25032 "social-media-profile" — the VR headset photo. */}
           <Link
@@ -588,28 +508,16 @@ export function CreatorCommunity() {
               Creators Story
             </h3>
             <CreatorsStory />
-            {/* Figma 18714:24942 — "+": share one of your projects to the feed. */}
-            <Link
-              href="/projects"
-              aria-label="Share a project to Creators Story"
-              title="Share a project"
-              className="absolute right-[19.86px] top-[17.73px] z-[3] flex size-[36.082px] items-center justify-center rounded-[12.735px] border-[1.061px] border-solid border-[#1d2649] transition-colors duration-fast ease-standard hover:bg-[rgba(255,255,255,0.1)] focus-visible:outline-none focus-visible:shadow-focus-brand xl:left-[305.32px] xl:right-auto"
-            >
-              {/* Figma 18714:24943 */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`${ASSETS}/plus.svg`} alt="" width={19} height={19} className="size-[19.102px]" />
-            </Link>
             <span
               aria-hidden
               className="pointer-events-none absolute inset-0 z-[3] rounded-[inherit] shadow-[inset_0px_-4.245px_7.429px_-2.122px_rgba(178,133,246,0.4),inset_3.184px_4.245px_20.163px_-2.122px_rgba(148,126,248,0.32)]"
             />
           </div>
 
-          {/* Figma 18714:24991 "social-media-profile" — a creator's post. */}
-          <Link
-            href="/innovations"
-            className={cn(CARD, LINK_CARD, "h-[374px] border-[1.292px] xl:left-[839px] xl:top-[402px] xl:w-[421px]")}
-          >
+          {/* Figma 18714:24991 "social-media-profile" — a post: its photos and its words. The
+              Figma's author row (avatar, name, verified, time) gives way to the feed's name, in the
+              Creators Story title's style; the like/comment counts are left out. */}
+          <div className={cn(CARD, "h-[374px] border-[1.292px] xl:left-[839px] xl:top-[402px] xl:w-[421px]")}>
             <div
               aria-hidden
               className="pointer-events-none absolute inset-0 bg-[image:linear-gradient(144.65deg,rgba(6,15,29,0.85)_0.89%,rgba(9,23,51,0.85)_90.04%),linear-gradient(185.47deg,rgba(204,172,239,0)_17.7%,rgba(214,180,251,0.48)_101.83%)]"
@@ -633,52 +541,18 @@ export function CreatorCommunity() {
                 <img src={`${ASSETS}/product-robot-dog.webp`} alt="" width={260} height={260} className="size-full object-cover" />
               </div>
             </div>
-            {/* Figma 18714:24995 */}
-            <div className="absolute left-[18.71px] top-[18.71px] flex items-center gap-[12px] font-display">
-              {/* Figma 18714:24996 Ellipse 1634 */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`${ASSETS}/avatar-anderson.png`} alt="" width={45} height={45} className="size-[45px] shrink-0" />
-              <div className="flex flex-col gap-[4px]">
-                <div className="flex w-full items-center gap-[4px]">
-                  <span className={cn("overflow-hidden text-ellipsis whitespace-nowrap text-2xl font-semibold leading-2xl tracking-normal", TEXT_PRIMARY)}>
-                    Anderson William
-                  </span>
-                  {/* Figma 18714:25000 — verified */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`${ASSETS}/verified-sm.svg`} alt="Verified" width={18} height={18} className="size-[18px] shrink-0" />
-                </div>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap text-sm font-regular leading-xs tracking-normal text-[color:var(--color-icon-default)]">
-                  Author • Friday 3:12 PM
-                </span>
-              </div>
-            </div>
+            {/* Figma 18714:24995 — the author row's place, 45 tall. */}
+            <h3 className={cn("absolute left-[18.71px] top-[18.71px] flex h-[45px] items-center whitespace-nowrap font-display text-2xl font-semibold leading-2xl tracking-normal", TEXT_PRIMARY)}>
+              Innovations
+            </h3>
             {/* Figma 18714:25003 */}
-            <div className="absolute left-[18.71px] top-[227.71px] flex w-[344px] max-w-[calc(100%-37.42px)] flex-col gap-[25px] font-display">
+            <div className="absolute left-[18.71px] top-[227.71px] w-[344px] max-w-[calc(100%-37.42px)] font-display">
               <p className="text-lg font-medium leading-lg tracking-normal text-[#fbfbfc]">
                 Discover products being built right now. Follow creators. Get inspired. Share your own inventions with the world.
               </p>
-              {/* Figma 18714:25005 */}
-              <div className="flex items-center gap-[12px]">
-                <span className="flex items-center gap-[6px]">
-                  {/* Figma 18714:25007 */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`${ASSETS}/heart.svg`} alt="" width={20} height={20} className="size-[20px]" />
-                  <span className="text-md font-medium leading-[18px] text-[#8ca3bb] [text-box:trim-both_cap_alphabetic]">
-                    324<span className="sr-only"> likes</span>
-                  </span>
-                </span>
-                <span className="flex items-center gap-[6px]">
-                  {/* Figma 18714:25011 */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`${ASSETS}/comment.svg`} alt="" width={20} height={20} className="size-[20px]" />
-                  <span className="text-md font-medium leading-[18px] text-[#8ca3bb] [text-box:trim-both_cap_alphabetic]">
-                    76<span className="sr-only"> comments</span>
-                  </span>
-                </span>
-              </div>
             </div>
             <span aria-hidden className={INNER_GLOW} />
-          </Link>
+          </div>
         </div>
       </div>
     </section>
