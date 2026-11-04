@@ -160,7 +160,7 @@ ideeza-creator-panel/
    │  ├─ notifications/      the notice model: sources (builds, Blog, Messages, market, credits,
    │  │                      videos, comments), filter (heard or quiet, count, quiet hours, pop-up
    │  │                      mode, hidden words), popups (daily summary, browser pop-ups), read state; withdrawal-method notices
-   │  ├─ account/            the account: the demo sign-in (auth.ts: ideeza:account, ideeza:session,
+   │  ├─ account/            the account: the demo sign-in (auth.ts: ideeza:accounts, ideeza:session, ideeza:verify,
    │  │                      the pre-paint gate; zone-countries.ts), payment token, invoices, summary,
    │  │                      your private identity (ideeza:account:identity: the legal name) and countries
    │  ├─ support/            Report a problem: form rules, page names, recent

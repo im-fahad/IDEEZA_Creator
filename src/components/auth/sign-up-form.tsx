@@ -2,12 +2,17 @@
 
 // Sign up (Notion Part 1: name, email, password, date of birth, consent). The
 // account is saved unverified; the next page is the Demo email that verifies
-// it. A link's utm_source is kept, so the one question can be skipped.
+// it. A link's utm_source is kept, so the one question can be skipped. An
+// email that already has an account points to Sign in, carrying the email;
+// "Already have an account? Sign in" sits under the button. The fields can
+// arrive filled (?email=&first=&last=) from Sign in or "Wrong email?".
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import NextLink from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ideeza/button";
 import { Checkbox } from "@/components/ideeza/checkbox";
+import { linkVariants } from "@/components/ideeza/link";
 import { SelectMenu } from "@/components/ideeza/select-menu";
 import { TextInput } from "@/components/ideeza/text-input";
 import {
@@ -15,6 +20,8 @@ import {
   NAME_PART_MAX,
   PASSWORD_MAX,
   birthDateOf,
+  isEmail,
+  normalizeEmail,
   createAccount,
   signUpProblems,
   useAuth,
@@ -22,7 +29,7 @@ import {
   type SignUpInput,
 } from "@/lib/account/auth";
 import { cn } from "@/lib/utils";
-import { AuthHeading, FIELD_ERROR, FIELD_LABEL, Field, PasswordInput, errorProps, useFieldIds } from "./auth-parts";
+import { AuthHeading, FIELD_ERROR, FIELD_LABEL, Field, NewPasswordField, PasswordInput, errorProps, useFieldIds } from "./auth-parts";
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const DAY_OPTIONS = Array.from({ length: 31 }, (_, i) => ({ value: String(i + 1), label: String(i + 1) }));
@@ -33,9 +40,17 @@ const EMPTY: SignUpInput = { firstName: "", lastName: "", email: "", password: "
 
 export function SignUpForm() {
   const router = useRouter();
-  const { hydrated, account, signedIn } = useAuth();
+  const params = useSearchParams();
+  const { hydrated, signedIn } = useAuth();
   const ids = useFieldIds(KEYS);
-  const [input, setInput] = React.useState<SignUpInput>(EMPTY);
+  // Filled from the link when Sign in or "Wrong email?" sent you here.
+  const [input, setInput] = React.useState<SignUpInput>(() => ({
+    ...EMPTY,
+    email: params.get("email") ?? "",
+    firstName: params.get("first") ?? "",
+    lastName: params.get("last") ?? "",
+  }));
+  const [taken, setTaken] = React.useState("");
   const [shown, setShown] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
   const [refused, setRefused] = React.useState(false);
@@ -46,16 +61,28 @@ export function SignUpForm() {
     return Array.from({ length: now - 1899 }, (_, i) => ({ value: String(now - i), label: String(now - i) }));
   }, []);
 
-  // One account per browser: one already here goes to its next step instead.
   React.useEffect(() => {
-    if (!hydrated || !account || busy) return;
-    router.replace(signedIn ? "/" : account.verifiedAt === null ? "/sign-up/check-email" : "/sign-in");
-  }, [hydrated, account, signedIn, busy, router]);
+    if (hydrated && signedIn && !busy) router.replace("/");
+  }, [hydrated, signedIn, busy, router]);
+
+  if (!hydrated || (signedIn && !busy)) return null;
 
   const set = <K extends keyof SignUpInput>(k: K) => (v: SignUpInput[K]) => setInput((p) => ({ ...p, [k]: v }));
   const problems = signUpProblems(input, now);
   const show = (k: SignUpField) => (shown ? problems[k] : undefined);
   const badDate = !!input.day && !!input.month && !!input.year && !birthDateOf(input.day, input.month, input.year, now);
+  const signInHref = isEmail(input.email) ? `/sign-in?email=${encodeURIComponent(normalizeEmail(input.email))}` : "/sign-in";
+  const emailError: React.ReactNode =
+    taken && taken === normalizeEmail(input.email) ? (
+      <>
+        There&apos;s already an account with this email.{" "}
+        <NextLink href={signInHref} className={linkVariants({ size: "sm" })}>
+          Sign in instead
+        </NextLink>
+      </>
+    ) : (
+      show("email")
+    );
   const dateError = {
     day: shown && !input.day ? "Choose a day." : shown && badDate ? "That date doesn't exist." : undefined,
     month: shown && !input.month ? "Choose a month." : undefined,
@@ -73,14 +100,14 @@ export function SignUpForm() {
     }
     setBusy(true);
     setRefused(false);
-    const utm = new URLSearchParams(window.location.search).get("utm_source") ?? "";
-    const saved = await createAccount(input, utm, Date.now());
-    if (!saved.ok) {
-      setBusy(false);
-      setRefused(true);
-      return;
-    }
-    router.push("/sign-up/check-email");
+    const utm = params.get("utm_source") ?? "";
+    const result = await createAccount(input, utm, Date.now());
+    if (result === "ok") return router.push("/sign-up/check-email");
+    setBusy(false);
+    if (result === "exists") {
+      setTaken(normalizeEmail(input.email));
+      document.getElementById(ids.email.id)?.focus();
+    } else setRefused(true);
   };
 
   return (
@@ -96,6 +123,7 @@ export function SignUpForm() {
               onValueChange={set("firstName")}
               maxLength={NAME_PART_MAX}
               autoComplete="given-name"
+              autoFocus
               {...errorProps(show("firstName"), ids.firstName.errorId)}
             />
           </Field>
@@ -111,7 +139,7 @@ export function SignUpForm() {
             />
           </Field>
         </div>
-        <Field label="Email" htmlFor={ids.email.id} error={show("email")} errorId={ids.email.errorId}>
+        <Field label="Email" htmlFor={ids.email.id} error={emailError} errorId={ids.email.errorId}>
           <TextInput
             id={ids.email.id}
             size="xl"
@@ -123,20 +151,17 @@ export function SignUpForm() {
             autoComplete="email"
             spellCheck={false}
             autoCapitalize="none"
-            {...errorProps(show("email"), ids.email.errorId)}
+            {...errorProps(emailError, ids.email.errorId)}
           />
         </Field>
-        <Field label="Password" htmlFor={ids.password.id} error={show("password")} errorId={ids.password.errorId}>
-          <PasswordInput
-            id={ids.password.id}
-            value={input.password}
-            onValueChange={set("password")}
-            maxLength={PASSWORD_MAX}
-            autoComplete="new-password"
-            placeholder="At least 8 characters"
-            {...errorProps(show("password"), ids.password.errorId)}
-          />
-        </Field>
+        <NewPasswordField
+          id={ids.password.id}
+          errorId={ids.password.errorId}
+          label="Password"
+          value={input.password}
+          onValueChange={set("password")}
+          error={show("password")}
+        />
         <Field label="Confirm password" htmlFor={ids.confirm.id} error={show("confirm")} errorId={ids.confirm.errorId}>
           <PasswordInput
             id={ids.confirm.id}
@@ -183,6 +208,12 @@ export function SignUpForm() {
           Create account
         </Button>
       </form>
+      <p className="m-0 text-center text-md leading-md text-text-secondary">
+        Already have an account?{" "}
+        <NextLink href={signInHref} className={linkVariants({ size: "md" })}>
+          Sign in
+        </NextLink>
+      </p>
     </>
   );
 }

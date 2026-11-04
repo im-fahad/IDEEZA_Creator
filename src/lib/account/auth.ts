@@ -1,9 +1,10 @@
 // The demo sign-in (owner, 2026-11-04): Notion Part 1's sign-up flow, with
-// nothing behind it but this browser, like the rest of the app. One account
-// per browser in `ideeza:account`, the signed-in state in `ideeza:session`,
-// both through the shared key store so every reader agrees without a reload.
-// The password is kept only as a salted PBKDF2 hash. Signing out keeps the
-// account and all the work in the browser; signing in again finds it all.
+// nothing behind it but this browser, like the rest of the app. The accounts
+// made here in `ideeza:accounts`, who is signed in in `ideeza:session`, the
+// account waiting for its email to be verified in `ideeza:verify` — all
+// through the shared key store so every reader agrees without a reload.
+// Passwords are kept only as salted PBKDF2 hashes. Signing out keeps the
+// accounts and all the work in the browser; signing in again finds it all.
 //
 // Sign up → the "email" (a Demo card in the app) → verifying signs you in →
 // one question (where you heard of IDEEZA) unless the link already said →
@@ -16,8 +17,9 @@ import { readProfileFields, saveProfile } from "../people/profile-store";
 import { countryCodeOf, countryNameOf } from "./countries";
 import { ZONE_COUNTRIES } from "./zone-countries";
 
-export const ACCOUNT_KEY = "ideeza:account";
+export const ACCOUNTS_KEY = "ideeza:accounts";
 export const SESSION_KEY = "ideeza:session";
+export const VERIFY_KEY = "ideeza:verify";
 
 export const NAME_PART_MAX = 40;
 export const EMAIL_MAX = 254;
@@ -112,16 +114,46 @@ export function normalizeSession(raw: unknown): Session | null {
   return { v: 1, email: normalizeEmail(raw.email), at: time(raw.at) ?? 0 };
 }
 
-/** Signed in: a session for this browser's account, and its email verified. */
-export function isSignedIn(account: Account | null, session: Session | null): boolean {
-  return !!account && !!session && session.email === account.email && account.verifiedAt !== null;
+/** Every readable account, one per email (the first kept). */
+export function normalizeAccounts(raw: unknown): Account[] {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set<string>();
+  const out: Account[] = [];
+  for (const item of raw) {
+    const a = normalizeAccount(item);
+    if (a && !seen.has(a.email)) {
+      seen.add(a.email);
+      out.push(a);
+    }
+  }
+  return out;
 }
 
-/** Where a signed-out visitor goes: Sign up when this browser has no account,
- *  Check your email while it isn't verified, else Sign in. */
-export function signedOutHome(account: Account | null): "/sign-in" | "/sign-up" | "/sign-up/check-email" {
-  if (!account) return "/sign-up";
-  return account.verifiedAt === null ? "/sign-up/check-email" : "/sign-in";
+/** The account waiting for its email to be verified, by its email. */
+export function normalizeVerify(raw: unknown): string {
+  return isObj(raw) && typeof raw.email === "string" ? normalizeEmail(raw.email) : "";
+}
+
+export function accountOf(accounts: Account[], email: string): Account | null {
+  const e = normalizeEmail(email);
+  return accounts.find((a) => a.email === e) ?? null;
+}
+
+/** Who is signed in: the session's account, its email verified. */
+export function currentAccount(accounts: Account[], session: Session | null): Account | null {
+  const a = session ? accountOf(accounts, session.email) : null;
+  return a && a.verifiedAt !== null ? a : null;
+}
+
+/** Where a signed-out visitor goes: Sign in once this browser has an account, else Sign up. */
+export function signedOutHome(accounts: Account[]): "/sign-in" | "/sign-up" {
+  return accounts.length ? "/sign-in" : "/sign-up";
+}
+
+/** A path to return to after signing in: this app's own, never Sign in or Sign up again. */
+export function safeNext(raw: string | null | undefined): string {
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//") || raw.startsWith("/\\")) return "";
+  return isAuthPath(raw.split(/[?#]/)[0]) ? "" : raw;
 }
 
 /** The pages anyone can open. Every other page needs you signed in. */
@@ -189,10 +221,29 @@ export function birthDateOf(day: string, month: string, year: string, now: numbe
   return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 }
 
+/** The rules a new password has to meet, in the order the checker lists them. */
+export const PASSWORD_RULES = [
+  { id: "length", label: `At least ${PASSWORD_MIN} characters`, need: `at least ${PASSWORD_MIN} characters`, test: (p: string) => p.length >= PASSWORD_MIN },
+  { id: "upper", label: "An uppercase letter (A–Z)", need: "an uppercase letter", test: (p: string) => /[A-Z]/.test(p) },
+  { id: "lower", label: "A lowercase letter (a–z)", need: "a lowercase letter", test: (p: string) => /[a-z]/.test(p) },
+  { id: "number", label: "A number (0–9)", need: "a number", test: (p: string) => /\d/.test(p) },
+  { id: "symbol", label: "A symbol, like ! @ # $", need: "a symbol", test: (p: string) => /[^A-Za-z0-9\s]/.test(p) },
+] as const;
+
+export type PasswordRuleId = (typeof PASSWORD_RULES)[number]["id"];
+
+/** Each rule and whether the password meets it. */
+export function passwordChecks(password: string): { id: PasswordRuleId; label: string; met: boolean }[] {
+  return PASSWORD_RULES.map((r) => ({ id: r.id, label: r.label, met: r.test(password) }));
+}
+
+/** What the password still needs, as one sentence; "" when it meets every rule. */
 export function passwordProblem(password: string): string {
-  if (password.length < PASSWORD_MIN) return `Use at least ${PASSWORD_MIN} characters.`;
   if (password.length > PASSWORD_MAX) return `Use at most ${PASSWORD_MAX} characters.`;
-  return "";
+  const missing = PASSWORD_RULES.filter((r) => !r.test(password)).map((r) => r.need);
+  if (!missing.length) return "";
+  const list = missing.length === 1 ? missing[0] : `${missing.slice(0, -1).join(", ")} and ${missing[missing.length - 1]}`;
+  return `Your password still needs ${list}.`;
 }
 
 /** What is wrong with each field, in the form's order; empty when it can be sent. */
@@ -241,34 +292,57 @@ export async function hashPassword(password: string, salt: string): Promise<stri
 
 // ─────────────────────────── the store ───────────────────────────
 
-export function readAccount(): Account | null {
-  return normalizeAccount(parseStored(readStoredKey(ACCOUNT_KEY)).value);
+const isArr = (v: unknown) => Array.isArray(v);
+
+export function readAccounts(): Account[] {
+  return normalizeAccounts(parseStored(readStoredKey(ACCOUNTS_KEY)).value);
 }
 
 export function readSession(): Session | null {
   return normalizeSession(parseStored(readStoredKey(SESSION_KEY)).value);
 }
 
-function writeAccount(account: Account): WriteResult {
-  if (storedUnreadable(ACCOUNT_KEY, isObj)) return { ok: false };
-  return writeStoredKey(ACCOUNT_KEY, account);
+function readVerify(): string {
+  return normalizeVerify(parseStored(readStoredKey(VERIFY_KEY)).value);
+}
+
+function writeAccounts(accounts: Account[]): WriteResult {
+  if (storedUnreadable(ACCOUNTS_KEY, isArr)) return { ok: false };
+  return writeStoredKey(ACCOUNTS_KEY, accounts);
+}
+
+/** Saves `next` over the account with the same email. */
+function saveAccount(next: Account): WriteResult {
+  const all = readAccounts();
+  return writeAccounts(all.some((a) => a.email === next.email) ? all.map((a) => (a.email === next.email ? next : a)) : [...all, next]);
 }
 
 function startSession(email: string, now: number): WriteResult {
   return writeStoredKey(SESSION_KEY, { v: 1, email, at: now } satisfies Session);
 }
 
-/** Saves a new, unverified account; nobody is signed in until the email is verified. */
-export async function createAccount(input: SignUpInput, utmSource: string, now: number): Promise<WriteResult> {
+/** The signed-in account, read now. */
+function readCurrent(): Account | null {
+  return currentAccount(readAccounts(), readSession());
+}
+
+export type CreateResult = "ok" | "exists" | "invalid" | "refused";
+
+/** Saves a new, unverified account and marks it as the one waiting for its
+ *  email; nobody is signed in until it is verified. An email already here is
+ *  refused, so Sign up can point to Sign in. */
+export async function createAccount(input: SignUpInput, utmSource: string, now: number): Promise<CreateResult> {
   const birthDate = birthDateOf(input.day, input.month, input.year, now);
-  if (Object.keys(signUpProblems(input, now)).length || !birthDate) return { ok: false };
+  if (Object.keys(signUpProblems(input, now)).length || !birthDate) return "invalid";
+  const email = normalizeEmail(input.email);
+  if (accountOf(readAccounts(), email)) return "exists";
   const salt = newSalt();
   const source = sourceFromUtm(utmSource);
-  return writeAccount({
+  const saved = saveAccount({
     v: 1,
     firstName: str(input.firstName, NAME_PART_MAX),
     lastName: str(input.lastName, NAME_PART_MAX),
-    email: normalizeEmail(input.email),
+    email,
     passwordHash: await hashPassword(input.password, salt),
     salt,
     birthDate,
@@ -282,31 +356,50 @@ export async function createAccount(input: SignUpInput, utmSource: string, now: 
     nudgeClosed: false,
     country: "",
   });
+  if (!saved.ok) return "refused";
+  return writeStoredKey(VERIFY_KEY, { v: 1, email }).ok ? "ok" : "refused";
 }
 
-/** The verify link: marks the email verified, signs you in, and fills your
- *  profile's name and country where they are still empty. */
+/** The verify link: marks the waiting account verified, signs it in, and fills
+ *  your profile's name and country where they are still empty. */
 export function verifyEmail(now: number): WriteResult {
-  const account = readAccount();
+  const account = accountOf(readAccounts(), readVerify());
   if (!account) return { ok: false };
   const country = account.country || deviceCountry();
-  const saved = writeAccount({ ...account, verifiedAt: account.verifiedAt ?? now, country });
+  const saved = saveAccount({ ...account, verifiedAt: account.verifiedAt ?? now, country });
   if (!saved.ok) return saved;
   const profile = readProfileFields();
   const patch: { name?: string; location?: string } = {};
   if (!profile.name) patch.name = `${account.firstName} ${account.lastName}`.trim();
   if (!profile.location && country) patch.location = countryNameOf(country);
   if (patch.name || patch.location) saveProfile(patch);
+  writeStoredKey(VERIFY_KEY, null);
   return startSession(account.email, now);
+}
+
+/** "Wrong email?": the waiting, never-verified account is dropped, so Sign up
+ *  can start again; a verified one is never touched. */
+export function discardUnverified(): WriteResult {
+  const email = readVerify();
+  const all = readAccounts();
+  const target = accountOf(all, email);
+  if (target && target.verifiedAt === null) {
+    const saved = writeAccounts(all.filter((a) => a.email !== email));
+    if (!saved.ok) return saved;
+  }
+  return writeStoredKey(VERIFY_KEY, null);
 }
 
 export type SignInResult = "ok" | "wrong" | "unverified" | "refused";
 
+/** One answer for an unknown email and a wrong password alike. An account
+ *  whose email isn't verified yet becomes the one waiting, and goes back to
+ *  Check your email. */
 export async function signIn(email: string, password: string, now: number): Promise<SignInResult> {
-  const account = readAccount();
-  if (!account || normalizeEmail(email) !== account.email) return "wrong";
+  const account = accountOf(readAccounts(), email);
+  if (!account) return "wrong";
   if ((await hashPassword(password, account.salt)) !== account.passwordHash) return "wrong";
-  if (account.verifiedAt === null) return "unverified";
+  if (account.verifiedAt === null) return writeStoredKey(VERIFY_KEY, { v: 1, email: account.email }).ok ? "unverified" : "refused";
   return startSession(account.email, now).ok ? "ok" : "refused";
 }
 
@@ -314,20 +407,20 @@ export function signOut(): WriteResult {
   return writeStoredKey(SESSION_KEY, null);
 }
 
-/** The reset link: a new password, and you're signed in. Opening the link
- *  proves the email, so it counts as verified. */
-export async function resetPassword(password: string, now: number): Promise<WriteResult> {
-  const account = readAccount();
+/** The reset link: a new password for that email's account, and you're signed
+ *  in. Opening the link proves the email, so it counts as verified. */
+export async function resetPassword(email: string, password: string, now: number): Promise<WriteResult> {
+  const account = accountOf(readAccounts(), email);
   if (!account || passwordProblem(password)) return { ok: false };
   const salt = newSalt();
-  const saved = writeAccount({ ...account, salt, passwordHash: await hashPassword(password, salt), verifiedAt: account.verifiedAt ?? now });
+  const saved = saveAccount({ ...account, salt, passwordHash: await hashPassword(password, salt), verifiedAt: account.verifiedAt ?? now });
   return saved.ok ? startSession(account.email, now) : saved;
 }
 
 export function answerSource(source: Source, other: string): WriteResult {
-  const account = readAccount();
+  const account = readCurrent();
   if (!account) return { ok: false };
-  return writeAccount({
+  return saveAccount({
     ...account,
     source,
     sourceVia: "answer",
@@ -337,30 +430,46 @@ export function answerSource(source: Source, other: string): WriteResult {
 }
 
 export function skipSource(): WriteResult {
-  const account = readAccount();
+  const account = readCurrent();
   if (!account) return { ok: false };
-  return writeAccount({ ...account, sourceSkipped: true });
+  return saveAccount({ ...account, sourceSkipped: true });
 }
 
 export function closeSourceNudge(): WriteResult {
-  const account = readAccount();
+  const account = readCurrent();
   if (!account) return { ok: false };
-  return writeAccount({ ...account, nudgeClosed: true });
+  return saveAccount({ ...account, nudgeClosed: true });
 }
 
-/** The account and whether you're signed in, live. `hydrated` is false until the browser's copy is read. */
-export function useAuth(): { hydrated: boolean; account: Account | null; signedIn: boolean } {
-  const a = useStoredKey(ACCOUNT_KEY);
+/** The accounts, who is signed in, and the account waiting for its email, live.
+ *  `hydrated` is false until the browser's copy is read. */
+export function useAuth(): {
+  hydrated: boolean;
+  accounts: Account[];
+  account: Account | null;
+  waiting: Account | null;
+  signedIn: boolean;
+} {
+  const a = useStoredKey(ACCOUNTS_KEY);
   const s = useStoredKey(SESSION_KEY);
+  const v = useStoredKey(VERIFY_KEY);
   return React.useMemo(() => {
-    const account = normalizeAccount(parseStored(a.raw).value);
-    const session = normalizeSession(parseStored(s.raw).value);
-    return { hydrated: a.hydrated && s.hydrated, account, signedIn: isSignedIn(account, session) };
-  }, [a.hydrated, a.raw, s.hydrated, s.raw]);
+    const accounts = normalizeAccounts(parseStored(a.raw).value);
+    const account = currentAccount(accounts, normalizeSession(parseStored(s.raw).value));
+    const w = accountOf(accounts, normalizeVerify(parseStored(v.raw).value));
+    return {
+      hydrated: a.hydrated && s.hydrated && v.hydrated,
+      accounts,
+      account,
+      waiting: w && w.verifiedAt === null ? w : null,
+      signedIn: !!account,
+    };
+  }, [a.hydrated, a.raw, s.hydrated, s.raw, v.hydrated, v.raw]);
 }
 
 /** Runs in <head> before the first paint: a signed-out visitor to any page but
  *  Sign up / Sign in goes there at once, so no page flashes before the gate.
- *  The same rule as `isSignedIn` and `signedOutHome`; the link's query (its
- *  utm_source) rides along to Sign up. */
-export const AUTH_PREPAINT = `(function(){try{var p=location.pathname;if(/^\\/(sign-up|sign-in)(\\/|$)/.test(p))return;var a=JSON.parse(localStorage.getItem("${ACCOUNT_KEY}")||"null"),s=JSON.parse(localStorage.getItem("${SESSION_KEY}")||"null");if(a&&s&&a.email&&s.email===a.email&&a.verifiedAt)return;document.documentElement.style.visibility="hidden";location.replace(!(a&&a.email)?"/sign-up"+location.search:a.verifiedAt?"/sign-in":"/sign-up/check-email");}catch(e){}})();`;
+ *  The same rule as `currentAccount` and `signedOutHome`. Sign in carries the
+ *  page they opened (`next`), to go on to it; Sign up carries the link's query
+ *  (its utm_source). */
+export const AUTH_PREPAINT = `(function(){try{var p=location.pathname;if(/^\\/(sign-up|sign-in)(\\/|$)/.test(p))return;var a=JSON.parse(localStorage.getItem("${ACCOUNTS_KEY}")||"[]"),s=JSON.parse(localStorage.getItem("${SESSION_KEY}")||"null");if(!Array.isArray(a))a=[];var e=s&&typeof s.email==="string"?s.email.trim().toLowerCase():"";for(var i=0;i<a.length;i++)if(a[i]&&e&&a[i].email===e&&a[i].verifiedAt)return;document.documentElement.style.visibility="hidden";location.replace(a.length?"/sign-in"+(p==="/"?"":"?next="+encodeURIComponent(p+location.search)):"/sign-up"+location.search);}catch(x){}})();`;

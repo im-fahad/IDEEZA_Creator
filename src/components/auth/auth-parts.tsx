@@ -5,12 +5,13 @@
 // card that stands in for a real email, since nothing here leaves the browser.
 
 import * as React from "react";
-import { ViewIcon, ViewOffIcon } from "@hugeicons/core-free-icons";
+import { CheckmarkCircle02Icon, CircleIcon, ViewIcon, ViewOffIcon } from "@hugeicons/core-free-icons";
 import { Icon, type IconValue } from "@/components/dashboard/icon";
 import { IdeezaLogo } from "@/components/brand/ideeza-logo";
 import { Badge } from "@/components/ideeza/badge";
 import { IconButton } from "@/components/ideeza/icon-button";
 import { TextInput, type TextInputProps } from "@/components/ideeza/text-input";
+import { passwordChecks } from "@/lib/account/auth";
 import { cn } from "@/lib/utils";
 
 export const FIELD_LABEL = "text-sm font-medium leading-sm text-text-primary";
@@ -47,7 +48,8 @@ export function Field({
 }: {
   label: string;
   htmlFor: string;
-  error?: string;
+  /** Why it is wrong; may carry the way out (a link to Sign in). */
+  error?: React.ReactNode;
   errorId?: string;
   /** Something on the label's row, at its end (Forgot password?). */
   aside?: React.ReactNode;
@@ -145,6 +147,117 @@ export function useFieldIds<K extends string>(keys: readonly K[]): Record<K, { i
   );
 }
 
-export function errorProps(error: string | undefined, errorId: string) {
+export function errorProps(error: React.ReactNode, errorId: string) {
   return error ? { invalid: true, "aria-invalid": true as const, "aria-describedby": errorId } : {};
+}
+
+const LEVELS = [
+  { word: "Weak", ink: "text-text-error", bar: "bg-[var(--color-icon-error)]" },
+  { word: "Weak", ink: "text-text-error", bar: "bg-[var(--color-icon-error)]" },
+  { word: "Fair", ink: "text-text-warning", bar: "bg-[var(--color-icon-warning)]" },
+  { word: "Fair", ink: "text-text-warning", bar: "bg-[var(--color-icon-warning)]" },
+  { word: "Almost there", ink: "text-text-warning", bar: "bg-[var(--color-icon-warning)]" },
+  { word: "Strong", ink: "text-text-success", bar: "bg-[var(--color-icon-success)]" },
+];
+
+/** A new password with its rules (owner 2026-11-04): focusing the field
+ *  unfolds the rules under it; each one ticks as it is met, and a bar shows
+ *  how far along it is. The rules stay open while any is unmet, or while the
+ *  form says the password is wrong (unmet ones then read in the error ink);
+ *  once every rule is met and focus leaves, they fold away. */
+export function NewPasswordField({
+  id,
+  errorId,
+  label,
+  value,
+  onValueChange,
+  error,
+  autoFocus,
+}: {
+  id: string;
+  errorId: string;
+  label: string;
+  value: string;
+  onValueChange: (v: string) => void;
+  error?: string;
+  autoFocus?: boolean;
+}) {
+  const rulesId = React.useId();
+  const [focused, setFocused] = React.useState(false);
+  const checks = passwordChecks(value);
+  const met = checks.filter((c) => c.met).length;
+  const all = met === checks.length;
+  const open = focused || (!!value && !all) || !!error;
+  const level = LEVELS[value ? met : 0];
+
+  return (
+    <div className="flex min-w-0 flex-col gap-[6px]">
+      <label htmlFor={id} className={FIELD_LABEL}>
+        {label}
+      </label>
+      <PasswordInput
+        id={id}
+        value={value}
+        onValueChange={onValueChange}
+        autoComplete="new-password"
+        autoFocus={autoFocus}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        invalid={!!error}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={[rulesId, error ? errorId : ""].filter(Boolean).join(" ")}
+      />
+      {error ? (
+        <p id={errorId} className={cn(FIELD_ERROR, open && "sr-only")}>
+          {error}
+        </p>
+      ) : null}
+      <div
+        className={cn(
+          "grid transition-[grid-template-rows] duration-[var(--motion-duration-normal)] ease-out motion-reduce:transition-none",
+          open ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+        )}
+      >
+        <div className="min-h-0 overflow-hidden" aria-hidden={!open} inert={!open}>
+          <div id={rulesId} className="mt-[4px] flex flex-col gap-[10px] rounded-[var(--radius-xl)] border border-solid border-border bg-bg-subtle p-[12px]">
+            <div className="flex items-center gap-[10px]">
+              <div aria-hidden className="flex flex-1 gap-[4px]">
+                {checks.map((c, i) => (
+                  <span
+                    key={c.id}
+                    className={cn("h-[4px] flex-1 rounded-full transition-colors duration-[var(--motion-duration-normal)]", value && i < met ? level.bar : "bg-[var(--color-border-default)]")}
+                  />
+                ))}
+              </div>
+              <span className={cn("min-w-[88px] text-right text-sm font-medium leading-sm", value ? level.ink : "text-text-tertiary")}>
+                {value ? level.word : "Password rules"}
+              </span>
+            </div>
+            <ul className="m-0 grid list-none grid-cols-1 gap-x-[12px] gap-y-[6px] p-0 sm:grid-cols-2">
+              {checks.map((c) => (
+                <li
+                  key={c.id}
+                  className={cn(
+                    "flex items-center gap-[8px] text-sm leading-sm transition-colors duration-[var(--motion-duration-normal)]",
+                    c.met ? "text-text-primary" : error ? "text-text-error" : "text-text-secondary",
+                  )}
+                >
+                  <span
+                    aria-hidden
+                    className={cn("inline-flex shrink-0", c.met ? "text-[color:var(--color-icon-success)]" : "text-text-tertiary")}
+                  >
+                    <Icon icon={c.met ? CheckmarkCircle02Icon : CircleIcon} size={16} />
+                  </span>
+                  <span>
+                    <span className="sr-only">{c.met ? "Done: " : "Still needed: "}</span>
+                    {c.label}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }

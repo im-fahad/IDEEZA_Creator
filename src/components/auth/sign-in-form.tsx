@@ -1,24 +1,33 @@
 "use client";
 
-// Sign in, and Forgot password on the same page: the reset link arrives as a
-// Demo email, and setting the new password signs you in.
+// Sign in, and Forgot password on the same page. Every step has its way on:
+// "New to IDEEZA? Create an account" under the button (carrying the email);
+// after Sign out, a line that says the work is still here; after signing in,
+// back to the page they opened (?next=). Forgot password sends a Demo email
+// whose link sets a new password and signs you in; an email with no account
+// here says so and offers to try another or to create one.
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import NextLink from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { MailOpen01Icon } from "@hugeicons/core-free-icons";
+import { Banner } from "@/components/ideeza/banner";
 import { Button } from "@/components/ideeza/button";
+import { linkVariants } from "@/components/ideeza/link";
 import { TextInput } from "@/components/ideeza/text-input";
 import {
   EMAIL_MAX,
   PASSWORD_MAX,
+  accountOf,
   isEmail,
   normalizeEmail,
   passwordProblem,
   resetPassword,
+  safeNext,
   signIn,
   useAuth,
 } from "@/lib/account/auth";
-import { AuthHeading, DemoEmail, FIELD_ERROR, Field, PasswordInput, errorProps, useFieldIds } from "./auth-parts";
+import { AuthHeading, DemoEmail, FIELD_ERROR, Field, NewPasswordField, PasswordInput, errorProps, useFieldIds } from "./auth-parts";
 
 type Mode = "sign-in" | "forgot" | "sent" | "new";
 
@@ -30,10 +39,17 @@ const textLink =
 
 export function SignInForm() {
   const router = useRouter();
-  const { hydrated, account, signedIn } = useAuth();
+  const params = useSearchParams();
+  const { hydrated, accounts, signedIn } = useAuth();
   const ids = useFieldIds(KEYS);
+  // From the link: the email Sign up carried, where to go after, and whether they just signed out.
+  const [arrived] = React.useState(() => ({
+    email: params.get("email") ?? "",
+    next: safeNext(params.get("next")),
+    signedOut: params.get("signed-out") === "1",
+  }));
   const [mode, setMode] = React.useState<Mode>("sign-in");
-  const [email, setEmail] = React.useState("");
+  const [email, setEmail] = React.useState(arrived.email);
   const [password, setPassword] = React.useState("");
   const [confirm, setConfirm] = React.useState("");
   const [error, setError] = React.useState("");
@@ -41,12 +57,10 @@ export function SignInForm() {
   const [busy, setBusy] = React.useState(false);
 
   React.useEffect(() => {
-    if (!hydrated || busy) return;
-    if (signedIn) router.replace("/");
-    else if (!account) router.replace("/sign-up");
-  }, [hydrated, account, signedIn, busy, router]);
+    if (hydrated && signedIn && !busy) router.replace(arrived.next || "/");
+  }, [hydrated, signedIn, busy, router, arrived.next]);
 
-  if (!hydrated || signedIn || !account) return null;
+  if (!hydrated || (signedIn && !busy)) return null;
 
   const go = (next: Mode) => {
     setMode(next);
@@ -56,6 +70,8 @@ export function SignInForm() {
     setShown(false);
   };
 
+  const clean = normalizeEmail(email);
+  const withEmail = (path: string) => (isEmail(email) ? `${path}?email=${encodeURIComponent(clean)}` : path);
   const emailError = shown && !isEmail(email) ? (email.trim() ? "Enter an email like name@example.com." : "Enter your email.") : undefined;
 
   const submitSignIn = async (e: React.FormEvent) => {
@@ -66,7 +82,7 @@ export function SignInForm() {
     if (!password) return document.getElementById(ids.password.id)?.focus();
     setBusy(true);
     const result = await signIn(email, password, Date.now());
-    if (result === "ok") return router.replace("/");
+    if (result === "ok") return router.replace(arrived.next || "/");
     setBusy(false);
     if (result === "unverified") return router.push("/sign-up/check-email");
     setError(result === "refused" ? REFUSED : "That email and password don't match.");
@@ -88,12 +104,12 @@ export function SignInForm() {
     if (passwordProblem(password)) return document.getElementById(ids.password.id)?.focus();
     if (confirm !== password) return document.getElementById(ids.confirm.id)?.focus();
     setBusy(true);
-    if ((await resetPassword(password, Date.now())).ok) return router.replace("/");
+    if ((await resetPassword(email, password, Date.now())).ok) return router.replace(arrived.next || "/");
     setBusy(false);
     setError(REFUSED);
   };
 
-  const emailField = (
+  const emailField = (autoFocus: boolean) => (
     <Field label="Email" htmlFor={ids.email.id} error={emailError} errorId={ids.email.errorId}>
       <TextInput
         id={ids.email.id}
@@ -106,6 +122,7 @@ export function SignInForm() {
         autoComplete="email"
         spellCheck={false}
         autoCapitalize="none"
+        autoFocus={autoFocus}
         {...errorProps(emailError, ids.email.errorId)}
       />
     </Field>
@@ -124,7 +141,7 @@ export function SignInForm() {
       <>
         <AuthHeading title="Reset your password">Enter your account&apos;s email and we&apos;ll send you a link to set a new one.</AuthHeading>
         <form noValidate onSubmit={submitForgot} className="flex flex-col gap-[16px]">
-          {emailField}
+          {emailField(true)}
           <Button type="submit" hierarchy="ai" size="xl" className="mt-[8px] w-full">
             Send link
           </Button>
@@ -135,25 +152,44 @@ export function SignInForm() {
   }
 
   if (mode === "sent") {
-    const match = normalizeEmail(email) === account.email;
+    const match = accountOf(accounts, clean);
+    if (!match) {
+      return (
+        <>
+          <AuthHeading title="No account for that email">
+            There&apos;s no account for <strong className="font-semibold text-text-primary">{clean}</strong> in this browser. Check the
+            spelling, or create an account with it.
+          </AuthHeading>
+          <div className="flex flex-col gap-[12px]">
+            <Button hierarchy="secondary" size="xl" onClick={() => go("forgot")} className="w-full">
+              Try another email
+            </Button>
+            <p className="m-0 text-center text-md leading-md text-text-secondary">
+              New to IDEEZA?{" "}
+              <NextLink href={withEmail("/sign-up")} className={linkVariants({ size: "md" })}>
+                Create an account
+              </NextLink>
+            </p>
+          </div>
+          {backToSignIn}
+        </>
+      );
+    }
     return (
       <>
         <AuthHeading title="Check your email" icon={MailOpen01Icon}>
-          If an account uses <strong className="font-semibold text-text-primary">{normalizeEmail(email)}</strong>, a link to reset
-          its password is on its way.
+          We sent a link to <strong className="font-semibold text-text-primary">{clean}</strong> to reset its password.
         </AuthHeading>
-        {match ? (
-          <DemoEmail
-            subject="Reset your password"
-            action={
-              <Button hierarchy="ai" size="xl" onClick={() => go("new")} className="w-full">
-                Set a new password
-              </Button>
-            }
-          >
-            Hi {account.firstName}, someone asked to reset your IDEEZA password. If it was you, set a new one.
-          </DemoEmail>
-        ) : null}
+        <DemoEmail
+          subject="Reset your password"
+          action={
+            <Button hierarchy="ai" size="xl" onClick={() => go("new")} className="w-full">
+              Set a new password
+            </Button>
+          }
+        >
+          Hi {match.firstName}, someone asked to reset your IDEEZA password. If it was you, set a new one.
+        </DemoEmail>
         {backToSignIn}
       </>
     );
@@ -162,19 +198,17 @@ export function SignInForm() {
   if (mode === "new") {
     return (
       <>
-        <AuthHeading title="Set a new password">You&apos;ll be signed in as soon as it&apos;s saved.</AuthHeading>
+        <AuthHeading title="Set a new password">For {clean}. You&apos;ll be signed in as soon as it&apos;s saved.</AuthHeading>
         <form noValidate onSubmit={submitNew} className="flex flex-col gap-[16px]">
-          <Field label="New password" htmlFor={ids.password.id} error={pwError} errorId={ids.password.errorId}>
-            <PasswordInput
-              id={ids.password.id}
-              value={password}
-              onValueChange={setPassword}
-              maxLength={PASSWORD_MAX}
-              autoComplete="new-password"
-              placeholder="At least 8 characters"
-              {...errorProps(pwError, ids.password.errorId)}
-            />
-          </Field>
+          <NewPasswordField
+            id={ids.password.id}
+            errorId={ids.password.errorId}
+            label="New password"
+            value={password}
+            onValueChange={setPassword}
+            error={pwError}
+            autoFocus
+          />
           <Field label="Confirm password" htmlFor={ids.confirm.id} error={confirmError} errorId={ids.confirm.errorId}>
             <PasswordInput
               id={ids.confirm.id}
@@ -194,6 +228,7 @@ export function SignInForm() {
             Save and sign in
           </Button>
         </form>
+        {backToSignIn}
       </>
     );
   }
@@ -201,9 +236,14 @@ export function SignInForm() {
   const pwMissing = shown && isEmail(email) && !password ? "Enter your password." : undefined;
   return (
     <>
+      {arrived.signedOut ? (
+        <Banner tone="good" title="You've signed out">
+          Your account and your work are saved in this browser.
+        </Banner>
+      ) : null}
       <AuthHeading title="Welcome back">Sign in to pick up where you left off.</AuthHeading>
       <form noValidate onSubmit={submitSignIn} className="flex flex-col gap-[16px]">
-        {emailField}
+        {emailField(!arrived.email)}
         <Field
           label="Password"
           htmlFor={ids.password.id}
@@ -221,6 +261,7 @@ export function SignInForm() {
             onValueChange={setPassword}
             maxLength={PASSWORD_MAX}
             autoComplete="current-password"
+            autoFocus={!!arrived.email}
             {...errorProps(pwMissing, ids.password.errorId)}
           />
         </Field>
@@ -233,6 +274,12 @@ export function SignInForm() {
           Sign in
         </Button>
       </form>
+      <p className="m-0 text-center text-md leading-md text-text-secondary">
+        New to IDEEZA?{" "}
+        <NextLink href={withEmail("/sign-up")} className={linkVariants({ size: "md" })}>
+          Create an account
+        </NextLink>
+      </p>
     </>
   );
 }
