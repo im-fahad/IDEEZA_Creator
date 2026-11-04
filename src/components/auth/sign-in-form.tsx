@@ -5,6 +5,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import { MailOpen01Icon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ideeza/button";
 import { TextInput } from "@/components/ideeza/text-input";
 import {
@@ -111,7 +112,7 @@ export function SignInForm() {
   );
 
   const backToSignIn = (
-    <div className="flex justify-center">
+    <div>
       <Button hierarchy="ghost" size="md" onClick={() => go("sign-in")}>
         Back to sign in
       </Button>
@@ -137,7 +138,7 @@ export function SignInForm() {
     const match = normalizeEmail(email) === account.email;
     return (
       <>
-        <AuthHeading title="Check your email">
+        <AuthHeading title="Check your email" icon={MailOpen01Icon}>
           If an account uses <strong className="font-semibold text-text-primary">{normalizeEmail(email)}</strong>, a link to reset
           its password is on its way.
         </AuthHeading>

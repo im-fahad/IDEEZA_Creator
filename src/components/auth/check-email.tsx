@@ -6,6 +6,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import { MailOpen01Icon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ideeza/button";
 import { needsSourceQuestion, useAuth, verifyEmail } from "@/lib/account/auth";
 import { AuthHeading, DemoEmail, FIELD_ERROR } from "./auth-parts";
@@ -37,7 +38,7 @@ export function CheckEmail() {
 
   return (
     <>
-      <AuthHeading title="Check your email">
+      <AuthHeading title="Check your email" icon={MailOpen01Icon}>
         We sent a link to <strong className="font-semibold text-text-primary">{account.email}</strong>. Open it to verify your
         email, and you&apos;re in.
       </AuthHeading>
@@ -57,12 +58,12 @@ export function CheckEmail() {
           This browser wouldn&apos;t save that. Check that it allows this site to store data, then try again.
         </p>
       ) : null}
-      <div className="flex flex-col items-center gap-[4px]">
+      <div className="flex flex-wrap items-center gap-x-[4px] gap-y-[2px]">
         <p className="m-0 text-md leading-md text-text-secondary">Didn&apos;t get it?</p>
         <Button hierarchy="ghost" size="md" onClick={() => setResent((n) => n + 1)}>
           Send it again
         </Button>
-        <p aria-live="polite" className="m-0 text-sm leading-sm text-text-tertiary">
+        <p aria-live="polite" className="m-0 basis-full text-sm leading-sm text-text-tertiary">
           {resent ? "Sent again. It's the email above." : ""}
         </p>
       </div>

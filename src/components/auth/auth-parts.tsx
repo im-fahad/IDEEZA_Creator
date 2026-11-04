@@ -6,7 +6,7 @@
 
 import * as React from "react";
 import { ViewIcon, ViewOffIcon } from "@hugeicons/core-free-icons";
-import { Icon } from "@/components/dashboard/icon";
+import { Icon, type IconValue } from "@/components/dashboard/icon";
 import { IdeezaLogo } from "@/components/brand/ideeza-logo";
 import { Badge } from "@/components/ideeza/badge";
 import { IconButton } from "@/components/ideeza/icon-button";
@@ -16,11 +16,22 @@ import { cn } from "@/lib/utils";
 export const FIELD_LABEL = "text-sm font-medium leading-sm text-text-primary";
 export const FIELD_ERROR = "m-0 text-sm leading-sm text-text-error";
 
-export function AuthHeading({ title, children }: { title: string; children?: React.ReactNode }) {
+/** The page's title and one line under it, left-aligned beside the showcase.
+ *  `icon` puts a gradient tile above, for the pages that are a moment (your
+ *  email, the welcome) rather than a form. */
+export function AuthHeading({ title, icon, children }: { title: string; icon?: IconValue; children?: React.ReactNode }) {
   return (
-    <div className="flex flex-col items-center gap-[8px] text-center">
+    <div className="flex flex-col gap-[8px]">
+      {icon ? (
+        <span
+          aria-hidden
+          className="mb-[12px] inline-flex size-[56px] items-center justify-center rounded-[var(--radius-2xl)] bg-[image:var(--gradient-button-ai)] text-[color:var(--color-white)] shadow-depth"
+        >
+          <Icon icon={icon} size={28} />
+        </span>
+      ) : null}
       <h1 className="m-0 text-4xl font-bold leading-4xl tracking-close text-text-primary [text-wrap:balance]">{title}</h1>
-      {children ? <p className="m-0 max-w-[40ch] text-md leading-relaxed text-text-secondary">{children}</p> : null}
+      {children ? <p className="m-0 max-w-[44ch] text-md leading-relaxed text-text-secondary">{children}</p> : null}
     </div>
   );
 }

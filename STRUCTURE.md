@@ -60,8 +60,9 @@ ideeza-creator-panel/
    ├─ components/            UI, grouped by module/area
    │  ├─ app-chrome/         profile dropdown (shared chrome)
    │  ├─ auth/               the demo sign-in's pages (sign up, check email, the one question,
-   │  │                      sign in), the Demo email, AuthGate + useSignOut, Home's SourceNudge
-   │  ├─ dashboard/          sidebar (+ sidebar-account: account / wallet popovers), workspace-prompt (hero), hero-glow (its wash, shared with sign-in), command-palette (⌘K)
+   │  │                      sign in), the showcase beside them, the Demo email, AuthGate +
+   │  │                      useSignOut, Home's SourceNudge
+   │  ├─ dashboard/          sidebar (+ sidebar-account: account / wallet popovers), workspace-prompt (hero), hero-glow (its wash, shared with sign-in), deliverable-icon, command-palette (⌘K)
    │  ├─ credits/            Settings › Plan & pricing (User Panel V2 layouts): pricing-frame (sheet,
    │  │                      breadcrumb, pill tabs), plan-pricing-page, plans-panel, credits-panel,
    │  │                      billing-history, payment-method-panel, plan-banner (+ plan details),

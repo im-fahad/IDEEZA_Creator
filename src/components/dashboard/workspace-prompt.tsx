@@ -14,13 +14,7 @@ import {
   AiMagicIcon,
   ArrowRight01Icon,
   Cancel01Icon,
-  CodeIcon,
-  CpuIcon,
-  CubeIcon,
-  ElectricWireIcon,
-  Layers01Icon,
   FavouriteIcon,
-  PackageIcon,
   MagicWand01Icon,
   Mic01Icon,
   Refresh01Icon,
@@ -32,7 +26,6 @@ import {
   ITEM_KINDS,
   ITEM_LABELS,
   useCreateHistory,
-  type BuildItemKind,
 } from "@/lib/create/history";
 import { CONCEPT_COST, useCredits } from "@/lib/create/credits";
 import {
@@ -52,6 +45,7 @@ import { MintedBadge } from "@/components/newsfeed/minted-badge";
 import { BuildManuallyInfo } from "./build-manually-info";
 import { ProjectInfoModal } from "./project-info-modal";
 import { HeroGlow } from "./hero-glow";
+import { DELIVERABLE_ICON } from "./deliverable-icon";
 import { SourceNudge } from "@/components/auth/source-picker";
 import { Icon, type IconValue } from "./icon";
 
@@ -743,18 +737,6 @@ function Chips({
     </div>
   );
 }
-
-// What a build really delivers — the same five pieces, in the same order and
-// with the same names, as the build's own tabs. This used to promise
-// "Schematic · Parts list · Build steps", which is not what arrives.
-const DELIVERABLE_ICON: Record<BuildItemKind, IconValue> = {
-  "3d": CubeIcon,
-  pcb: CpuIcon,
-  code: CodeIcon,
-  assembly: Layers01Icon,
-  wiring: ElectricWireIcon,
-  parts: PackageIcon,
-};
 
 function WhatYouGet() {
   return (
