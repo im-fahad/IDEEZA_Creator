@@ -353,9 +353,10 @@ export function CreatorCommunity() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={`${ASSETS}/orbit-rings.svg`} alt="" width={413} height={413} className="absolute left-[92.99px] top-[-11.63px] size-[413.294px] max-w-none" />
             </div>
-            {/* Figma 18714:25040 */}
+            {/* Figma 18714:25040 — "12,000+ creators" in Figma; owner 2026-11-04:
+                no count we can't back, so "Worldwide creators". */}
             <p className="absolute left-[22.71px] top-[22.71px] whitespace-nowrap font-display text-3xl font-semibold leading-3xl tracking-slight text-[#fefefe]">
-              12,000+
+              Worldwide
               <br />
               creators
             </p>
