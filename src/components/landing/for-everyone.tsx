@@ -10,13 +10,15 @@
 // The background picture (18532:51823) sits at y=1350 only because it is
 // rotated 90°: it covers y 0…1350 of the frame, at 16% under a 54 blur.
 //
-// A client module only because buttonVariants lives in one (the A01 Button
-// file is "use client"), so a server component cannot call it.
+// A client module: buttonVariants lives in one (the A01 Button file is "use
+// client"), and the buttons go through `useEntry`, so a signed-out visitor
+// reaches Sign up (or Sign in) with the page as `next`, not back here.
 
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ideeza/button";
 import { cn } from "@/lib/utils";
+import { useEntry } from "@/components/auth/use-entry";
 import { LandingSectionHeader } from "./section-header";
 
 type Audience = {
@@ -104,6 +106,7 @@ function AudienceTag({ children }: { children: ReactNode }) {
 }
 
 function AudienceCard({ a }: { a: Audience }) {
+  const { into } = useEntry();
   return (
     // Figma {a.node} — 615 x 782, radius 28, padding 48, clips; no fill. Its
     // GLASS effect is drawn as the lit 1px edge on top (see the last child).
@@ -148,7 +151,7 @@ function AudienceCard({ a }: { a: Audience }) {
           </div>
           {/* Figma 18532:51845 / 18532:51906 — A01 Button, Primary XL, pill. */}
           <Link
-            href={a.cta.href}
+            href={into(a.cta.href)}
             className={cn(
               buttonVariants({ hierarchy: "primary", size: "xl" }),
               "rounded-full",

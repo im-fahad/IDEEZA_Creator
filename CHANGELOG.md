@@ -39,7 +39,7 @@ and its buttons lead through Sign up / Sign in ([CL-002](#cl-002-sign-up-and-sig
 **One domain**
 - [ ] Signed out, `/` (with nothing but `utm_` tags) shows the landing page; any other app page asks you to sign in or sign up and returns you there afterwards.
 - [ ] Top bar: **Log in** → Sign in; **Join Us** → Sign up (keeping the visit's `utm_` tags, so the one question is skipped when they answer it).
-- [ ] **Start Project**, **Start With AI** and the hero prompt bar → Sign up, or Sign in once this browser has an account, carrying where they lead.
+- [ ] **Start Project**, **Start With AI**, the hero prompt bar, and For Everyone's **Start Creating** and **Explore Engineer Mode** → Sign up, or Sign in once this browser has an account, carrying where they lead (Explore Engineer Mode → My Projects). No button leads back to the landing page.
 - [ ] An idea typed in the hero prompt bar arrives in Home's prompt box after sign-up, the code and the one question; an empty send focuses the field.
 - [ ] Footer **Sign In** → Sign in.
 - [ ] Signed in: **Log in** is gone, **Join Us** and the footer link read **Open IDEEZA**, and every way in goes straight to the app.
