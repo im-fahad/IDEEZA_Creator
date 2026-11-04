@@ -103,6 +103,23 @@ From the master page's Main Profile and Main Profile-search and "People · 2026 
 - **Your own**: Share and ⋯ (View as public · Privacy & safety), Add / Change cover, Only you see this (public and private projects, You follow n → the Following sheet with Unfollow and Undo, the locked row), pin up to 3 projects from a card's ⋯, Edit profile; View as public shows what others see (locked: "This profile is locked"); "This creator isn't here" with Go to Feed; "Couldn't load this profile" with Try again.
 - **Edit profile** (`/m/profile/edit`): cover and photo (camera or library, resized on the phone), About you (name, English-letters name, headline with Suggest from my work → AI draft with Use this / Discard, About, location, Open to), Skills (up to 16, top 3 specialties with years, languages), 5 links, social accounts; Save stays off until something changes; errors focus their field; leaving with changes asks Discard changes?; a refused save keeps every field; saved returns with "Profile saved".
 
+## Settings and Sign-in & security (M7)
+
+From "Settings · 2026 update" (ST-01…93) and "Account · 2026 update" (AU-07, AU-33b, AU-40…65), on the web's stores (`lib/settings/`, `lib/account/`); the phone's sign-in security is `lib/account/security.ts`.
+
+- **Settings** (`/m/settings`): Find a setting (the web's search; "Page › Row" opens the page at the row), the account card, Preferences with each page's state as its value, Money (Plan & pricing, Get paid, Balance, Verify your identity), Help, Sign out, the version; bones while the stores are read.
+- **Every page**: toggles save as they change, pick-one sheets on Done with "Saved"; a refused write snaps back with "Couldn't save. Nothing changed." and Try again; offline shows the banner and greys the controls.
+- **Account**: the public profile card (Edit profile), Handle (Copy, Edit with the web's rules, "Handle saved"), Legal name (private), Wallet (Testnet demo; connect, Disconnect after a confirm).
+- **Notifications**: push is the browser's permission (pre-prompt, blocked with steps), How often, quiet hours (Let sales through), keep notices, the seven kinds with Bids to hear about, Muted projects (Unmute with Undo).
+- **Privacy & safety**: View as public, Lock profile, location, search engines, who can message / comment, Take a break; Blocked people (Block someone, Unblock with Undo), Hidden words (× with Undo), Your reports, each with its empty state.
+- **Language & region** (voice, date format, time zone in searchable pickers, Automatic first) and **Appearance & accessibility** (Theme at once, text size, high contrast, reduce motion, units, data saver).
+- **AI & your data**: where data goes, the AI switches, Search history, Blog reuse (Revoke), Download your information (zip with progress), Restore from a backup, Erase IDEEZA from this phone (type ERASE).
+- **Sign-in & security**: Email (change with a code to the new address), Password (change, or Add a password after a code for a provider-only account; Sign out of other devices), Apple · Google · Facebook (connect through a Demo sheet; disconnect after a confirm; never the last way in), Face ID, Your devices (this phone live, a device's sheet, Sign out of all other devices), Delete account.
+- **2-step sign-in**: on with a setup key and an authenticator's 6-digit code (RFC 6238, so a real app works), then 10 backup codes; off with the password. A sign-in on an untrusted phone asks the code first (`/m/two-step`): wrong, five wrong lock it for 5 minutes, a backup code once, Don't ask again on this phone. Open authenticator app is a Demo authenticator (prototype only).
+- **Sign out**: a neutral sheet (offline: Sign out anyway), then Welcome with "Signed out"; the phone forgets Explore first. The Profile hub's Log Out opens the same sheet.
+- **Delete account**: why (optional), what you'll lose (real counts; blocked while a withdrawal or a bid is open), keep a copy (download), confirm with the password (or the provider), deleted in 30 days with live listings down now; signing in before then offers Restore (`/m/restore`, "Account restored"), after it the account is gone.
+- **Shared kit**: "Another phone signed in" (prototype only) adds a Demo device to Your devices.
+
 ## Earn Coin tab (M8)
 
 From the owner's master page (Wallet Balance, Stacking, Refer & Earn, Buy IDEEZA Coin) on the web's IDZ balance, ledger, presale and demo wallet (`lib/wallet/`); staking and referrals are demo logic in `lib/wallet/{staking,referral}.ts`, recorded in the same demo wallet, so every balance agrees.
@@ -127,4 +144,4 @@ From the owner's master page (Wallet Balance, Stacking, Refer & Earn, Buy IDEEZA
 - **Report sheet** (KIT-RB-10…19b): a reason list per target, a 500-character note, Also block; Send report stays off until a reason is picked; Sending…, couldn't send (note kept, Try again), offline (kept until back online), Report sent (and "You blocked … too").
 - **Toasts** (M02): one at a time, 8 px above whatever is at the foot (tab bar, bottom bar or home indicator), 4 s, 6 s with an action; success, error and no-icon leads. "Back online" shows when the connection returns.
 - **States**: list-row bones (KIT-SK-01), empty and error cards (M48 / M49), the offline banner (M01).
-- **Also in the kit**: code cells, a pick-one sheet select (A06 on a phone), the Bottom action bar; links to the account states the demo can't cause, and (prototype only) Sign out until Profile has it.
+- **Also in the kit**: code cells, a pick-one sheet select (A06 on a phone), the Bottom action bar; links to the account states the demo can't cause.
