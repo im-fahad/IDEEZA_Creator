@@ -12,12 +12,12 @@ import { useRouter } from "next/navigation";
 import { MailOpen01Icon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ideeza/button";
 import { discardUnverified, needsSourceQuestion, signedOutHome, useAuth, verifyEmail } from "@/lib/account/auth";
-import { AuthHeading, DemoEmail, FIELD_ERROR } from "./auth-parts";
+import { AuthHeading, DemoEmail, FIELD_ERROR, authHref } from "./auth-parts";
 import { ChangeEmail, DemoCodeStep } from "./demo-code";
 
 export function CheckEmail() {
   const router = useRouter();
-  const { hydrated, accounts, waiting, signedIn } = useAuth();
+  const { hydrated, accounts, waiting, waitingNext, signedIn } = useAuth();
   const [busy, setBusy] = React.useState(false);
   const [refused, setRefused] = React.useState(false);
   const [resent, setResent] = React.useState(0);
@@ -37,18 +37,18 @@ export function CheckEmail() {
       setRefused(true);
       return;
     }
-    router.replace(needsSourceQuestion(waiting) ? "/sign-up/welcome" : "/");
+    router.replace(needsSourceQuestion(waiting) ? authHref("/sign-up/welcome", { next: waitingNext }) : waitingNext || "/");
   };
 
   const changeEmail = () => {
     setBusy(true);
-    const back = new URLSearchParams({ email: waiting.email, first: waiting.firstName, last: waiting.lastName });
+    const back = authHref("/sign-up", { email: waiting.email, first: waiting.firstName, last: waiting.lastName, next: waitingNext });
     if (!discardUnverified().ok) {
       setBusy(false);
       setRefused(true);
       return;
     }
-    router.replace(`/sign-up?${back.toString()}`);
+    router.replace(back);
   };
 
   return (

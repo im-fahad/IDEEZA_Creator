@@ -223,7 +223,26 @@ test("junk in storage reads as no account and no session; duplicate emails keep 
   assert.equal(auth.normalizeSession({ email: "" }), null);
 });
 
-test("the pre-paint gate lets a signed-in visitor through and sends others on, with where they were going", () => {
+test("the front door: signed out, Home's address shows the landing page; any other page asks you in with where you were going", () => {
+  assert.equal(auth.signedOutPath("/", "", []), "/landing");
+  assert.equal(auth.signedOutPath("/", "?utm_source=yt&utm_medium=video", []), "/landing?utm_source=yt&utm_medium=video");
+  assert.equal(auth.signedOutPath("/", "?prompt=a%20lamp", []), "/sign-up?next=%2F%3Fprompt%3Da%2520lamp");
+  assert.equal(auth.signedOutPath("/marketplace", "", []), "/sign-up?next=%2Fmarketplace");
+  assert.equal(auth.signedOutPath("/marketplace", "", [{ email: "a@b.co" }]), "/sign-in?next=%2Fmarketplace");
+});
+
+test("where they were going survives Sign up: kept with the waiting account, safe paths only", async () => {
+  assert.equal(await auth.createAccount(INPUT, "", NOW, "/settings/plan"), "ok");
+  assert.equal(auth.verifyNextOf(JSON.parse(store.get(auth.VERIFY_KEY))), "/settings/plan");
+  store.clear();
+  await auth.createAccount(INPUT, "", NOW, "//evil.example");
+  assert.equal(auth.verifyNextOf(JSON.parse(store.get(auth.VERIFY_KEY))), "");
+  store.delete(auth.VERIFY_KEY);
+  assert.equal(await auth.signIn("rafiq@example.com", PW, NOW, "/marketplace"), "unverified");
+  assert.equal(auth.verifyNextOf(JSON.parse(store.get(auth.VERIFY_KEY))), "/marketplace");
+});
+
+test("the pre-paint gate lets a signed-in visitor through and sends others on, as signedOutPath does", () => {
   const run = (path, search = "") => {
     let went = null;
     const html = { style: {} };
@@ -231,14 +250,17 @@ test("the pre-paint gate lets a signed-in visitor through and sends others on, w
     fn({ pathname: path, search, replace: (u) => (went = u) }, globalThis.localStorage, { documentElement: html });
     return went;
   };
-  assert.equal(run("/projects", "?utm_source=yt"), "/sign-up?utm_source=yt");
+  for (const [path, search] of [["/", ""], ["/", "?utm_source=yt"], ["/", "?prompt=x"], ["/projects", "?tab=draft"], ["/marketplace", ""]]) {
+    assert.equal(run(path, search), auth.signedOutPath(path, search, []), `${path}${search}, no account`);
+  }
   assert.equal(run("/sign-up"), null);
   assert.equal(run("/landing"), null);
   store.set(auth.ACCOUNTS_KEY, JSON.stringify([{ email: "a@b.co", verifiedAt: NOW }]));
   assert.equal(run("/projects", "?tab=draft"), "/sign-in?next=%2Fprojects%3Ftab%3Ddraft");
-  assert.equal(run("/"), "/sign-in");
+  assert.equal(run("/"), "/landing");
   store.set(auth.SESSION_KEY, JSON.stringify({ v: 1, email: "A@B.co", at: NOW }));
   assert.equal(run("/projects"), null);
+  assert.equal(run("/"), null);
   store.set(auth.ACCOUNTS_KEY, JSON.stringify([{ email: "a@b.co", verifiedAt: null }]));
   assert.equal(run("/projects"), "/sign-in?next=%2Fprojects");
 });

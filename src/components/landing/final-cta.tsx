@@ -14,6 +14,7 @@
 import Link from "next/link";
 import { LandingSectionHeader } from "@/components/landing/section-header";
 import { buttonVariants } from "@/components/ideeza/button";
+import { useEntry } from "@/components/auth/use-entry";
 import { cn } from "@/lib/utils";
 import { LANDING_SECONDARY } from "@/components/landing/buttons";
 
@@ -55,6 +56,7 @@ const CURSORS: { node: string; name: string; icon: string; box: string; tag: str
 
 
 export function FinalCta() {
+  const { into } = useEntry();
   return (
     <section
       aria-labelledby="final-cta-title"
@@ -117,7 +119,7 @@ export function FinalCta() {
           {/* Figma 18532:54013 — two A01 XL pills (gap 16). */}
           <div className="flex flex-wrap items-center justify-center gap-8">
             {/* Figma 18532:54014 — A01 AI */}
-            <Link href="/" className={cn(buttonVariants({ hierarchy: "ai", size: "xl" }), "rounded-full")}>
+            <Link href={into()} className={cn(buttonVariants({ hierarchy: "ai", size: "xl" }), "rounded-full")}>
               Start With AI
             </Link>
             {/* Figma 18532:54015 — A01 secondary; Figma draws it with a #dfd4fe line, the page wears one secondary look (owner 2026-11-04). */}

@@ -21,7 +21,8 @@
 // shadows), fitted from the Figma render.
 //
 // Both prompt bars are real: typing an idea and pressing Enter or the button
-// opens the app Home with the idea filled in (/?prompt=…); an empty submit
+// opens the app Home with the idea filled in (/?prompt=…) — signed out, by way
+// of Sign up or Sign in, which then carry on to it (useEntry); an empty submit
 // only puts the cursor in the field.
 
 import * as React from "react";
@@ -29,6 +30,7 @@ import { useRouter } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { AiMagicIcon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ideeza/button";
+import { useEntry } from "@/components/auth/use-entry";
 import { cn } from "@/lib/utils";
 
 const ASSET = "/landing/hero/";
@@ -37,6 +39,7 @@ const PLACEHOLDER = "Describe your hardware idea...";
 /** Sends a typed idea to the app Home; an empty submit focuses the field instead. */
 function usePromptSubmit() {
   const router = useRouter();
+  const { into } = useEntry();
   const inputRef = React.useRef<HTMLInputElement>(null);
   const onSubmit = React.useCallback(
     (event: React.FormEvent<HTMLFormElement>) => {
@@ -46,9 +49,9 @@ function usePromptSubmit() {
         inputRef.current?.focus();
         return;
       }
-      router.push(`/?prompt=${encodeURIComponent(idea)}`);
+      router.push(into(`/?prompt=${encodeURIComponent(idea)}`));
     },
-    [router],
+    [router, into],
   );
   return { inputRef, onSubmit };
 }

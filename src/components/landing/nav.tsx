@@ -5,8 +5,13 @@
 // it scrolls, blurred like the frame's 32px background blur.
 //
 // Where a link has no page in the app yet (Airdrop, I'm Manufacturer, About
-// Us, Join Us) it is shown as in Figma but greyed for the pointer and named
-// "Coming soon", rather than leading to a 404.
+// Us) it is shown as in Figma but greyed for the pointer and named "Coming
+// soon", rather than leading to a 404.
+//
+// The way in (owner 2026-11-04: one domain, website and platform together;
+// useEntry): signed out, Log in → Sign in, Join Us → Sign up, Start Project →
+// Sign up (Sign in once this browser has an account), each going on into the
+// app; signed in, Log in goes and Join Us reads Open IDEEZA, straight to Home.
 
 import * as React from "react";
 import Link from "next/link";
@@ -14,6 +19,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowDown01Icon, Menu01Icon, Cancel01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
 import { buttonVariants } from "@/components/ideeza/button";
 import { LANDING_SECONDARY } from "@/components/landing/buttons";
+import { useEntry } from "@/components/auth/use-entry";
 import { cn } from "@/lib/utils";
 
 type NavLink = { label: string; href?: string };
@@ -149,6 +155,8 @@ const START = LANDING_SECONDARY;
 
 export function LandingNav() {
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const { signedIn, into, signInHref, signUpHref } = useEntry();
+  const join = signedIn ? { label: "Open IDEEZA", href: "/" } : { label: "Join Us", href: signUpHref };
 
   return (
     <header className="fixed inset-x-0 top-0 z-sticky backdrop-blur-[32px]">
@@ -174,17 +182,17 @@ export function LandingNav() {
             <LanguageMenu />
           </div>
           <div className="hidden items-center gap-6 sm:flex">
-            <Link href="/" className={cn(buttonVariants({ hierarchy: "secondary", size: "2xl" }), START)}>
+            {!signedIn ? (
+              <Link href={signInHref} className={ITEM}>
+                Log in
+              </Link>
+            ) : null}
+            <Link href={into()} className={cn(buttonVariants({ hierarchy: "secondary", size: "2xl" }), START)}>
               Start Project
             </Link>
-            <span
-              role="link"
-              aria-disabled="true"
-              title="Coming soon"
-              className={cn(buttonVariants({ hierarchy: "primary", size: "2xl" }), "cursor-default rounded-full")}
-            >
-              Join Us
-            </span>
+            <Link href={join.href} className={cn(buttonVariants({ hierarchy: "primary", size: "2xl" }), "rounded-full")}>
+              {join.label}
+            </Link>
           </div>
           <button
             type="button"
@@ -204,19 +212,15 @@ export function LandingNav() {
             {[...LINKS, ...RESOURCES].map((l) => (
               <NavItem key={l.label} link={l} className="justify-start" />
             ))}
+            {!signedIn ? <NavItem link={{ label: "Log in", href: signInHref }} className="justify-start sm:hidden" /> : null}
           </div>
           <div className="flex gap-6 sm:hidden">
-            <Link href="/" className={cn(buttonVariants({ hierarchy: "secondary", size: "2xl" }), START, "flex-1")}>
+            <Link href={into()} className={cn(buttonVariants({ hierarchy: "secondary", size: "2xl" }), START, "flex-1")}>
               Start Project
             </Link>
-            <span
-              role="link"
-              aria-disabled="true"
-              title="Coming soon"
-              className={cn(buttonVariants({ hierarchy: "primary", size: "2xl" }), "flex-1 cursor-default rounded-full")}
-            >
-              Join Us
-            </span>
+            <Link href={join.href} className={cn(buttonVariants({ hierarchy: "primary", size: "2xl" }), "flex-1 rounded-full")}>
+              {join.label}
+            </Link>
           </div>
         </div>
       ) : null}

@@ -13,6 +13,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useEntry } from "@/components/auth/use-entry";
 import { cn } from "@/lib/utils";
 
 const ASSET = "/landing/footer";
@@ -46,7 +47,7 @@ const COLUMNS: { title: string; node: string; width: string; links: FooterLink[]
       { label: "Pricing", href: "/settings/plan" },
       { label: "Mobile App", href: "#mobile-app" },
       { label: "Success Story" },
-      { label: "Sign In" },
+      { label: "Sign In", href: "/sign-in" },
     ],
   },
   {
@@ -209,6 +210,7 @@ function Newsletter() {
 }
 
 export function LandingFooter() {
+  const { signedIn } = useEntry();
   return (
     // Figma 18590:19178
     <footer className="relative overflow-hidden bg-[var(--color-bg-page)]">
@@ -231,7 +233,7 @@ export function LandingFooter() {
                     </h2>
                     <div className="flex flex-col gap-8">
                       {col.links.map((link) => (
-                        <FooterItem key={link.label} link={link} />
+                        <FooterItem key={link.label} link={link.label === "Sign In" && signedIn ? { label: "Open IDEEZA", href: "/" } : link} />
                       ))}
                     </div>
                   </div>
