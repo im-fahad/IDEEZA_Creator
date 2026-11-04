@@ -79,6 +79,17 @@ From "People · 2026 update" (MS-01…51) and the Shared kit's message frames, o
 - **Team thread**: "Name · Role" with avatars, the Members sheet (Open Team), team ⋯; a deleted project replaces the composer with "This project was deleted."
 - **Attachments**: photos open the viewer (n of N, ← →, Save photo), PDFs the phone's preview, shared projects as cards. **Starting** (`/m/messages/new`): the existing thread, or a draft the first Send creates, or one card saying why it can't start.
 
+## Profile tab and creator profiles (M7)
+
+From the master page's Main Profile and Main Profile-search and "People · 2026 update" (PR-02…45), on the web's profile (`lib/people/*`, `components/profile/*` hooks); the phone's own words and addresses are `lib/people/phone-profile.ts`.
+
+- **Profile hub** (`/m/profile`): Settings and Search in the top bar; your card opens your profile; Wallet with your $IDZ (Testnet demo; "Not connected" while the demo wallet is off), Refer and Earn, Projects, Saved Items; Settings opens in place on General · Payments · $IDZ Pay · Security · Help and Support · Others; Log Out asks "Sign out of IDEEZA?", then Welcome says "Signed out". No Friends (D-1).
+- **Profile search** (`/m/profile/search`): creators and videos as you type; recent searches on this phone (apart from Global Search's), See all past five, ⋮ → Delete; a no-results line.
+- **A creator's profile** (`/m/creators/<handle>`, `me` is yours): cover and photo, name (Demo creator on samples), headline, where · local time · since when, the tie only you see, Open to, the four counts from shared work, About with Show more, More about (skills, specialties, languages, links, social), then Projects · Activity (the featured project card with Appreciate, Comments, Views and Save on the Feed's stores; More projects; activity rows open the project).
+- **Someone else's**: Follow / Following (Unfollowed with Undo) and Message (a conversation about a subject you share, else off with the web's reason); ⋯ Share profile · Report profile (Also block) · Block (confirm, toast with Undo); blocked shows Unblock and no bar; offline turns Follow and Message off with the reason.
+- **Your own**: Share and ⋯ (View as public · Privacy & safety), Add / Change cover, Only you see this (public and private projects, You follow n → the Following sheet with Unfollow and Undo, the locked row), pin up to 3 projects from a card's ⋯, Edit profile; View as public shows what others see (locked: "This profile is locked"); "This creator isn't here" with Go to Feed; "Couldn't load this profile" with Try again.
+- **Edit profile** (`/m/profile/edit`): cover and photo (camera or library, resized on the phone), About you (name, English-letters name, headline with Suggest from my work → AI draft with Use this / Discard, About, location, Open to), Skills (up to 16, top 3 specialties with years, languages), 5 links, social accounts; Save stays off until something changes; errors focus their field; leaving with changes asks Discard changes?; a refused save keeps every field; saved returns with "Profile saved".
+
 ## Earn Coin tab (M8)
 
 From the owner's master page (Wallet Balance, Stacking, Refer & Earn, Buy IDEEZA Coin) on the web's IDZ balance, ledger, presale and demo wallet (`lib/wallet/`); staking and referrals are demo logic in `lib/wallet/{staking,referral}.ts`, recorded in the same demo wallet, so every balance agrees.
