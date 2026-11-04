@@ -6,7 +6,7 @@ to build and how to check it is done, and links to its Jira ticket.
 
 | CL | Change | In the prototype | Jira | Production |
 | --- | --- | --- | --- | --- |
-| [CL-005](#cl-005-each-account-has-its-own-work-a-new-account-starts-fresh) | Each account has its own work; a new account starts fresh | 4 Nov 2026 | [PR-9010](https://ideeza.atlassian.net/browse/PR-9010) | To do |
+| [CL-005](#cl-005-each-account-has-its-own-work-a-new-account-starts-fresh) | Each account has its own work; a new account starts fresh | 4 Nov 2026 | None: prototype only | Nothing to build |
 | [CL-004](#cl-004-welcome-offer-50-off-the-first-payment-for-12-hours) | Welcome offer: 50% off the first payment, for 12 hours | 4 Nov 2026 | [PR-9013](https://ideeza.atlassian.net/browse/PR-9013) | To do |
 | [CL-003](#cl-003-landing-page-the-way-into-ideeza) | Landing page, the way into IDEEZA | 4 Nov 2026 | [PR-9009](https://ideeza.atlassian.net/browse/PR-9009) | To do |
 | [CL-002](#cl-002-sign-up-and-sign-in) | Sign up and sign in | 4 Nov 2026 | [PR-9011](https://ideeza.atlassian.net/browse/PR-9011) | To do |
@@ -18,6 +18,11 @@ Up and Sign In** (everything before the Creator Panel) and
 [PR-9008](https://ideeza.atlassian.net/browse/PR-9008) **Creator Panel**
 (everything after signing in). A new entry gets its Story once its release is
 approved.
+
+Some changes exist only because the prototype keeps everything in the browser
+(demo emails, demo accounts, demo data). They are marked **Prototype only**,
+get no Jira ticket and have nothing to build; a line inside an entry that is a
+demo stand-in says so.
 
 <!--
 How to add an entry: write it in the same merge that brings a change to main,
@@ -33,29 +38,12 @@ docs/changelog/ as <date>-<short-name>-before.png / -after.png.
 
 ## CL-005 Each account has its own work; a new account starts fresh
 
-**In the prototype:** 4 November 2026 · **Jira:** [PR-9010](https://ideeza.atlassian.net/browse/PR-9010) · **Production:** To do
+**In the prototype:** 4 November 2026 · **Jira:** none · **Production:** Nothing to build
 
-**Screen:** Sign out (the sidebar's account menu, the editor's account menu,
-Settings › Account › Sign-in and security), Sign up, Sign in, Forgot password,
-and every page that shows your work.
-
-> In the prototype every account lives in the same browser, so signing out sets
-> that account's work aside in the browser and signing in brings it back.
-> Production keeps each account's work on the server, so you simply see only
-> your own, on any device.
-
-### What to build
-
-- [ ] Everything you make or own belongs to your account: projects and their files, AI chats and builds, AI credits, plan, orders and invoices, wallet and IDZ, your profile (name, photo, cover, links), messages, settings, the tour and tutorials progress, notifications and drafts.
-- [ ] A new account starts empty: no projects, chats or builds; the starting AI credits (*You have 18 free credits to start*); the starting wallet; the Free plan; its own name on its profile (from Sign up); the Welcome, the tour and the welcome offer ([CL-004](#cl-004-welcome-offer-50-off-the-first-payment-for-12-hours)).
-- [ ] Signing out and back in shows exactly what you left, and nothing of another account that used the same browser or device.
-- [ ] Signed in as one account, no page ever shows another account's work.
-- [ ] Forgot password → a new password signs you in with your own work.
-- [ ] The welcome offer is per account: each new account gets its own 12 hours.
-
-### Design
-
-No new screens: the existing pages, filled with the signed-in account's own work.
+> **Prototype only.** The prototype keeps every account in one browser, so
+> signing out sets that account's work aside and signing in brings it back; a
+> new account starts empty. A real backend gives every account its own data
+> already, so there is nothing to build here (product owner, 4 Nov 2026).
 
 ### Before → After
 
@@ -158,7 +146,7 @@ and its buttons lead through Sign up / Sign in ([CL-002](#cl-002-sign-up-and-sig
 - [ ] **The Ecosystem:** six stacked cards (AI Engine · Manufacturing Network · Creator Feed · Digital Ownership · Marketplace · $IDZ Token); a click or the arrow keys bring the next to the front; still with reduced motion.
 - [ ] **Mobile Application:** *Coming soon to iOS and Android*; both store badges say *(coming soon)*.
 - [ ] **Final call:** *The Next Hardware Product Could Be Yours.* with **Start With AI** and **Explore Projects**.
-- [ ] **Footer:** Company · Product · Legal · Support columns, **Newsletter** (checks the address, then says *Newsletter sign-up isn't open yet, so your email wasn't saved.*), © line.
+- [ ] **Footer:** Company · Product · Legal · Support columns, **Newsletter** (checks the address, then says *Newsletter sign-up isn't open yet, so your email wasn't saved.* — prototype only: production subscribes the address), © line.
 - [ ] Links with no page yet (Airdrop, I'm Manufacturer, About Us, store badges, social and most footer links) show *Coming soon* and lead nowhere, never to a 404.
 
 **Honesty rules (owner, 4 Nov 2026)**
@@ -244,7 +232,7 @@ Part 1, without the waitlist (owner, 4 Nov 2026).
 - [ ] A wrong email or password always gives one message: *That email and password don't match.*
 - [ ] An account whose email isn't verified yet goes to Check your email.
 - [ ] Under the button: *New to IDEEZA?* **Create an account** (it carries the email).
-- [ ] After signing out, a green note on top: **You've signed out** — *Your account and your work are saved in this browser.*
+- [ ] After signing out, a green note on top: **You've signed out** — *Your account and your work are saved in this browser.* (the second line is prototype only)
 
 **Forgot password**
 - [ ] **Reset your password** — *Enter your account's email and we'll send you a link to set a new one.* — **Send link**.
@@ -254,7 +242,7 @@ Part 1, without the waitlist (owner, 4 Nov 2026).
 
 **Sign out**
 - [ ] **Sign out** works in the sidebar's account menu, the editors' account menu and Settings › Account › **Sign-in and security** (which shows *Signed in as* the email, **Download your information** and **Sign out**).
-- [ ] Signing out keeps the account and the work; signing in again finds everything.
+- [ ] Signing out keeps the account and the work; signing in again finds everything. (prototype only: a real backend does this already)
 
 **The 3D stage (left of the form)**
 - [ ] From 1024 px wide: a dark violet stage fills the left of the window and stays put while the form scrolls; the form sits on the right.
@@ -265,7 +253,7 @@ Part 1, without the waitlist (owner, 4 Nov 2026).
 
 ### Design
 
-- Design system components only: Text Input (XL, the eye as its action), Select Menu (date of birth), Checkbox, Button (the **AI** gradient for every main action, Ghost for secondary ones, Secondary), Tag (Home card choices), Badge (warning, "Demo"), Banner (good, "You've signed out"), Hugeicons through the app's icon component.
+- Design system components only: Text Input (XL, the eye as its action), Select Menu (date of birth), Checkbox, Button (the **AI** gradient for every main action, Ghost for secondary ones, Secondary), Tag (Home card choices), Badge (warning, "Demo"; prototype only), Banner (good, "You've signed out"), Hugeicons through the app's icon component.
 - Tokens: brand violet and blue (the AI button gradient on buttons and the icon tiles), success / warning / error inks for the rules and the code; radius 2xl–3xl; title 4xl, body md, labels sm; the stage's colours are the violet, blue and gray scales; motion 200 ms.
 - Light and dark mode; the stage is dark in both.
 
