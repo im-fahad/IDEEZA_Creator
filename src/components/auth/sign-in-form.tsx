@@ -27,7 +27,7 @@ import {
   signIn,
   useAuth,
 } from "@/lib/account/auth";
-import { AuthHeading, DemoEmail, FIELD_ERROR, Field, NewPasswordField, PasswordInput, errorProps, useFieldIds } from "./auth-parts";
+import { AuthHeading, DemoEmail, FIELD_ERROR, Field, NewPasswordField, PasswordInput, authHref, errorProps, useFieldIds } from "./auth-parts";
 import { ChangeEmail, DemoCodeStep } from "./demo-code";
 
 type Mode = "sign-in" | "forgot" | "sent" | "code" | "new";
@@ -72,7 +72,7 @@ export function SignInForm() {
   };
 
   const clean = normalizeEmail(email);
-  const withEmail = (path: string) => (isEmail(email) ? `${path}?email=${encodeURIComponent(clean)}` : path);
+  const withEmail = (path: string) => authHref(path, { email: isEmail(email) ? clean : "", next: arrived.next });
   const emailError = shown && !isEmail(email) ? (email.trim() ? "Enter an email like name@example.com." : "Enter your email.") : undefined;
 
   const submitSignIn = async (e: React.FormEvent) => {
@@ -82,7 +82,7 @@ export function SignInForm() {
     if (!isEmail(email)) return document.getElementById(ids.email.id)?.focus();
     if (!password) return document.getElementById(ids.password.id)?.focus();
     setBusy(true);
-    const result = await signIn(email, password, Date.now());
+    const result = await signIn(email, password, Date.now(), arrived.next);
     if (result === "ok") return router.replace(arrived.next || "/");
     setBusy(false);
     if (result === "unverified") return router.push("/sign-up/check-email");
