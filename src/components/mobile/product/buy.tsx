@@ -256,7 +256,7 @@ function CopyCard({
                 key={t}
                 className={cn(
                   "relative flex min-h-[44px] cursor-pointer items-start gap-4 rounded-md border-[length:var(--border-width-1)] border-solid px-6 py-4",
-                  on ? "border-border-brand bg-bg-brand-subtle" : "border-border-default bg-bg-surface",
+                  on ? "border-border-brand bg-bg-brand-subtle" : "border-border bg-bg-surface",
                 )}
               >
                 <input type="radio" name={`tier-${track.id}`} className="sr-only" checked={on} onChange={() => onTier(t)} />

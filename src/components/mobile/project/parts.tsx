@@ -57,7 +57,7 @@ export function SectionHeading({
 }
 
 export const LIST_CARD =
-  "flex shrink-0 flex-col overflow-hidden rounded-xl border-[length:var(--border-width-1)] border-solid border-border-default bg-bg-surface";
+  "flex shrink-0 flex-col overflow-hidden rounded-xl border-[length:var(--border-width-1)] border-solid border-border bg-bg-surface";
 /** A row inside a ListCard: the line under every row but the last. */
 export const LIST_ROW = "border-b-[length:var(--border-width-1)] border-solid border-border-subtle last:border-b-0";
 

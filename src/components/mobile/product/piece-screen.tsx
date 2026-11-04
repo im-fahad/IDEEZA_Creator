@@ -251,7 +251,7 @@ function Zoomable({ label, children }: { label: string; children: React.ReactNod
       }}
       onPointerCancel={(e) => pointers.current.delete(e.pointerId)}
       onDoubleClick={() => setScale((s) => (s > 1 ? 1 : 2))}
-      className="max-h-[420px] touch-pan-x touch-pan-y overflow-auto rounded-xl border-[length:var(--border-width-1)] border-solid border-border-default outline-none focus-visible:ring-2 focus-visible:ring-border-focus"
+      className="max-h-[420px] touch-pan-x touch-pan-y overflow-auto rounded-xl border-[length:var(--border-width-1)] border-solid border-border outline-none focus-visible:ring-2 focus-visible:ring-border-focus"
     >
       <div style={{ width: `${scale * 100}%` }}>{children}</div>
     </div>
@@ -270,7 +270,7 @@ function PinTable({ bp }: { bp: BuildProduct }) {
       <h2 id="pc-pins" className="text-lg font-semibold leading-lg text-text-primary">
         Pin to pin
       </h2>
-      <div className="overflow-x-auto rounded-xl border-[length:var(--border-width-1)] border-solid border-border-default">
+      <div className="overflow-x-auto rounded-xl border-[length:var(--border-width-1)] border-solid border-border">
         <table className="w-full min-w-[420px] border-collapse text-left">
           <thead>
             <tr className="bg-bg-subtle">
@@ -300,8 +300,8 @@ function CodeView({ bp }: { bp: BuildProduct }) {
   const fw = firmwareFor(bp);
   return (
     <div className="flex flex-col gap-3">
-      <div role="region" aria-label="Firmware code, scrollable" tabIndex={0} className="overflow-hidden rounded-xl border-[length:var(--border-width-1)] border-solid border-border-default outline-none focus-visible:ring-2 focus-visible:ring-border-focus">
-        <div className="flex items-center justify-between gap-4 border-b-[length:var(--border-width-1)] border-solid border-border-default bg-bg-subtle px-6 py-4">
+      <div role="region" aria-label="Firmware code, scrollable" tabIndex={0} className="overflow-hidden rounded-xl border-[length:var(--border-width-1)] border-solid border-border outline-none focus-visible:ring-2 focus-visible:ring-border-focus">
+        <div className="flex items-center justify-between gap-4 border-b-[length:var(--border-width-1)] border-solid border-border bg-bg-subtle px-6 py-4">
           <span className="truncate font-mono text-sm leading-sm text-text-primary">{fw.filename}</span>
           <span className="shrink-0 text-sm leading-sm text-text-secondary">{fw.lines.length} lines</span>
         </div>
@@ -340,7 +340,7 @@ function PartsTable({ bp }: { bp: BuildProduct }) {
   ];
   return (
     <div className="flex flex-col gap-8">
-      <div role="region" aria-label="Parts list, scrollable" tabIndex={0} className="overflow-x-auto rounded-xl border-[length:var(--border-width-1)] border-solid border-border-default outline-none focus-visible:ring-2 focus-visible:ring-border-focus">
+      <div role="region" aria-label="Parts list, scrollable" tabIndex={0} className="overflow-x-auto rounded-xl border-[length:var(--border-width-1)] border-solid border-border outline-none focus-visible:ring-2 focus-visible:ring-border-focus">
         <table className="w-full border-collapse text-left">
           <thead>
             <tr className="bg-bg-subtle">
@@ -424,7 +424,7 @@ function SamplePiece({ projectId, product, kind }: { projectId: string; product:
       <div className="flex flex-col gap-8 px-8 pb-12">
         <p className="text-sm leading-sm text-text-secondary">{product.name} · files come with a copy</p>
         {kind === "parts" ? (
-          <div role="region" aria-label="Parts list, scrollable" tabIndex={0} className="overflow-x-auto rounded-xl border-[length:var(--border-width-1)] border-solid border-border-default">
+          <div role="region" aria-label="Parts list, scrollable" tabIndex={0} className="overflow-x-auto rounded-xl border-[length:var(--border-width-1)] border-solid border-border">
             <table className="w-full min-w-[360px] border-collapse text-left">
               <thead>
                 <tr className="bg-bg-subtle">

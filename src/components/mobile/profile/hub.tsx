@@ -38,7 +38,7 @@ import { useMyProfile } from "@/lib/people/profile-store";
 import { idzCompactOf } from "@/lib/wallet/idz";
 import { Screen } from "../screen";
 import { TopBar } from "../top-bar";
-import { LogOutSheet } from "./log-out-sheet";
+import { SignOutSheet } from "../settings/sign-out";
 
 const ROW =
   "flex h-[44px] w-full items-center gap-8 rounded-md bg-bg-surface px-6 text-left outline-none transition-colors duration-fast hover:bg-bg-subtle focus-visible:ring-2 focus-visible:ring-border-focus";
@@ -172,7 +172,7 @@ export function ProfileHub() {
           </Button>
         </div>
       </div>
-      <LogOutSheet open={signOut} onClose={() => setSignOut(false)} />
+      <SignOutSheet open={signOut} onClose={() => setSignOut(false)} />
     </Screen>
   );
 }

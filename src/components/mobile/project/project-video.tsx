@@ -240,7 +240,7 @@ function ProjectVideo({
     body = (
       <div className="flex flex-col gap-6">
         <p className="text-sm leading-sm text-text-secondary">{project.name} · made from your product videos</p>
-        <div aria-hidden className="flex h-[28px] overflow-hidden rounded-md border-[length:var(--border-width-1)] border-solid border-border-default text-xs leading-xs">
+        <div aria-hidden className="flex h-[28px] overflow-hidden rounded-md border-[length:var(--border-width-1)] border-solid border-border text-xs leading-xs">
           <span className="flex items-center justify-center bg-bg-brand-subtle px-2 text-text-brand" style={{ flexGrow: INTRO_MS }}>
             Intro
           </span>
@@ -304,7 +304,7 @@ function ProjectVideo({
                 key={q}
                 className={cn(
                   "relative flex items-start gap-6 rounded-xl border-[length:var(--border-width-1)] border-solid p-6",
-                  on ? "border-border-brand bg-bg-brand-subtle" : "border-border-default",
+                  on ? "border-border-brand bg-bg-brand-subtle" : "border-border",
                   off ? "cursor-not-allowed" : "cursor-pointer",
                 )}
               >

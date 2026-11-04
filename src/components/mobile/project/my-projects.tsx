@@ -136,7 +136,7 @@ export function MyProjectsScreen() {
         </div>
       ) : (
         <>
-          <div role="tablist" aria-label="Projects" className="flex overflow-x-auto border-b-[length:var(--border-width-1)] border-solid border-border-default px-4 [scrollbar-width:none]">
+          <div role="tablist" aria-label="Projects" className="flex overflow-x-auto border-b-[length:var(--border-width-1)] border-solid border-border px-4 [scrollbar-width:none]">
             {LIST_TABS.map((t) => {
               const on = view.tab === t.id;
               return (
@@ -187,7 +187,7 @@ export function MyProjectsScreen() {
             {!result ? (
               <ul aria-label="Loading" className="flex flex-col gap-6">
                 {[0, 1, 2].map((i) => (
-                  <li key={i} className="flex flex-col gap-4 rounded-xl border-[length:var(--border-width-1)] border-solid border-border-default p-4">
+                  <li key={i} className="flex flex-col gap-4 rounded-xl border-[length:var(--border-width-1)] border-solid border-border p-4">
                     <Skeleton shape="block" className="aspect-[16/10] h-auto w-full" />
                     <Skeleton shape="text" size="lg" />
                     <Skeleton shape="text" size="md" />
@@ -268,7 +268,7 @@ function ProjectCard({ summary, via, now }: { summary: ProjectSummary; via?: str
   return (
     <Link
       href={phoneProjectHref(summary.id)}
-      className="flex flex-col gap-4 overflow-hidden rounded-xl border-[length:var(--border-width-1)] border-solid border-border-default bg-bg-surface p-4 outline-none transition-colors duration-fast hover:border-border-strong focus-visible:ring-2 focus-visible:ring-border-focus"
+      className="flex flex-col gap-4 overflow-hidden rounded-xl border-[length:var(--border-width-1)] border-solid border-border bg-bg-surface p-4 outline-none transition-colors duration-fast hover:border-border-strong focus-visible:ring-2 focus-visible:ring-border-focus"
     >
       <span className="relative block aspect-[16/10] w-full overflow-hidden rounded-md bg-bg-surface-raised">
         {summary.cover && !failed ? (

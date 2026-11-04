@@ -117,7 +117,7 @@ export function ModelView({ assembly, label }: { assembly: Assembly; label: stri
         role="region"
         aria-label={label}
         className={cn(
-          "relative overflow-hidden border-[length:var(--border-width-1)] border-solid border-border-default bg-bg-subtle",
+          "relative overflow-hidden border-[length:var(--border-width-1)] border-solid border-border bg-bg-subtle",
           fullscreen ? "fixed inset-0 z-sheet rounded-none" : "h-[300px] w-full rounded-xl",
         )}
       >
@@ -201,7 +201,7 @@ export function ModelView({ assembly, label }: { assembly: Assembly; label: stri
 
       {!loading && !failed && !allHidden && !view.isolatedId && (
         <>
-          <div className="flex items-center gap-6 rounded-xl border-[length:var(--border-width-1)] border-solid border-border-default bg-bg-surface px-6 py-2">
+          <div className="flex items-center gap-6 rounded-xl border-[length:var(--border-width-1)] border-solid border-border bg-bg-surface px-6 py-2">
             <span id="m-explode" className="text-sm font-medium leading-sm text-text-secondary">
               Explode
             </span>

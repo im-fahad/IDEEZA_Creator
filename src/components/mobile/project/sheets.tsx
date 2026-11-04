@@ -489,7 +489,7 @@ function ReadinessRows({ readiness }: { readiness: ReturnType<typeof useLiveRead
       {pv && pvCopy && (
         <>
           <h3 className="text-md font-medium leading-md text-text-primary">Project video</h3>
-          <div className="flex items-start gap-6 rounded-xl border-[length:var(--border-width-1)] border-dashed border-border-default p-6">
+          <div className="flex items-start gap-6 rounded-xl border-[length:var(--border-width-1)] border-dashed border-border p-6">
             <span aria-hidden className="mt-1 text-[color:var(--color-icon-secondary)]">
               <Icon icon={LockIcon} size={16} />
             </span>
@@ -633,7 +633,7 @@ function PublishSheet({ open, onClose, onSheet }: { open: boolean; onClose: () =
               key={it.id}
               className={cn(
                 "relative flex cursor-pointer items-start gap-6 rounded-xl border-[length:var(--border-width-1)] border-solid p-6",
-                on ? "border-border-brand bg-bg-brand-subtle" : "border-border-default",
+                on ? "border-border-brand bg-bg-brand-subtle" : "border-border",
               )}
             >
               <input type="radio" name="m-publish" className="sr-only" checked={on} onChange={() => setPick(it.id as PublishIntent)} />

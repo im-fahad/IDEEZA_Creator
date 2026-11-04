@@ -442,7 +442,7 @@ export function TabRow({ tabs, tab, onChange }: { tabs: readonly { id: ProductTa
     refs.current.get(next.id)?.focus();
   };
   return (
-    <div role="tablist" aria-label="Product" className="flex border-b-[length:var(--border-width-1)] border-solid border-border-default">
+    <div role="tablist" aria-label="Product" className="flex border-b-[length:var(--border-width-1)] border-solid border-border">
       {tabs.map((t, i) => {
         const on = t.id === tab;
         return (

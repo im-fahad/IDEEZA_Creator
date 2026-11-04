@@ -398,7 +398,7 @@ function ActivityForm({
             onClick={() => fileRef.current?.click()}
             className={cn(
               "flex flex-col items-center gap-2 rounded-xl border-[length:var(--border-width-1-5)] border-dashed px-8 py-8 text-center outline-none focus-visible:ring-2 focus-visible:ring-border-focus",
-              mediaError ? "border-[var(--color-input-border-error)]" : "border-border-default",
+              mediaError ? "border-[var(--color-input-border-error)]" : "border-border",
             )}
           >
             <Icon icon={CloudUploadIcon} size={24} className="text-[color:var(--color-icon-default)]" />
@@ -419,7 +419,7 @@ function ActivityForm({
               {files.map((f) => {
                 const lastProof = mode === "edit" && files.filter((x) => x.status !== "error").length <= 1 && f.status !== "error";
                 return (
-                  <li key={f.id} className="flex items-center gap-6 rounded-xl border-[length:var(--border-width-1)] border-solid border-border-default p-4">
+                  <li key={f.id} className="flex items-center gap-6 rounded-xl border-[length:var(--border-width-1)] border-solid border-border p-4">
                     <span className="relative flex size-[40px] shrink-0 items-center justify-center overflow-hidden rounded-md bg-bg-surface-raised text-[color:var(--color-icon-secondary)]">
                       {f.preview ? (
                         // eslint-disable-next-line @next/next/no-img-element -- the picked file, before it is saved

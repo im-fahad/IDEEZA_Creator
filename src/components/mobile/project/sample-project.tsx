@@ -84,7 +84,7 @@ export function SampleProject({ post, id }: { post: InnovationPost; id: string }
         )}
       </header>
       <div className="sticky top-0 z-10 bg-bg-page">
-        <div role="tablist" aria-label="Project" className="flex border-b-[length:var(--border-width-1)] border-solid border-border-default">
+        <div role="tablist" aria-label="Project" className="flex border-b-[length:var(--border-width-1)] border-solid border-border">
           {VIEWER_TABS.map((t) => {
             const on = t.id === tab;
             return (

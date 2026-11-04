@@ -46,7 +46,7 @@ import { PhoneVideo } from "../project/video";
 import { usePhoneWriteGate } from "../project/write-gate";
 import { useProduct } from "./use-product";
 
-const BOX = "flex aspect-video w-full flex-col items-center justify-center gap-4 rounded-md border-[length:var(--border-width-1)] border-solid border-border-default bg-bg-surface-raised px-8 text-center";
+const BOX = "flex aspect-video w-full flex-col items-center justify-center gap-4 rounded-md border-[length:var(--border-width-1)] border-solid border-border bg-bg-surface-raised px-8 text-center";
 
 export function MediaTab() {
   return (
@@ -321,7 +321,7 @@ function TakePoster({ take, playing, onPlay }: { take: VideoTake; playing: boole
       aria-pressed={playing}
       className={cn(
         "relative flex h-[44px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-md border-[length:var(--border-width-1)] border-solid bg-bg-surface-raised outline-none focus-visible:ring-2 focus-visible:ring-border-focus",
-        playing ? "border-border-brand" : "border-border-default",
+        playing ? "border-border-brand" : "border-border",
       )}
     >
       {clip.state === "ready" ? (

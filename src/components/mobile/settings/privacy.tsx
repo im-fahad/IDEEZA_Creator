@@ -105,7 +105,7 @@ export function PrivacySettings() {
   return (
     <SettingsScreen title="Privacy & safety" loading={!running || !messages.hydrated}>
       <SettingsGroup label="Your profile">
-        <SettingsRow id="view-public" label="View as public" href="/creators/me?view=public" />
+        <SettingsRow id="view-public" label="View as public" href="/m/creators/me?view=public" />
         <SettingsRow
           id="lock"
           label="Lock your profile"

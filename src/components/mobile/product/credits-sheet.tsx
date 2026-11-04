@@ -106,7 +106,7 @@ export function BuyCreditsSheet({ open, need, onClose }: { open: boolean; need: 
                 <label
                   className={cn(
                     "relative flex cursor-pointer items-start gap-6 rounded-xl border-[length:var(--border-width-1)] border-solid p-6",
-                    on ? "border-border-brand bg-bg-brand-subtle" : "border-border-default bg-bg-surface",
+                    on ? "border-border-brand bg-bg-brand-subtle" : "border-border bg-bg-surface",
                   )}
                 >
                   <input type="radio" name="m-credit-pack" className="sr-only" checked={on} onChange={() => setPackId(p.id)} />

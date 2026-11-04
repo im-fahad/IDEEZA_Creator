@@ -13,7 +13,7 @@ export function BottomBar({ children, className }: { children: React.ReactNode; 
   return (
     <div
       className={cn(
-        "flex flex-col gap-4 border-t-[length:var(--border-width-1)] border-solid border-border-default bg-bg-surface px-8 pb-4 pt-6",
+        "flex flex-col gap-4 border-t-[length:var(--border-width-1)] border-solid border-border bg-bg-surface px-8 pb-4 pt-6",
         className,
       )}
     >

@@ -345,7 +345,7 @@ function AddNetwork({ projectId, projectName, products }: { projectId: string; p
               </span>
             </span>
           </div>
-          <div aria-disabled className="flex items-start gap-6 rounded-xl border-[length:var(--border-width-1)] border-solid border-border-default p-6">
+          <div aria-disabled className="flex items-start gap-6 rounded-xl border-[length:var(--border-width-1)] border-solid border-border p-6">
             <Radio checked={false} disabled decorative className="mt-1" />
             <span className="flex flex-col gap-2">
               <span className="flex items-center gap-4 text-md font-medium leading-md text-text-disabled">
@@ -564,7 +564,7 @@ function AddNetwork({ projectId, projectName, products }: { projectId: string; p
               <span
                 className={cn(
                   "inline-flex size-[32px] items-center justify-center rounded-full border-[length:var(--border-width-1)] border-solid text-md font-medium leading-md",
-                  i === index ? "border-transparent bg-bg-brand text-text-on-brand" : i < index ? "border-border-brand text-text-brand" : "border-border-default text-text-secondary",
+                  i === index ? "border-transparent bg-bg-brand text-text-on-brand" : i < index ? "border-border-brand text-text-brand" : "border-border text-text-secondary",
                 )}
               >
                 {i + 1}

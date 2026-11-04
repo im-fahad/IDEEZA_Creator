@@ -77,7 +77,7 @@ function PublicProfile() {
         </div>
       </div>
       {/* The phone's Profile has no Edit profile yet: the web's opens with its dialog. */}
-      <Link href={`/creators/${ownHandleOf(fields.handle)}?edit=1`} className={buttonVariants({ hierarchy: "secondary", size: "lg", className: "w-full border-solid" })}>
+      <Link href="/m/profile/edit" className={buttonVariants({ hierarchy: "secondary", size: "lg", className: "w-full border-solid" })}>
         Edit profile
       </Link>
     </section>

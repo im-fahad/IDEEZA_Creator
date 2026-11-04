@@ -48,7 +48,7 @@ function PhoneFrame() {
 
   return (
     <div className="flex h-dvh items-center justify-center overflow-auto bg-bg-subtle p-8">
-      <div className="box-content h-[812px] max-h-[calc(100%_-_2_*_var(--border-width-1))] w-[375px] shrink-0 overflow-hidden rounded-3xl border-[length:var(--border-width-1)] border-solid border-border-default bg-bg-page shadow-overlay">
+      <div className="box-content h-[812px] max-h-[calc(100%_-_2_*_var(--border-width-1))] w-[375px] shrink-0 overflow-hidden rounded-3xl border-[length:var(--border-width-1)] border-solid border-border bg-bg-page shadow-overlay">
         <iframe src={src} title="IDEEZA mobile" className="block size-full border-0" />
       </div>
     </div>

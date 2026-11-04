@@ -211,7 +211,7 @@ function MarketplaceBlock() {
         <span className="flex-1" />
         <TestnetDemoBadge />
       </div>
-      <div role="tablist" aria-label="NFT editions" className="flex border-b-[length:var(--border-width-1)] border-solid border-border-default">
+      <div role="tablist" aria-label="NFT editions" className="flex border-b-[length:var(--border-width-1)] border-solid border-border">
         {KINDS.map((k) => {
           const on = k === kind;
           return (

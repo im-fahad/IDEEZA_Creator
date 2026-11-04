@@ -145,7 +145,7 @@ export function ProductsTab() {
 type Step = "choose" | "ai" | "manual";
 
 const OPTION =
-  "flex w-full items-start gap-6 rounded-xl border-[length:var(--border-width-1)] border-solid border-border-default p-8 text-left outline-none transition-colors duration-fast hover:bg-bg-subtle focus-visible:ring-2 focus-visible:ring-border-focus";
+  "flex w-full items-start gap-6 rounded-xl border-[length:var(--border-width-1)] border-solid border-border p-8 text-left outline-none transition-colors duration-fast hover:bg-bg-subtle focus-visible:ring-2 focus-visible:ring-border-focus";
 
 export function AddProductSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { project } = useProject();

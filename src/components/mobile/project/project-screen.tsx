@@ -360,7 +360,7 @@ function TabRow({ tab, onChange }: { tab: PhoneTab; onChange: (t: PhoneTab) => v
     <div
       role="tablist"
       aria-label="Project"
-      className="flex border-b-[length:var(--border-width-1)] border-solid border-border-default"
+      className="flex border-b-[length:var(--border-width-1)] border-solid border-border"
     >
       {PHONE_TABS.map((t, i) => {
         const on = t.id === tab;
