@@ -45,7 +45,7 @@ export function ProductSpecsBlock({ product, partChanges }: { product: BuildProd
 }
 
 /** The tier as a maker reads it: Checked; Not checked (nothing could run); n to review. */
-function checkWordsOf(c: ProductConfidence): { chip: string; tone: "ok" | "warn" | "quiet"; line: string } {
+export function checkWordsOf(c: ProductConfidence): { chip: string; tone: "ok" | "warn" | "quiet"; line: string } {
   if (c.tier === "checked") return { chip: "Checked", tone: "ok", line: "Every automated check passed." };
   const found = c.issues.filter((i) => !i.notRun).length;
   if (found > 0) {

@@ -278,7 +278,7 @@ export function useMediaUrl(key: string | null): string | null {
   return url && url.key === key ? url.url : null;
 }
 
-function ProofTile({ media, onOpen }: { media: MediaRef; onOpen: () => void }) {
+export function ProofTile({ media, onOpen }: { media: MediaRef; onOpen: () => void }) {
   const url = useMediaUrl(media.kind === "image" ? media.blobKey : (media.posterKey ?? null));
   return (
     <button
@@ -301,7 +301,7 @@ function ProofTile({ media, onOpen }: { media: MediaRef; onOpen: () => void }) {
   );
 }
 
-function ProofViewer({
+export function ProofViewer({
   viewing,
   onIndex,
   onClose,

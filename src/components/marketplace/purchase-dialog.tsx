@@ -62,7 +62,7 @@ import { demoAddress, shortAddress } from "@/lib/wallet/demo-wallet";
 import { DEMO_BUYERS } from "@/lib/wallet/identities";
 import { payoutAddressOf } from "@/lib/wallet/mint";
 import type { DemoBuyerId, WalletRequest } from "@/lib/wallet/types";
-import { useWalletRequest } from "@/components/wallet/wallet-provider";
+import { useWalletRequest, type WalletRequestApi } from "@/components/wallet/wallet-provider";
 import { writeTracks } from "@/components/projects/editions/create-dialog";
 
 export const JUST_SOLD = "This listing was just sold.";
@@ -245,12 +245,16 @@ export function useEditionPurchase({
   project,
   view,
   buyerId,
+  request: askWallet,
 }: {
   project: ManualProject;
   view: ProjectView;
   buyerId: DemoBuyerId;
+  /** Another wallet surface's request (the phone's bottom sheet); the Demo wallet dialog's otherwise. */
+  request?: WalletRequestApi["request"];
 }): { busyId: string | null; buy: (track: EditionTrack, tier: EditionTier) => Promise<string | null> } {
-  const { request } = useWalletRequest();
+  const dialog = useWalletRequest();
+  const request = askWallet ?? dialog.request;
   const { appendSale } = useMarket();
   const [busyId, setBusyId] = React.useState<string | null>(null);
 

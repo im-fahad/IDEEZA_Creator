@@ -21,7 +21,10 @@ import { Button } from "@/components/ideeza/button";
 import { Radio } from "@/components/ideeza/checkbox";
 import { TextInput, Textarea } from "@/components/ideeza/text-input";
 import { useMinuteClock, useProjectPageData } from "@/components/projects/details/use-project-page-data";
-import { catalogueOf, checkActivity, labelOf, snapshotPrices, historyOf, type Activity, type LiveListingFacts, type MediaRef } from "@/lib/manual/journey";
+import { catalogueOf, checkActivity, labelOf, snapshotPrices, historyOf, type Activity, type ActivityTarget, type LiveListingFacts, type MediaRef } from "@/lib/manual/journey";
+import { productAddedAt } from "@/lib/manual/journey-dates";
+import { displayProductName } from "@/lib/manual/products-tab-view";
+import { phoneProductPath } from "@/lib/manual/phone-product";
 import { deleteMediaFiles, getMediaFile, putMediaFile, useJourney } from "@/lib/manual/journey-store";
 import { listingViewOf } from "@/lib/market/listing";
 import { useEditions } from "@/lib/market/editions-store";
@@ -41,7 +44,7 @@ const NAME_MAX = 40;
 const DESCRIPTION_MAX = 400;
 const ACCEPT =
   "image/png,image/jpeg,image/gif,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,video/*";
-const TARGET = { kind: "project" } as const;
+const TARGET: ActivityTarget = { kind: "project" };
 /** The time a save is stamped with, read when it is pressed. */
 const stamp = () => Date.now();
 
@@ -79,15 +82,38 @@ type Attached = {
   isNew: boolean;
 };
 
-export function ActivityFormScreen({ projectId, activityId }: { projectId: string; activityId: string | null }) {
+export function ActivityFormScreen({
+  projectId,
+  activityId,
+  productId = null,
+}: {
+  projectId: string;
+  activityId: string | null;
+  /** A product's own activity (Product Details 10s), from its product page: its target, its back. */
+  productId?: string | null;
+}) {
   const data = useProjectPageData(projectId, "project");
   const { hydrated, record } = useJourney(data.state === "ready" ? data.project.id : null);
   if (data.state === "loading" || (data.state === "ready" && !hydrated)) return <ProjectLoading />;
-  const back = phoneProjectHref(projectId, "activity");
+  const product = productId && data.state === "ready" ? (data.view.products.find((p) => p.id === productId) ?? null) : null;
+  const back = productId ? phoneProductPath(projectId, productId, "activity") : phoneProjectHref(projectId, "activity");
   if (data.state === "missing") return <Missing back="/m/projects" text="We couldn't find this project" />;
-  const entry = activityId ? (historyOf(record, data.project.id, TARGET, data.project.createdAt).find((e) => e.id === activityId && !e.isDefault) ?? null) : null;
+  if (productId && !product) return <Missing back={phoneProjectHref(projectId, "products")} text="We couldn't find this product" />;
+  const target: ActivityTarget = product ? { kind: "product", productId: product.id } : TARGET;
+  const defaultAt = product ? productAddedAt(data.project, data.view.refs, product) : data.project.createdAt;
+  const entry = activityId ? (historyOf(record, data.project.id, target, defaultAt).find((e) => e.id === activityId && !e.isDefault) ?? null) : null;
   if (activityId && !entry) return <Missing back={back} text="We couldn't find this activity" />;
-  return <ActivityForm key={entry?.id ?? "new"} projectId={data.project.id} products={data.view.products} entry={entry} back={back} />;
+  return (
+    <ActivityForm
+      key={entry?.id ?? "new"}
+      projectId={data.project.id}
+      products={data.view.products}
+      entry={entry}
+      back={back}
+      target={target}
+      forName={product ? displayProductName(product.name) : null}
+    />
+  );
 }
 
 function Missing({ back, text }: { back: string; text: string }) {
@@ -122,11 +148,16 @@ function ActivityForm({
   products,
   entry,
   back,
+  target = TARGET,
+  forName = null,
 }: {
   projectId: string;
   products: { id: string; name: string }[];
   entry: Activity | null;
   back: string;
+  target?: ActivityTarget;
+  /** A product's name: the form says whose activity it adds and where its NFTs' activity is. */
+  forName?: string | null;
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -195,7 +226,7 @@ function ActivityForm({
     return u.trim() && i >= 0 && tried ? errors.urls[i] : null;
   });
   const busy = saving || files.some((f) => f.status === "saving");
-  const types = catalogueOf(TARGET);
+  const types = catalogueOf(target);
   const picked = types.find((t) => t.id === type) ?? null;
 
   const addFiles = (list: FileList | null) => {
@@ -241,7 +272,7 @@ function ActivityForm({
       v: 2,
       id: entry?.id ?? randomId("act_"),
       projectId,
-      target: TARGET,
+      target,
       type,
       ...(isOthers && customName.trim() ? { customName: customName.trim() } : {}),
       description: description.trim(),
@@ -265,7 +296,7 @@ function ActivityForm({
       if (orphaned.length) void deleteMediaFiles(orphaned);
     }
     submitted.current = true;
-    toast({ title: `${labelOf({ target: TARGET, type, customName })} ${mode === "add" ? "added" : "updated"}` });
+    toast({ title: `${labelOf({ target, type, customName })} ${mode === "add" ? "added" : "updated"}` });
     router.push(back);
   };
 
@@ -285,6 +316,7 @@ function ActivityForm({
       }
     >
       <form id="m-activity-form" onSubmit={submit} noValidate className="flex flex-col gap-8 px-8 pb-12">
+        {forName && <p className="text-md leading-md text-text-secondary">For {forName}. Its NFTs get their own activity in Earn › Sell.</p>}
         <p className="text-md leading-md text-text-secondary">
           {mode === "add"
             ? "Add at least one photo, video, PDF or document as proof — people who buy it see it in the journey. Everything is required unless it says optional."
