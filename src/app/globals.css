@@ -169,19 +169,17 @@ html[data-sidebar="collapsed"] aside[data-collapsed="false"] {
   will-change: transform, opacity;
 }
 
-/* The sign-in showcase (components/auth/auth-showcase.tsx): the brand's deep
- * violet, lit by its two colours (violet primary, blue secondary) from
- * opposite corners. One surface in both themes — it is the brand, not a page. */
-.ix-auth-showcase {
+/* The sign-in stage (components/auth/auth-stage.tsx): the brand's deep violet,
+ * lit by its two colours (violet primary, blue secondary) from opposite
+ * corners, the 3D board drawn over it. One surface in both themes — it is the
+ * brand, not a page. The veil darkens the foot so the words stay readable. */
+.ix-auth-stage {
   background:
-    radial-gradient(120% 80% at 100% 0%, color-mix(in srgb, var(--color-blue-600) 55%, transparent) 0%, transparent 55%),
-    radial-gradient(110% 90% at 0% 100%, color-mix(in srgb, var(--color-violet-600) 70%, transparent) 0%, transparent 60%),
-    linear-gradient(160deg, var(--color-violet-900) 0%, var(--color-violet-950) 100%);
+    radial-gradient(90% 70% at 85% 10%, color-mix(in srgb, var(--color-blue-600) 45%, transparent) 0%, transparent 60%),
+    radial-gradient(90% 80% at 10% 95%, color-mix(in srgb, var(--color-violet-600) 55%, transparent) 0%, transparent 60%),
+    linear-gradient(165deg, var(--color-violet-900) 0%, var(--color-violet-950) 55%, var(--color-gray-950) 100%);
 }
 
-/* The showcase's three examples take turns (owner 2026-11-04: the sign-in
- * pages are the front door and should feel like an AI product). A crossfade,
- * nothing moves; under reduced motion only the first example shows. */
-.ix-showcase-slide {
-  transition: opacity var(--motion-duration-normal) var(--motion-easing-standard);
+.ix-auth-stage-veil {
+  background: linear-gradient(to top, color-mix(in srgb, var(--color-gray-950) 88%, transparent) 0%, color-mix(in srgb, var(--color-gray-950) 40%, transparent) 38%, transparent 62%);
 }

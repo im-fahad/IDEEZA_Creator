@@ -179,7 +179,7 @@ export function SignUpForm() {
             This browser wouldn&apos;t save your account. Check that it allows this site to store data, then try again.
           </p>
         ) : null}
-        <Button type="submit" hierarchy="primary" size="xl" loading={busy} className="mt-[8px] w-full">
+        <Button type="submit" hierarchy="ai" size="xl" loading={busy} className="mt-[8px] w-full">
           Create account
         </Button>
       </form>

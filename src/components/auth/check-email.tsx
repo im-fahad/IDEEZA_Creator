@@ -46,7 +46,7 @@ export function CheckEmail() {
         key={resent}
         subject="Verify your email"
         action={
-          <Button hierarchy="primary" size="xl" loading={busy} onClick={verify} className="w-full">
+          <Button hierarchy="ai" size="xl" loading={busy} onClick={verify} className="w-full">
             Verify email
           </Button>
         }

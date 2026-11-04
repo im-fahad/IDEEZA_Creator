@@ -125,7 +125,7 @@ export function SignInForm() {
         <AuthHeading title="Reset your password">Enter your account&apos;s email and we&apos;ll send you a link to set a new one.</AuthHeading>
         <form noValidate onSubmit={submitForgot} className="flex flex-col gap-[16px]">
           {emailField}
-          <Button type="submit" hierarchy="primary" size="xl" className="mt-[8px] w-full">
+          <Button type="submit" hierarchy="ai" size="xl" className="mt-[8px] w-full">
             Send link
           </Button>
         </form>
@@ -146,7 +146,7 @@ export function SignInForm() {
           <DemoEmail
             subject="Reset your password"
             action={
-              <Button hierarchy="primary" size="xl" onClick={() => go("new")} className="w-full">
+              <Button hierarchy="ai" size="xl" onClick={() => go("new")} className="w-full">
                 Set a new password
               </Button>
             }
@@ -190,7 +190,7 @@ export function SignInForm() {
               {error}
             </p>
           ) : null}
-          <Button type="submit" hierarchy="primary" size="xl" loading={busy} className="mt-[8px] w-full">
+          <Button type="submit" hierarchy="ai" size="xl" loading={busy} className="mt-[8px] w-full">
             Save and sign in
           </Button>
         </form>
@@ -229,7 +229,7 @@ export function SignInForm() {
             {error}
           </p>
         ) : null}
-        <Button type="submit" hierarchy="primary" size="xl" loading={busy} className="mt-[8px] w-full">
+        <Button type="submit" hierarchy="ai" size="xl" loading={busy} className="mt-[8px] w-full">
           Sign in
         </Button>
       </form>
