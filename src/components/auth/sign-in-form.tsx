@@ -28,8 +28,9 @@ import {
   useAuth,
 } from "@/lib/account/auth";
 import { AuthHeading, DemoEmail, FIELD_ERROR, Field, NewPasswordField, PasswordInput, errorProps, useFieldIds } from "./auth-parts";
+import { ChangeEmail, DemoCodeStep } from "./demo-code";
 
-type Mode = "sign-in" | "forgot" | "sent" | "new";
+type Mode = "sign-in" | "forgot" | "sent" | "code" | "new";
 
 const REFUSED = "This browser wouldn't save that. Check that it allows this site to store data, then try again.";
 const KEYS = ["email", "password", "confirm"] as const;
@@ -178,18 +179,32 @@ export function SignInForm() {
     return (
       <>
         <AuthHeading title="Check your email" icon={MailOpen01Icon}>
-          We sent a link to <strong className="font-semibold text-text-primary">{clean}</strong> to reset its password.
+          Use it to set a new password. We sent it to <strong className="font-semibold text-text-primary">{clean}</strong>
+          <ChangeEmail onClick={() => go("forgot")} />
         </AuthHeading>
         <DemoEmail
           subject="Reset your password"
           action={
-            <Button hierarchy="ai" size="xl" onClick={() => go("new")} className="w-full">
+            <Button hierarchy="ai" size="xl" onClick={() => go("code")} className="w-full">
               Set a new password
             </Button>
           }
         >
           Hi {match.firstName}, someone asked to reset your IDEEZA password. If it was you, set a new one.
         </DemoEmail>
+        {backToSignIn}
+      </>
+    );
+  }
+
+  if (mode === "code") {
+    return (
+      <>
+        <AuthHeading title="Check your email" icon={MailOpen01Icon}>
+          Use it to set a new password. We sent it to <strong className="font-semibold text-text-primary">{clean}</strong>
+          <ChangeEmail onClick={() => go("forgot")} />
+        </AuthHeading>
+        <DemoCodeStep email={clean} onVerified={() => go("new")} />
         {backToSignIn}
       </>
     );
