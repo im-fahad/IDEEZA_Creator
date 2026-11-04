@@ -23,6 +23,7 @@ import { Badge, type BadgeTone } from "@/components/ideeza/badge";
 import { buttonVariants } from "@/components/ideeza/button";
 import { LandingSectionHeader } from "@/components/landing/section-header";
 import { cn } from "@/lib/utils";
+import { LANDING_SECONDARY } from "@/components/landing/buttons";
 
 const ASSETS = "/landing/ownership";
 
@@ -76,12 +77,6 @@ const TICKS: { node: string; left: number; top: number }[] = [
 // An outline in color/text/primary at a few percent, as the ring art's ticks
 // and rules are drawn (Figma 1.27 px strokes).
 const RULE = "absolute border-[1.27px] border-solid border-[var(--color-text-primary)]";
-
-// "Explore Marketplace" (Figma 18714:24911): no fill, two gradient strokes
-// (1.5 px, inside) and a 4 px glass blur. The strokes are a 1.5 px ring masked
-// out of a pseudo-element laid over the button's transparent border.
-const GRADIENT_STROKE =
-  "relative border-transparent bg-transparent backdrop-blur-[2px] before:pointer-events-none before:absolute before:inset-[-1.5px] before:rounded-[inherit] before:p-[1.5px] before:content-[''] before:[background:linear-gradient(11.75deg,rgba(223,212,254,0)_20.7%,rgba(223,212,254,0.38)_46.2%,rgba(223,212,254,0)_74.9%),linear-gradient(90deg,rgba(73,73,154,0.27)_0%,rgba(69,62,112,0.27)_53.8%,rgba(66,53,76,0.72)_100%)] before:[mask:linear-gradient(#000_0_0)_content-box_exclude,linear-gradient(#000_0_0)]";
 
 export function Ownership() {
   return (
@@ -258,9 +253,7 @@ export function Ownership() {
             href="/marketplace"
             className={cn(
               buttonVariants({ hierarchy: "secondary", size: "2xl" }),
-              // color/button/secondary-text by its role token — see the note on FEATURES.
-              "rounded-full text-[color:var(--color-text-primary)]",
-              GRADIENT_STROKE,
+              LANDING_SECONDARY,
             )}
           >
             Explore Marketplace

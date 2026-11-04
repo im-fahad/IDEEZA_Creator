@@ -15,6 +15,7 @@ import Link from "next/link";
 import { LandingSectionHeader } from "@/components/landing/section-header";
 import { buttonVariants } from "@/components/ideeza/button";
 import { cn } from "@/lib/utils";
+import { LANDING_SECONDARY } from "@/components/landing/buttons";
 
 const ASSET = "/landing/final-cta";
 
@@ -52,9 +53,6 @@ const CURSORS: { node: string; name: string; icon: string; box: string; tag: str
   },
 ];
 
-// "Explore Projects" — A01 secondary with Figma's raw #dfd4fe stroke and no fill.
-const EXPLORE =
-  "rounded-full border-[#dfd4fe] bg-transparent hover:bg-[var(--color-glass-border-subtle)]";
 
 export function FinalCta() {
   return (
@@ -122,8 +120,8 @@ export function FinalCta() {
             <Link href="/" className={cn(buttonVariants({ hierarchy: "ai", size: "xl" }), "rounded-full")}>
               Start With AI
             </Link>
-            {/* Figma 18532:54015 — A01 secondary */}
-            <Link href="/innovations" className={cn(buttonVariants({ hierarchy: "secondary", size: "xl" }), EXPLORE)}>
+            {/* Figma 18532:54015 — A01 secondary; Figma draws it with a #dfd4fe line, the page wears one secondary look (owner 2026-11-04). */}
+            <Link href="/innovations" className={cn(buttonVariants({ hierarchy: "secondary", size: "xl" }), LANDING_SECONDARY)}>
               Explore Projects
             </Link>
           </div>

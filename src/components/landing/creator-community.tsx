@@ -25,6 +25,7 @@
 
 import Link from "next/link";
 import { buttonVariants } from "@/components/ideeza/button";
+import { LANDING_SECONDARY } from "@/components/landing/buttons";
 import { LandingSectionHeader } from "@/components/landing/section-header";
 import { cn } from "@/lib/utils";
 
@@ -123,10 +124,6 @@ function GlowLayers({ layers }: { layers: GlowLayer[] }) {
 
 const CARD =
   "relative block w-full overflow-clip rounded-[24px] border-solid border-[rgba(255,255,255,0.1)] text-left transition-colors duration-fast ease-standard xl:absolute";
-// The page's "Explore" buttons (Explore Projects, Explore Marketplace): A01
-// secondary, a pill with Figma's raw #dfd4fe stroke and no fill.
-const EXPLORE =
-  "rounded-full border-[#dfd4fe] bg-transparent hover:bg-[var(--color-glass-border-subtle)]";
 const INNER_GLOW =
   "pointer-events-none absolute inset-0 rounded-[inherit] shadow-[inset_0px_-4px_7px_-2px_rgba(178,133,246,0.4),inset_3px_4px_19px_-2px_rgba(148,126,248,0.32)]";
 const TEXT_PRIMARY = "text-[color:var(--color-text-primary)]";
@@ -272,7 +269,7 @@ export function CreatorCommunity() {
       </div>
 
       {/* Figma 18714:24930 — heading, then the bento 92 below. */}
-      <div className="relative mx-auto flex w-full max-w-[1260px] flex-col items-center gap-[92px] px-8 pb-40 pt-40 xl:px-0 xl:pb-[58px] xl:pt-[150px]">
+      <div className="relative mx-auto flex w-full max-w-[1260px] flex-col items-center gap-[92px] px-8 pb-40 pt-40 xl:px-0 xl:pb-[54px] xl:pt-[150px]">
         {/* Figma 18714:24931 — eyebrow, Display/MD title, Heading/H4 lead (two lines), centred. */}
         <LandingSectionHeader
           id="creator-community-title"
@@ -563,11 +560,11 @@ export function CreatorCommunity() {
               <span aria-hidden className={INNER_GLOW} />
             </div>
           </div>
-          {/* Owner 2026-11-04 (not in Figma): the section's one way in, 48 under the bento,
-              in the page's Explore style; the section keeps Figma's 1376 at xl. */}
+          {/* Owner 2026-11-04 (not in Figma): the section's one way in, 48 under the bento —
+              the same button as Explore Marketplace above; the section keeps Figma's 1376 at xl. */}
           <Link
             href="/innovations"
-            className={cn(buttonVariants({ hierarchy: "secondary", size: "xl" }), EXPLORE)}
+            className={cn(buttonVariants({ hierarchy: "secondary", size: "2xl" }), LANDING_SECONDARY)}
           >
             Explore Community
           </Link>
