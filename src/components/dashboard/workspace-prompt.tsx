@@ -51,6 +51,8 @@ import { formatCount, PROJECTS, type Project } from "@/lib/feed";
 import { MintedBadge } from "@/components/newsfeed/minted-badge";
 import { BuildManuallyInfo } from "./build-manually-info";
 import { ProjectInfoModal } from "./project-info-modal";
+import { HeroGlow } from "./hero-glow";
+import { SourceNudge } from "@/components/auth/source-picker";
 import { Icon, type IconValue } from "./icon";
 
 type Mode = "ai" | "manual";
@@ -237,6 +239,8 @@ export function WorkspacePrompt() {
 
       {/* Hero — centered narrow column. */}
       <div className="relative mx-auto w-full max-w-[760px] px-[var(--layout-page-inset)] pt-[64px]">
+        {/* After a skipped "where did you hear about us?" (lib/account/auth.ts). */}
+        <SourceNudge className="mb-[40px]" />
         <h1 className="text-center text-5xl font-bold tracking-close text-text-primary">
           What will you build today?
         </h1>
@@ -321,35 +325,6 @@ export function WorkspacePrompt() {
 
 // ────────────────────────────────── parts ───────────────────────────────
 
-// The soft violet wash behind the hero — still, because it is the ground the
-// headline sits on. Over it, one small light travels along the top edge and
-// fades at both ends, so the loop has no seam. Decorative, never in the way:
-// nothing below the hero moves, and under reduced motion the light is simply
-// absent, leaving the wash exactly as it was.
-function HeroGlow() {
-  return (
-    <div
-      aria-hidden
-      // Tall enough that the clip falls where the glow has already reached
-      // the page's own colour. `overflow-hidden` is here for the travelling
-      // light, which crosses ±42vw and would otherwise widen the page — but
-      // it was cutting the wash at 420px while a 120px blur was still 33
-      // levels above the background, leaving a hard rule across the hero.
-      className="pointer-events-none absolute inset-x-0 top-0 h-[900px] overflow-hidden"
-    >
-      <div className="flex justify-center">
-        <div
-          className="h-[420px] w-[1100px] max-w-[140%] -translate-y-[38%] rounded-full opacity-25 blur-[120px]"
-          style={{ backgroundImage: "var(--gradient-ai)" }}
-        />
-      </div>
-      <div
-        className="ix-hero-sweep absolute left-1/2 top-0 h-[190px] w-[380px] rounded-full blur-[90px]"
-        style={{ backgroundImage: "var(--gradient-brand)" }}
-      />
-    </div>
-  );
-}
 
 function ModeToggle({
   mode,
