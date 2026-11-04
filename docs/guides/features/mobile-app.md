@@ -24,6 +24,19 @@ From "Account · 2026 update" (AU-01…33); the accounts are the web's (`lib/acc
 - **Welcome map**, then Look around first (where they were going) or Start with my idea (AI tab). The Face ID offer comes once per phone after the first sign-in.
 - **Reset password**: email (prefilled from Sign in) → code in neutral words → new password (not the current one, checklist, Sign out of other devices) → signed in where they were, with "Password reset".
 
+## My projects and Project details (M3)
+
+From "Project Details · 2026 update" and the master page's My project, all on the web's project derivation, stores and rules (`lib/manual/`, `lib/network/`, `lib/video/`); the phone's own helpers are `lib/manual/phone-project.ts`.
+
+- **My projects** (`/m/projects`): All · Draft · Minted · Listed · Sold with counts, search over project and product names and descriptions, one filter sheet (Shared only, sort), cards with the cover, title and status chip, "{n} products · Saved {date}" and the next-step hint; twelve at a time with Show more; the view kept in the address; "No projects yet" with Create a project, empty tabs, no matches with Clear search.
+- **Project page** (`/m/projects/<id>`): the header (name and chip, stage line opening Versions, meta line, lock line, description clamped to 3 lines with Show more or Add a description, newer-version notices with Review version n); tabs Overview · Products · Media · Activity pinned under the top bar, which takes the name once the header scrolls away; the Bottom action bar (Publish + Earn, or Earn with its fact); bones while loading; "We couldn't find this project" for an unknown address.
+- **Overview**: the current activity with + Add, the products (count and pieces, Build check, the first 3), the current version, About (Created, Parts, Team ›, Network ›, Stored) and Recent once the project has gone out. **Products**: Add a product (Build with AI opens the chat; Build manually adds a hand-made product — the editors open on a computer), compact rows, Search and Sort from 6 products.
+- **Media**: the project video (waiting, Make, Update, Try again, Review; the player, takes with Use this and delete), product videos playing in a sheet, the builds' images with the viewer's Use as cover. **Project video** (`/m/projects/<id>/video`): timeline, intro, product order and labels, outro, quality, sound, Generate (rendered in the browser) and the review (Use this video, Make another take, Change scenes, Decide later).
+- **Activity**: the journey newest first, ⋮ Edit or Delete (asks first), proof tiles with a viewer, links that ask before opening, the price snapshot; the full-screen Add / Edit form (type sheet, Others name, description, https links, files kept in the browser, the web's errors).
+- **⋯ menu**: Edit name and description (counts, duplicate-name note, Update with AI with Undo, Discard changes?), Share to Feed (a draft gets "Mint it first"), Delete (what goes and stays, the typed name when work would be lost, the blocked variants with where to fix them); a live listing asks to come off the marketplace before an edit.
+- **Publish**: Keep private · Give · Sell; Give and Sell first check every video (readiness), then open the mint. **Versions** and **Review version n** (Save version n); **Team** (Team conversation, Message, Splits); **Network** and the **Add network** wizard (Setup, Method, AI map with the rules fallback, Review, Done; Manual Canvas opens on a computer).
+- **Someone else's project** (a Feed clip's `/m/projects/p1`): the web's sample post read-only (Overview · Products · Media) with the marketplace rows.
+
 ## Home · Feed, Search, Notifications (M5)
 
 From "Feed · 2026 update" and the master page's Global Search and Notification. Clips are the web's Innovations posts (`lib/innovations/clips.ts`); the phone's own choices live in `lib/innovations/{feed-prefs,search}.ts` and `lib/notifications/phone.ts`.
