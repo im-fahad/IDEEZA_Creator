@@ -40,6 +40,7 @@ export type PaidOrder = {
   price?: number;
   credit?: number;
   creditFrom?: PlanTier;
+  offer?: number;
   txHash?: string;
   payer?: string;
 };
@@ -111,8 +112,9 @@ function creditInvoice(e: PaidLine): Invoice {
 function planInvoice(o: PaidOrder): Invoice {
   const plan = planOf(o.tier);
   const renewal = o.kind === "renewal";
-  const price = o.price ?? cents(o.amount + (o.credit ?? 0));
+  const price = o.price ?? cents(o.amount + (o.credit ?? 0) + (o.offer ?? 0));
   const credit = o.credit ?? 0;
+  const offer = o.offer ?? 0;
   const cycle = o.cycle === "yearly" ? "annual" : "monthly";
   const to = addMonths(o.ts, cycleMonths(o.cycle));
   return {
@@ -130,10 +132,13 @@ function planInvoice(o: PaidOrder): Invoice {
         total: price,
       },
     ],
-    adjustments: credit > 0 ? [{ label: `Unused time on ${o.creditFrom ? planOf(o.creditFrom).name : "your last plan"}`, amount: credit }] : [],
+    adjustments: [
+      ...(credit > 0 ? [{ label: `Unused time on ${o.creditFrom ? planOf(o.creditFrom).name : "your last plan"}`, amount: credit }] : []),
+      ...(offer > 0 ? [{ label: "Welcome offer (50% off)", amount: offer }] : []),
+    ],
     subtotal: price,
     tax: 0,
-    total: cents(price - credit),
+    total: cents(price - credit - offer),
     paid: renewal ? 0 : o.amount,
     paidWith: o.paidWith,
     status: renewal ? "Not charged" : "Paid",

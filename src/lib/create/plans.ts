@@ -120,6 +120,9 @@ export type PlanOrder = {
   price?: number;
   credit?: number;
   creditFrom?: PlanTier;
+  /** The welcome offer's half off the first payment (lib/account/welcome-offer.ts):
+   *  `amount` = price − credit − offer. */
+  offer?: number;
   /** The wallet's transaction and the address that paid. */
   txHash?: string;
   payer?: string;
@@ -132,6 +135,7 @@ export type PlanPayment = {
   paidWith: string;
   price?: number;
   credit?: number;
+  offer?: number;
   txHash?: string;
   payer?: string;
 };
@@ -200,6 +204,7 @@ export function startPlan(
     kind: "start",
     ...(pay.price !== undefined ? { price: pay.price } : {}),
     ...(pay.credit ? { credit: pay.credit, creditFrom: sub.tier } : {}),
+    ...(pay.offer ? { offer: pay.offer } : {}),
     ...(pay.txHash ? { txHash: pay.txHash } : {}),
     ...(pay.payer ? { payer: pay.payer } : {}),
   };

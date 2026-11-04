@@ -6,6 +6,7 @@ to build and how to check it is done, and links to its Jira ticket.
 
 | CL | Change | In the prototype | Jira | Production |
 | --- | --- | --- | --- | --- |
+| [CL-004](#cl-004-welcome-offer-50-off-the-first-payment-for-12-hours) | Welcome offer: 50% off the first payment, for 12 hours | 4 Nov 2026 | Not created yet | To do |
 | [CL-003](#cl-003-landing-page-the-way-into-ideeza) | Landing page, the way into IDEEZA | 4 Nov 2026 | Not created yet | To do |
 | [CL-002](#cl-002-sign-up-and-sign-in) | Sign up and sign in | 4 Nov 2026 | Not created yet | To do |
 | [CL-001](#cl-001-products-question-the-total-stays-at-the-bottom-of-the-screen) | Products question: the total stays at the bottom of the screen | 3 Nov 2026 | Not created yet | To do |
@@ -22,6 +23,66 @@ state, mobile); Design (DS components and tokens); Before → After screenshots.
 No code: no file names, functions or commit hashes. Screenshots go in
 docs/changelog/ as <date>-<short-name>-before.png / -after.png.
 -->
+
+---
+
+## CL-004 Welcome offer: 50% off the first payment, for 12 hours
+
+**In the prototype:** 4 November 2026 · **Jira:** not created yet · **Production:** To do
+
+**Screen:** Home (a pop-up after the Welcome), the sidebar's Upgrade card,
+Settings › Plan & pricing (`/settings/plan`), Checkout and the invoice.
+
+> In the prototype the offer is kept in the browser, per account. Production
+> keeps it on the server, per account, so the 12 hours and "already closed" hold
+> on every device, and checkout applies the discount on the server.
+
+### What to build
+
+**Who gets it**
+- [ ] A new account on Free that has never paid for a plan.
+- [ ] Half off the first payment on any paid plan: the first month (Monthly) or the first year (Annual).
+- [ ] It lasts 12 hours, counted from the moment the pop-up first shows. One offer per account; it never restarts — a reload or signing in again changes nothing.
+- [ ] It ends when the 12 hours run out, or when a plan is bought with it.
+
+**The pop-up (Home)**
+- [ ] Opens on Home right after the Welcome closes (after the tour, when the Welcome's *Look around first* starts one), never on top of another dialog.
+- [ ] Top band: the pill *A welcome gift, just for you*; the mark — a big **50%** with a yellow **OFF** sticker; *your first month of any plan* (*first year* on Annual); a price tag for the picked plan with its usual price struck through and the offer price under it (*Builder · $10.00 · $5.00 · first month*), changing with the plan and with Monthly · Annual; *Ends in* hh : mm : ss, counting down every second.
+- [ ] **Monthly · Annual** switch.
+- [ ] The three paid plans as a radio list, Builder picked: the name (*Most popular* on Builder), AI credits a month, the usual price struck through, the offer price and *You save $X.XX*. Monthly: Tinkerer $8.00 → $4.00, Builder $10.00 → $5.00, Disruptor $20.00 → $10.00. Annual: $76.80 → $38.40, $96.00 → $48.00, $192.00 → $96.00.
+- [ ] Button **Claim 50% off: Builder for $5.00** (plan and price follow the choice) → checkout for that plan and billing.
+- [ ] Under it: *Then $10.00 a month. Cancel any time.* (*a year* on Annual).
+- [ ] **Compare all plans** → Plan & pricing. **Maybe later** and ✕ close it.
+- [ ] Once closed it never pops up again, not after a reload and not on a later visit to Home.
+- [ ] On a phone it rises from the bottom as a sheet; on a very narrow screen (about 320 px) the price tag is left out.
+
+**After it is closed**
+- [ ] The sidebar's Upgrade card becomes the offer: **50% OFF** *any plan*, *Ends in 11:42:10*, opening Plan & pricing. In the collapsed sidebar: a **50%** tile.
+- [ ] When the offer ends or is used, the card goes back to *Upgrade to …*.
+
+**Plan & pricing**
+- [ ] A band at the top: **50% OFF**, *Your welcome gift: half price on any plan*, *Your first month, or your first year. The prices below already include it.* and the *Ends in* clock.
+- [ ] Each paid plan card shows the offer price, a **50% OFF** sticker, the usual price struck through and *your first month* / *your first year*. The Compare plans heads show the same.
+
+**Checkout and invoice**
+- [ ] Checkout lists *Welcome offer (50% off)* as its own line (−$5.00 for Builder monthly); *Due today* is what is left, and it says when the offer ends.
+- [ ] The invoice lists the same line: Subtotal $10.00, Welcome offer (50% off) −$5.00, Total $5.00.
+- [ ] Buying a plan uses the offer up.
+
+### Design
+
+- The pop-up's top band, the sidebar card and the Plan & pricing band stand on the brand stage: deep violet (violet 900 → 950) lit by the brand violet and blue, with a faint dot grid. One look in light and dark mode; words on it are white.
+- The mark: Display font, extra bold; **50%** at the 8xl size in the pop-up, 6xl on Plan & pricing, 4xl in the sidebar. The **OFF** sticker is yellow 400 with violet 950 text, turned −6°.
+- Price tag: a white card, the offer price in violet 700, the usual price in gray with a red 500 line through it.
+- Clock: glass chips (white at 12 % with a 20 % ring).
+- DS components: Modal (M07; a bottom sheet on a phone), Segmented, Badge (*Most popular* brand, *You save* success), the AI-gradient Button (XL) for the claim, Link, ghost Button.
+
+### Before → After
+
+| Before | After |
+| --- | --- |
+| ![Before: Plan & pricing at full price, and the sidebar's Upgrade to Builder card](docs/changelog/2026-11-04-welcome-offer-before.png) | ![After: the welcome offer pop-up on Home — 50% OFF, the price tag, the clock and the three plans](docs/changelog/2026-11-04-welcome-offer-after.png) |
+| | ![After: Plan & pricing with the offer band and 50% OFF prices, and the sidebar's offer card](docs/changelog/2026-11-04-welcome-offer-pricing-after.png) |
 
 ---
 
