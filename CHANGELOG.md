@@ -6,6 +6,7 @@ to build and how to check it is done, and links to its Jira ticket.
 
 | CL | Change | In the prototype | Jira | Production |
 | --- | --- | --- | --- | --- |
+| [CL-003](#cl-003-landing-page-the-way-into-ideeza) | Landing page, the way into IDEEZA | 4 Nov 2026 | Not created yet | To do |
 | [CL-002](#cl-002-sign-up-and-sign-in) | Sign up and sign in | 4 Nov 2026 | Not created yet | To do |
 | [CL-001](#cl-001-products-question-the-total-stays-at-the-bottom-of-the-screen) | Products question: the total stays at the bottom of the screen | 3 Nov 2026 | Not created yet | To do |
 
@@ -21,6 +22,65 @@ state, mobile); Design (DS components and tokens); Before → After screenshots.
 No code: no file names, functions or commit hashes. Screenshots go in
 docs/changelog/ as <date>-<short-name>-before.png / -after.png.
 -->
+
+---
+
+## CL-003 Landing page, the way into IDEEZA
+
+**In the prototype:** 4 November 2026 · **Jira:** not created yet · **Production:** To do
+
+**Screen:** the landing page (`/landing`, and `/` for anyone signed out), built
+from the Figma *IDEEZA Website V-2* (frame 18532:46268, 1440 wide, dark mode).
+Website and platform live on one domain: the landing page is the front door
+and its buttons lead through Sign up / Sign in ([CL-002](#cl-002-sign-up-and-sign-in)) into the app.
+
+### What to build
+
+**One domain**
+- [ ] Signed out, `/` (with nothing but `utm_` tags) shows the landing page; any other app page asks you to sign in or sign up and returns you there afterwards.
+- [ ] Top bar: **Log in** → Sign in; **Join Us** → Sign up (keeping the visit's `utm_` tags, so the one question is skipped when they answer it).
+- [ ] **Start Project**, **Start With AI** and the hero prompt bar → Sign up, or Sign in once this browser has an account, carrying where they lead.
+- [ ] An idea typed in the hero prompt bar arrives in Home's prompt box after sign-up, the code and the one question; an empty send focuses the field.
+- [ ] Footer **Sign In** → Sign in.
+- [ ] Signed in: **Log in** is gone, **Join Us** and the footer link read **Open IDEEZA**, and every way in goes straight to the app.
+- [ ] The landing page itself never asks anyone to sign in.
+
+**Sections, top to bottom (copy as on the page)**
+- [ ] **Top bar**, fixed and blurred: logo, Airdrop · NFT Marketplace · I'm Manufacturer · Pricing · ICO · About Us · **Resources** (Tutorials, Blog) · **EN** menu · Log in · Start Project · Join Us; under 1280 px a menu button opens the links and both buttons.
+- [ ] **Hero:** *Build Hardware at the Speed of Software*, the line under it, the prompt bar *Describe your hardware idea…* with **Generate**.
+- [ ] **Backed by World-Class Programs:** Member of Google AI Startup Program · Member of Microsoft for Startups · Member of NVIDIA Inception (owner confirmed all three).
+- [ ] **For Everyone:** *Beginner-Friendly. Engineer-capable.*, For Creators (five points, **Start Creating**) and For Engineers (five points, **Explore Engineer Mode**).
+- [ ] **What You Can Do:** AI Design Generation · Engineer Mode · Digital Ownership; a slider with a pager on narrow screens.
+- [ ] **The Problem & Solution:** *The Complete Hardware Stack In One Platform.*
+- [ ] **Ownership & Monetization:** Secure Digital Ownership · Sell on the Marketplace · Recurring Royalties; **Publish as Digital Product** and **Explore Marketplace**.
+- [ ] **Creator Community — The Hardware Creator Feed:** one still picture (no card is a link) — *Worldwide creators*, *Follow creators*, *Get inspired*, *Browse innovations*, *Creators Story* (AI Engineering · VR & Wearables · Aerorobotics), *Share your inventions* — and one **Explore Community** button under it (→ Innovations).
+- [ ] **Manufacturing Network:** four step tabs (Your Design · Prototype · Review & Approve · Production), arrow keys move between them.
+- [ ] **The Ecosystem:** six stacked cards (AI Engine · Manufacturing Network · Creator Feed · Digital Ownership · Marketplace · $IDZ Token); a click or the arrow keys bring the next to the front; still with reduced motion.
+- [ ] **Mobile Application:** *Coming soon to iOS and Android*; both store badges say *(coming soon)*.
+- [ ] **Final call:** *The Next Hardware Product Could Be Yours.* with **Start With AI** and **Explore Projects**.
+- [ ] **Footer:** Company · Product · Legal · Support columns, **Newsletter** (checks the address, then says *Newsletter sign-up isn't open yet, so your email wasn't saved.*), © line.
+- [ ] Links with no page yet (Airdrop, I'm Manufacturer, About Us, store badges, social and most footer links) show *Coming soon* and lead nowhere, never to a 404.
+
+**Honesty rules (owner, 4 Nov 2026)**
+- [ ] No invented people or figures: no creator counts, names, handles, follower or like counts, app downloads or ratings — even where the Figma draws them.
+- [ ] Interaction only where it shows something otherwise hidden (tabs, the card deck, the slider); a showcase is a still picture with one clear button.
+
+**Layout**
+- [ ] At 1440 every section sits at the Figma's position and height.
+- [ ] Below 1280 px the columns stack; no horizontal scroll at 375 px.
+
+### Design
+
+- Dark mode of the design system throughout the page.
+- **One look per button kind:** the A01 **primary** (brand violet with the inner highlight) for Join Us, Generate, Start Creating and Publish as Digital Product; the **AI** gradient for Start With AI; and one **secondary** — no fill, a gradient glass ring — for Start Project, Explore Marketplace, Explore Community and Explore Projects. All pill-shaped.
+- Type from the DS scale (Display headings, body lg/md); Hugeicons; art that CSS can't draw (glows, star fields, the globe, glass) comes from the Figma file.
+
+### Before → After
+
+| Before | After |
+| --- | --- |
+| ![Before: a signed-out visitor opening IDEEZA lands straight on Sign up](docs/changelog/2026-11-04-sign-up-after.png) | ![After: the landing page, with Log in, Start Project and Join Us in the top bar](docs/changelog/2026-11-04-landing-after.png) |
+| | ![After: the Creator Feed as one still picture](docs/changelog/2026-11-04-creator-feed-after.png) |
 
 ---
 
