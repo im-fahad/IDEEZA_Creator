@@ -120,6 +120,20 @@ From "Settings · 2026 update" (ST-01…93) and "Account · 2026 update" (AU-07,
 - **Delete account**: why (optional), what you'll lose (real counts; blocked while a withdrawal or a bid is open), keep a copy (download), confirm with the password (or the provider), deleted in 30 days with live listings down now; signing in before then offers Restore (`/m/restore`, "Account restored"), after it the account is gone.
 - **Shared kit**: "Another phone signed in" (prototype only) adds a Demo device to Your devices.
 
+## Plans, payments, KYC and Help (M7)
+
+From the master page's plans, checkout, AI credits, billing, success/failed, payment method, IDEEZA pay, KYC, FAQ & contact support, Report a issue and Tutorial sections, on the web's plans, credits, billing, payouts, identity, reports and tutorials (`lib/create/`, `lib/account/`, `lib/commerce/`, `lib/support/`, `lib/tutorials/`); the phone's own pieces are `lib/commerce/kyc-levels.ts`, `lib/account/money-phone.ts` and `lib/support/{faq,support-chat}.ts`.
+
+- **Plan & pricing** (`/m/plans`): Plans · Credits · Billing; Monthly/Annual, the web's four plans with buttons by relation (Upgrade · Downgrade · Switch to Free · Current plan · Starts on), the welcome offer price, the compare table, Pricing FAQs.
+- **Credits**: the balance chip opens Current credit; the three packs at the plan's discount, Compare credit discounts, Upgrade to unlock, a custom amount from 50 (Better deal available when a pack is cheaper).
+- **Checkout** (`/m/plans/checkout`): the web's quote (unused time, annual discount, welcome offer, plan discount); Card and PayPal not available yet; Crypto pays USDT or IDZ on Base Sepolia through the wallet sheet; auto-renew; then Upgrade completed / Credits added (invoice or receipt) or Payment failed (Try again, Change payment method). The coupon field says no coupon codes are on offer (or "Welcome offer applied").
+- **Billing**: the current plan, Downgrade plan (`/m/plans/downgrade`), Cancel subscription sheet, Keep plan, invoices (`/m/plans/invoice/<id>`, Download PDF). **Current credit** (`/m/plans/credits`) and **Credit history** (every lot: Active / Used up / Expired).
+- **Payment method** (`/m/settings/payments`): Wallet Connect connects the Demo wallet as the default (real wallets Soon); ⋮ Pay with IDZ / USDT, Manage wallet, Remove (asks first); Card and PayPal not available yet.
+- **Get Paid** (`/m/settings/idz-pay`): the balance, Withdraw money, withdrawal methods (Add a crypto wallet: setup → review → signed; Make default, Remove), **Withdraw** (full or other amount, signed, Withdrawal recorded), **History** (totals, search, filters, Transaction details with Share and Download receipt, Download statement → Withdrawal statement). Bank, Payoneer, PayPal and tax forms are off with their reason (the web has none).
+- **KYC** (`/m/settings/kyc`): three levels with status; Level 1 (legal name, email, country, mobile → a six-digit code from a Demo text message → verified; Reset); Levels 2 and 3 (What you'll need → camera pre-prompt → Demo ID check → Under review → approved or rejected by the "Demo reviewer" in ⋯, prototype only).
+- **Help** (`/m/help`): searchable FAQs, then Contact support (`/m/help/contact`: each message goes to the team as a report and the reply gives its reference), Report a problem (`/m/help/report`: the web's fields, up to 3 screenshots, page and device details opt-in, Report sent with its reference) and Tutorials.
+- **Tutorials** (`/m/tutorials`): search, category cards with progress, Tutorial details with the ☰ topics sheet, articles, video cards ("Video coming soon" until the files arrive; Earn → % watched → Claim → Claimed), Previous / Next.
+
 ## Earn Coin tab (M8)
 
 From the owner's master page (Wallet Balance, Stacking, Refer & Earn, Buy IDEEZA Coin) on the web's IDZ balance, ledger, presale and demo wallet (`lib/wallet/`); staking and referrals are demo logic in `lib/wallet/{staking,referral}.ts`, recorded in the same demo wallet, so every balance agrees.
