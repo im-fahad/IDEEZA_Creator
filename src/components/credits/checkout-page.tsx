@@ -31,6 +31,8 @@ import { checkoutOrderOf, type CheckoutOrder } from "@/lib/create/checkout-route
 import { useCredits } from "@/lib/create/credits";
 import { useCreatePlan, useCreditDiscount } from "@/lib/create/plan";
 import { YEARLY_OFF, planOf, priceOf, quoteUpgrade, relationOf } from "@/lib/create/plans";
+import { OFFER_OFF, countdown, offerPrice, spendOffer } from "@/lib/account/welcome-offer";
+import { useWelcomeOffer } from "./welcome-offer";
 import { useSettings } from "@/lib/settings/use-settings";
 import { cn } from "@/lib/utils";
 import { invoiceHref } from "./billing-history";
@@ -82,6 +84,7 @@ type Phase = { kind: "form" } | { kind: "done"; id: string; line: string } | { k
 function Checkout({ order }: { order: CheckoutOrder }) {
   const { hydrated: planReady, sub, plan: current, start, cancel } = useCreatePlan();
   const { hydrated: creditsReady, balance, purchase } = useCredits();
+  const welcome = useWelcomeOffer();
   const discount = useCreditDiscount();
   const { request } = useWalletRequest();
   const wallet = useWalletStatus();
@@ -105,7 +108,9 @@ function Checkout({ order }: { order: CheckoutOrder }) {
   const rel = isPlan ? relationOf(sub, order.tier, cycle) : null;
   const quote = isPlan ? quoteUpgrade(sub, order.tier, cycle, now) : null;
   const credits = !isPlan ? orderOf(order.kind === "pack" ? { kind: "pack", id: order.id } : { kind: "custom", credits: order.credits }, discount) : null;
-  const due = isPlan ? quote!.due : credits!.price.final;
+  // The welcome offer: half off the first payment of a plan bought from Free while it runs.
+  const offered = isPlan && welcome.ready && welcome.live && sub.tier === "free" ? offerPrice(quote!.due) : null;
+  const due = isPlan ? (offered ? offered.final : quote!.due) : credits!.price.final;
 
   if (phase.kind === "done") {
     return isPlan ? (
@@ -160,13 +165,15 @@ function Checkout({ order }: { order: CheckoutOrder }) {
   const finishPlan = (pay: { paidWith: string; txHash?: string; payer?: string }) => {
     start(order.kind === "plan" ? order.tier : "free", cycle, {
       orderId,
-      amount: quote!.due,
+      amount: due,
       paidWith: pay.paidWith,
       price: quote!.price,
       credit: quote!.unused,
+      ...(offered ? { offer: offered.saving } : {}),
       txHash: pay.txHash,
       payer: pay.payer,
     });
+    if (offered && welcome.email) spendOffer(welcome.email, now);
     if (!autoRenew) cancel();
   };
 
@@ -261,9 +268,10 @@ function Checkout({ order }: { order: CheckoutOrder }) {
         { label: autoRenew ? "Renews on" : "Ends on", value: date(renewsAt!) },
       ]}
       renewal={{ on: autoRenew, onChange: () => setAutoRenew((v) => !v) }}
-      adjustments={
-        quote!.unused > 0 ? [{ label: `Unused time on ${current.name}`, value: `−${usd(quote!.unused)}`, tone: "success" }] : []
-      }
+      adjustments={[
+        ...(quote!.unused > 0 ? [{ label: `Unused time on ${current.name}`, value: `−${usd(quote!.unused)}`, tone: "success" as const }] : []),
+        ...(offered ? [{ label: `Welcome offer (${Math.round(OFFER_OFF * 100)}% off)`, value: `−${usd(offered.saving)}`, tone: "success" as const }] : []),
+      ]}
       subtotal={usd(quote!.price)}
       total={usd(due)}
       cta={{
@@ -273,7 +281,15 @@ function Checkout({ order }: { order: CheckoutOrder }) {
         disabled: due > 0 && !wallet.connected,
         hint: due > 0 && !wallet.connected ? "Connect your wallet to pay." : undefined,
       }}
-      note={note && <p role="status">{note}</p>}
+      note={
+        note ? (
+          <p role="status">{note}</p>
+        ) : offered ? (
+          <p className="text-text-success">
+            Your welcome offer ends in <span className="tabular-nums">{countdown(welcome.left)}</span>.
+          </p>
+        ) : undefined
+      }
     />
   ) : (
     <OrderSummary

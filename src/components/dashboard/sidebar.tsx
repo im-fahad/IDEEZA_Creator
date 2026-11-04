@@ -28,6 +28,7 @@ import {
   Compass01Icon,
   CpuIcon,
   FlashIcon,
+  GiftIcon,
   Folder01Icon,
   HistoryIcon,
   Home01Icon,
@@ -44,6 +45,8 @@ import {
   Wallet01Icon,
 } from "@hugeicons/core-free-icons";
 import { checkoutHref } from "@/lib/create/checkout-route";
+import { OFFER_OFF, countdown } from "@/lib/account/welcome-offer";
+import { useWelcomeOffer } from "@/components/credits/welcome-offer";
 import { useCreatePlan } from "@/lib/create/plan";
 import { planOf } from "@/lib/create/plans";
 import { idzCompactOf } from "@/lib/wallet/idz";
@@ -550,7 +553,9 @@ function Footer({ collapsed, onLeave }: { collapsed: boolean; onLeave?: () => vo
 // all. Gone on the top plan.
 function UpgradeButton({ collapsed, onLeave }: { collapsed: boolean; onLeave?: () => void }) {
   const { hydrated, sub } = useCreatePlan();
+  const offer = useWelcomeOffer();
   if (!hydrated || sub.tier === "disruptor") return null;
+  if (offer.ready && offer.live && offer.entry?.closedAt !== null) return <OfferCard left={offer.left} collapsed={collapsed} onLeave={onLeave} />;
   const next = planOf(sub.tier === "builder" ? "disruptor" : "builder");
   const label = `Upgrade to ${next.name}`;
   const href = checkoutHref({ kind: "plan", tier: next.tier, cycle: sub.tier === "free" ? "monthly" : sub.cycle });
@@ -585,6 +590,49 @@ function UpgradeButton({ collapsed, onLeave }: { collapsed: boolean; onLeave?: (
         className="inline-flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full bg-bg-surface text-text-brand"
       >
         <Icon icon={FlashIcon} />
+      </span>
+    </Link>
+  );
+}
+
+// The welcome offer, once its pop-up is closed (components/credits/welcome-offer.tsx): the
+// Upgrade card becomes the offer — half off the first payment, the clock running — and opens
+// Plan & pricing, where every plan shows its offer price. Back to Upgrade when it ends or is used.
+function OfferCard({ left, collapsed, onLeave }: { left: number; collapsed: boolean; onLeave?: () => void }) {
+  // A steady name for assistive tech; the clock is for the eye (and the tooltip).
+  const label = `Welcome gift: ${Math.round(OFFER_OFF * 100)}% off any plan. See plans`;
+  if (collapsed) {
+    return (
+      <Link
+        href="/settings/plan"
+        data-tour="plan"
+        aria-label={label}
+        title={`${label} · ends in ${countdown(left)}`}
+        className="relative mb-[12px] flex h-[40px] w-full items-center justify-center rounded-lg bg-[image:var(--gradient-button-ai)] text-[color:var(--color-white)] outline-none focus-visible:ring-2 focus-visible:ring-border-focus"
+      >
+        <Icon icon={GiftIcon} />
+      </Link>
+    );
+  }
+  return (
+    <Link
+      href="/settings/plan"
+      data-tour="plan"
+      onClick={onLeave}
+      aria-label={label}
+      className="mb-[16px] flex w-full items-center gap-[12px] rounded-lg bg-[image:var(--gradient-button-ai)] px-[12px] py-[12px] text-[color:var(--color-white)] outline-none transition-[filter] duration-fast hover:brightness-110 focus-visible:ring-2 focus-visible:ring-border-focus"
+    >
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-md font-semibold leading-md">{Math.round(OFFER_OFF * 100)}% off any plan</span>
+        <span aria-hidden className="block truncate text-sm font-regular leading-sm text-[color:color-mix(in_srgb,var(--color-white)_84%,transparent)]">
+          Ends in <span className="tabular-nums">{countdown(left)}</span>
+        </span>
+      </span>
+      <span
+        aria-hidden
+        className="inline-flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full bg-[color:color-mix(in_srgb,var(--color-white)_20%,transparent)]"
+      >
+        <Icon icon={GiftIcon} />
       </span>
     </Link>
   );
