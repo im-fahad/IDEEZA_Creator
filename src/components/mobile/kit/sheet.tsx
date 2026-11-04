@@ -142,6 +142,7 @@ export function Sheet({
   title,
   description,
   actions,
+  hideClose,
   children,
 }: {
   open: boolean;
@@ -150,11 +151,13 @@ export function Sheet({
   description?: React.ReactNode;
   /** _Modal actions: XL buttons, stacked, the action first. Left out on pick-one sheets. */
   actions?: React.ReactNode;
+  /** No ✕: a step that can't be left (a submitted transaction confirming). */
+  hideClose?: boolean;
   children?: React.ReactNode;
 }) {
   return (
     <Layer open={open} onClose={onClose} label={title}>
-      {(panel) => <SheetPanel panel={panel} {...{ onClose, title, description, actions, children }} />}
+      {(panel) => <SheetPanel panel={panel} {...{ onClose, title, description, actions, hideClose, children }} />}
     </Layer>
   );
 }
@@ -165,6 +168,7 @@ function SheetPanel({
   title,
   description,
   actions,
+  hideClose,
   children,
 }: {
   panel: React.RefObject<HTMLDivElement | null>;
@@ -172,6 +176,7 @@ function SheetPanel({
   title: string;
   description?: React.ReactNode;
   actions?: React.ReactNode;
+  hideClose?: boolean;
   children?: React.ReactNode;
 }) {
   const framed = useFramed();
@@ -194,14 +199,16 @@ function SheetPanel({
             <h2 className="text-3xl font-semibold leading-3xl text-text-primary">{title}</h2>
             {description && <p className="text-md leading-md text-text-secondary">{description}</p>}
           </div>
-          <button
-            type="button"
-            aria-label="Close"
-            onClick={onClose}
-            className="inline-flex size-[44px] shrink-0 items-center justify-center rounded-full text-[color:var(--color-icon-default)] outline-none transition-colors duration-fast hover:bg-bg-subtle focus-visible:ring-2 focus-visible:ring-border-focus"
-          >
-            <Icon icon={Cancel01Icon} size={24} />
-          </button>
+          {!hideClose && (
+            <button
+              type="button"
+              aria-label="Close"
+              onClick={onClose}
+              className="inline-flex size-[44px] shrink-0 items-center justify-center rounded-full text-[color:var(--color-icon-default)] outline-none transition-colors duration-fast hover:bg-bg-subtle focus-visible:ring-2 focus-visible:ring-border-focus"
+            >
+              <Icon icon={Cancel01Icon} size={24} />
+            </button>
+          )}
         </div>
       </div>
       {children != null && (
