@@ -226,6 +226,30 @@ export function linkProvider(email: string, provider: Provider, passwordless = f
   }));
 }
 
+/** Disconnects a provider (Sign-in & security). Refused while it is the account's only way in:
+ *  no password and no other provider. */
+export function unlinkProvider(email: string, provider: Provider): WriteResult {
+  const a = phoneAccountOf(readPhoneAccounts(), email);
+  if (isLastWayIn(a, provider)) return { ok: false };
+  return updatePhoneAccount(email, (x) => ({ ...x, providers: x.providers.filter((p) => p !== provider) }));
+}
+
+/** The provider is the only way in: no password of its own and no other provider. */
+export function isLastWayIn(a: PhoneAccount, provider: Provider): boolean {
+  return a.passwordless && a.providers.length === 1 && a.providers[0] === provider;
+}
+
+/** The email changed: its sign-in methods go with it. */
+export function movePhoneAccount(from: string, to: string): WriteResult {
+  const all = readPhoneAccounts();
+  const f = normalizeEmail(from);
+  const t = normalizeEmail(to);
+  if (!all[f] || f === t) return { ok: true };
+  const rest = { ...all };
+  delete rest[f];
+  return writeStoredKey(PHONE_ACCOUNTS_KEY, { ...rest, [t]: all[f] });
+}
+
 export function usePhoneAccounts(): Record<string, PhoneAccount> {
   const k = useStoredKey(PHONE_ACCOUNTS_KEY);
   return React.useMemo(() => normalizePhoneAccounts(parseStored(k.raw).value), [k.raw]);

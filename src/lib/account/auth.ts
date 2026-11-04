@@ -16,7 +16,7 @@ import * as React from "react";
 import { parseStored, readStoredKey, storedUnreadable, useStoredKey, writeStoredKey, type WriteResult } from "../key-store";
 import { readProfileFields, saveProfile } from "../people/profile-store";
 import { countryCodeOf, countryNameOf } from "./countries";
-import { enterWork, parkWork } from "./work-vault";
+import { enterWork, isWorkKey, parkWork, parkedPrefix } from "./work-vault";
 import { ZONE_COUNTRIES } from "./zone-countries";
 
 export const ACCOUNTS_KEY = "ideeza:accounts";
@@ -475,6 +475,53 @@ export async function providerSignIn(email: string, name: { first: string; last:
 export async function isCurrentPassword(email: string, password: string): Promise<boolean> {
   const account = accountOf(readAccounts(), email);
   return !!account && (await hashPassword(password, account.salt)) === account.passwordHash;
+}
+
+/** A new password for the account, nothing else changed: the phone's Change password and Add a
+ *  password (Settings › Sign-in & security). `problem` is the rules it is held to. */
+export async function setAccountPassword(email: string, password: string, problem: (password: string) => string = passwordProblem): Promise<WriteResult> {
+  const account = accountOf(readAccounts(), email);
+  if (!account || problem(password)) return { ok: false };
+  const salt = newSalt();
+  return saveAccount({ ...account, salt, passwordHash: await hashPassword(password, salt) });
+}
+
+export type EmailChange = "ok" | "exists" | "invalid" | "refused";
+
+/** The signed-in account moves to a new email (its code was checked): the account and the session
+ *  follow it. Refused when another account has the email. */
+export function changeAccountEmail(newEmail: string): EmailChange {
+  const account = readCurrent();
+  const e = normalizeEmail(newEmail);
+  if (!account || !isEmail(e)) return "invalid";
+  if (e === account.email) return "ok";
+  const all = readAccounts();
+  if (accountOf(all, e)) return "exists";
+  if (!writeAccounts(all.map((a) => (a.email === account.email ? { ...a, email: e } : a))).ok) return "refused";
+  const session = readSession();
+  return writeStoredKey(SESSION_KEY, { v: 1, email: e, at: session?.at ?? Date.now() } satisfies Session).ok ? "ok" : "refused";
+}
+
+/** Deleted for good (the 30 days after Delete account are over): the account, its parked work and
+ *  its session go. */
+export function removeAccount(email: string): WriteResult {
+  const e = normalizeEmail(email);
+  const saved = writeAccounts(readAccounts().filter((a) => a.email !== e));
+  if (!saved.ok) return saved;
+  const prefix = parkedPrefix(e);
+  const theirs = readSession()?.email === e;
+  try {
+    const keys: string[] = [];
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const k = window.localStorage.key(i);
+      // Their parked work, and the work out now when they are the one signed in.
+      if (k && (k.startsWith(prefix) || (theirs && isWorkKey(k)))) keys.push(k);
+    }
+    for (const k of keys) window.localStorage.removeItem(k);
+  } catch {
+    // Storage blocked: the parked work stays, unreadable without the account.
+  }
+  return theirs ? writeStoredKey(SESSION_KEY, null) : { ok: true };
 }
 
 /** The signed-in account's name, as the phone's Name and handle step sets it. */

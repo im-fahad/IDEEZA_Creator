@@ -28,8 +28,8 @@ import { ListBones } from "@/components/mobile/kit/states";
 import { useToast } from "@/components/mobile/kit/toast";
 import { Screen } from "@/components/mobile/screen";
 import { TopBar } from "@/components/mobile/top-bar";
-import { signOut, useAuth } from "@/lib/account/auth";
-import { updatePhone } from "@/lib/account/phone";
+import { useAuth } from "@/lib/account/auth";
+import { updateSecurity, withDemoDevice } from "@/lib/account/security";
 
 const PROFILE_REASONS: ReportReason[] = [
   { id: "impersonation", label: "Pretending to be someone else" },
@@ -68,7 +68,7 @@ const wait = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));
 export default function SharedKitPage() {
   const router = useRouter();
   const toast = useToast();
-  const { signedIn } = useAuth();
+  const { account } = useAuth();
   const [open, setOpen] = React.useState<Open>(null);
   const close = () => setOpen(null);
 
@@ -121,16 +121,15 @@ export default function SharedKitPage() {
           <Row label="Report that can’t send" note="KIT-RB-14" onClick={() => setOpen("report-fails")} />
         </Group>
 
-        {signedIn && (
+        {account && (
           <Group title="Account">
             <Row
-              label="Sign out"
-              note="Prototype only · AU-50 comes with Profile (M7)"
+              label="Another phone signed in"
+              note="Prototype only · AU-45 · adds a Demo device to Your devices"
               onClick={() => {
-                void signOut().then(() => {
-                  updatePhone({ explored: false });
-                  window.location.replace("/m/welcome");
-                });
+                const ok = updateSecurity(account.email, (s) => withDemoDevice(s, Date.now())).ok;
+                if (ok) router.push("/m/settings/security#devices");
+                else toast({ title: "Couldn’t save. Nothing changed.", lead: "error" });
               }}
             />
           </Group>
