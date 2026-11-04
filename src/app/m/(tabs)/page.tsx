@@ -1,9 +1,8 @@
 "use client";
 
-import { Home09Icon } from "@hugeicons/core-free-icons";
-import { PhasePlaceholder } from "@/components/mobile/phase-placeholder";
+import { FeedHome } from "@/components/mobile/feed/feed-home";
 
-// Home tab (Figma Navbar Container › Home): placeholder until phase M5.
+// Home tab = the Feed (mobile Figma "Feed · 2026 update"): clips of what is shared on the marketplace.
 export default function Page() {
-  return <PhasePlaceholder title="Home" icon={Home09Icon} phase="M5" />;
+  return <FeedHome />;
 }

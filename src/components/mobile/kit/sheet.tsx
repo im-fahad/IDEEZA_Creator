@@ -143,6 +143,8 @@ export function Sheet({
   description,
   actions,
   hideClose,
+  footer,
+  fill,
   children,
 }: {
   open: boolean;
@@ -153,11 +155,15 @@ export function Sheet({
   actions?: React.ReactNode;
   /** No ✕: a step that can't be left (a submitted transaction confirming). */
   hideClose?: boolean;
+  /** Pinned under the content in place of the actions (a comment composer): 8 / 24 / 10 / 24. */
+  footer?: React.ReactNode;
+  /** The tall sheet: as high as a sheet goes (61 under the top), the content filling it. */
+  fill?: boolean;
   children?: React.ReactNode;
 }) {
   return (
     <Layer open={open} onClose={onClose} label={title}>
-      {(panel) => <SheetPanel panel={panel} {...{ onClose, title, description, actions, hideClose, children }} />}
+      {(panel) => <SheetPanel panel={panel} {...{ onClose, title, description, actions, hideClose, footer, fill, children }} />}
     </Layer>
   );
 }
@@ -169,6 +175,8 @@ function SheetPanel({
   description,
   actions,
   hideClose,
+  footer,
+  fill,
   children,
 }: {
   panel: React.RefObject<HTMLDivElement | null>;
@@ -177,6 +185,8 @@ function SheetPanel({
   description?: React.ReactNode;
   actions?: React.ReactNode;
   hideClose?: boolean;
+  footer?: React.ReactNode;
+  fill?: boolean;
   children?: React.ReactNode;
 }) {
   const framed = useFramed();
@@ -189,6 +199,7 @@ function SheetPanel({
         RISE,
         // Clear of the status bar: Figma's tallest sheet stops 61 under the top (8 under the bar).
         framed ? "max-h-[calc(100dvh_-_61px)]" : "max-h-[calc(100dvh_-_env(safe-area-inset-top)_-_var(--spacing-4))]",
+        fill && (framed ? "h-[calc(100dvh_-_61px)]" : "h-[calc(100dvh_-_env(safe-area-inset-top)_-_var(--spacing-4))]"),
       )}
       style={drag.offset ? { transform: `translateY(${drag.offset}px)` } : undefined}
     >
@@ -212,8 +223,9 @@ function SheetPanel({
         </div>
       </div>
       {children != null && (
-        <div className="flex min-h-0 flex-col gap-6 overflow-y-auto overscroll-contain px-16 pb-4">{children}</div>
+        <div className={cn("flex min-h-0 flex-col gap-6 overflow-y-auto overscroll-contain px-16 pb-4", fill && "flex-1")}>{children}</div>
       )}
+      {footer && <div className="shrink-0 px-16 pb-5 pt-4">{footer}</div>}
       {actions && (
         <div className="shrink-0 pb-5 pt-4">
           <div className="flex flex-col gap-6 border-t-[length:var(--border-width-1)] border-solid border-border-subtle px-16 pb-16 pt-8">

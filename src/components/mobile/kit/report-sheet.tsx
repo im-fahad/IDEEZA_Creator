@@ -30,6 +30,8 @@ export function ReportSheet({
   description,
   reasons,
   blockName,
+  question = "What’s wrong?",
+  note: noteCopy,
   onSend,
 }: {
   open: boolean;
@@ -41,6 +43,10 @@ export function ReportSheet({
   reasons: readonly ReportReason[];
   /** Offers "Also block {name}" (profile and conversation reports). */
   blockName?: string;
+  /** The reasons' heading (the Feed asks "Why are you reporting this video?"). */
+  question?: string;
+  /** The note's words, and the reason that opens it (the Feed's "Tell us more" shows under Others only). */
+  note?: { label: string; placeholder: string; onlyFor?: string };
   /** Saves the report; a throw is "Couldn’t send your report". */
   onSend: (r: ReportInput) => Promise<void>;
 }) {
@@ -64,7 +70,8 @@ export function ReportSheet({
     if (!reason || !online) return;
     setPhase("sending");
     try {
-      await onSend({ reason, note: note.trim(), alsoBlock: !!blockName && alsoBlock });
+      const kept = !noteCopy?.onlyFor || reason === noteCopy.onlyFor ? note.trim() : "";
+      await onSend({ reason, note: kept, alsoBlock: !!blockName && alsoBlock });
       setBlocked(!!blockName && alsoBlock);
       setPhase("sent");
     } catch {
@@ -93,6 +100,7 @@ export function ReportSheet({
   }
 
   const sending = phase === "sending";
+  const showNote = !noteCopy?.onlyFor || reason === noteCopy.onlyFor;
   return (
     <Sheet
       open={open}
@@ -121,7 +129,7 @@ export function ReportSheet({
         </Banner>
       )}
       <fieldset className="flex flex-col gap-6" disabled={sending}>
-        <legend className="pb-6 text-md font-medium leading-md text-text-primary">What’s wrong?</legend>
+        <legend className="pb-6 text-md font-medium leading-md text-text-primary">{question}</legend>
         <div role="radiogroup" className="flex flex-col">
           {reasons.map((r) => (
             <label key={r.id} className="relative flex min-h-[44px] cursor-pointer items-center gap-8 rounded-md has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-border-focus">
@@ -137,19 +145,21 @@ export function ReportSheet({
             </label>
           ))}
         </div>
-        <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium leading-sm text-text-primary">Note (optional)</span>
-          <Textarea
-            value={note}
-            onValueChange={(v) => setNote(v.slice(0, REPORT_NOTE_MAX))}
-            placeholder="Tell us what happened"
-            rows={4}
-            maxLength={REPORT_NOTE_MAX}
-          />
-          <span className="self-end text-sm leading-sm text-text-tertiary tabular-nums">
-            {note.length}/{REPORT_NOTE_MAX}
-          </span>
-        </label>
+        {showNote && (
+          <label className="flex flex-col gap-2">
+            <span className="text-sm font-medium leading-sm text-text-primary">{noteCopy?.label ?? "Note (optional)"}</span>
+            <Textarea
+              value={note}
+              onValueChange={(v) => setNote(v.slice(0, REPORT_NOTE_MAX))}
+              placeholder={noteCopy?.placeholder ?? "Tell us what happened"}
+              rows={4}
+              maxLength={REPORT_NOTE_MAX}
+            />
+            <span className="self-end text-sm leading-sm text-text-tertiary tabular-nums">
+              {note.length}/{REPORT_NOTE_MAX}
+            </span>
+          </label>
+        )}
         {blockName && (
           <label className="relative flex cursor-pointer items-center gap-4 rounded-md has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-border-focus">
             <input
