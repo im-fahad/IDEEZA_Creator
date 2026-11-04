@@ -1,9 +1,8 @@
 "use client";
 
-import { CoinsDollarIcon } from "@hugeicons/core-free-icons";
-import { PhasePlaceholder } from "@/components/mobile/phase-placeholder";
+import { EarnHome } from "@/components/mobile/earn-coin/earn-home";
 
-// Earn Coin tab (Figma Navbar Container › Earn Coin): placeholder until phase M8.
+// Earn Coin tab (Figma Navbar Container › Earn Coin; "Buy IDEEZA Coin" › 229448).
 export default function Page() {
-  return <PhasePlaceholder title="Earn Coin" icon={CoinsDollarIcon} phase="M8" />;
+  return <EarnHome />;
 }
