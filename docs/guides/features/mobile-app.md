@@ -24,6 +24,20 @@ From "Account · 2026 update" (AU-01…33); the accounts are the web's (`lib/acc
 - **Welcome map**, then Look around first (where they were going) or Start with my idea (AI tab). The Face ID offer comes once per phone after the first sign-in.
 - **Reset password**: email (prefilled from Sign in) → code in neutral words → new password (not the current one, checklist, Sign out of other devices) → signed in where they were, with "Password reset".
 
+## Home · Feed, Search, Notifications (M5)
+
+From "Feed · 2026 update" and the master page's Global Search and Notification. Clips are the web's Innovations posts (`lib/innovations/clips.ts`); the phone's own choices live in `lib/innovations/{feed-prefs,search}.ts` and `lib/notifications/phone.ts`.
+
+- **Feed (Home)**: full-screen clips of what is shared on the marketplace — each post a Project clip, each further product with its own video a Product clip. The clip on screen plays muted and looping; tap pauses or plays. The title and description open the project or product details, the creator their profile, Follow is the web's follow. Feed | Following (`?tab=following`; nobody followed → Search People). Text over the clip is white.
+- **Side nav**: 3D (the item's render; samples have no 3D file), AR/VR mode (checks WebXR, says why there is nothing to place), appreciate with its count, comments with their count, Share to your Feed, ⋯. **Offers** on the clip: Main · Physical · Virtual NFT cards, Testnet demo, Buy → the item's marketplace.
+- **Comments** (DS M100 in the tall sheet): Top / Newest / Oldest, threads with "View n more replies", Reply · ♥ · ⋯ (yours: Edit, Copy link, Delete; others': Copy link, Report), the pinned composer with Link, Image, @mention and Replying to @Name; written to the web's comment store.
+- **⋯ menu**: Interested / Not interested (reorders the Feed, Undo), Hide video (Undo), Save video, Copy link, Playback speed (0.5–2), Video quality (Auto or the clip's own height; Data saver waits for a tap), Report (the kit's sheet with the web's post reasons; Tell us more under Something else).
+- **Share to your Feed**: Post audience (Public / Only me), a caption, Share now. **Saved** (`/m/saved`): saved clips with Saved on and ⋯ (View original post, Copy link, Unsave with Undo). **Marketplace activity** (`/m/market-activity`): weekly average price and volume (demo dollars), sales per day over 7 · 30 · 90 days, the sales list.
+- **Queue pill**: while a build of yours waits, "Please wait. Your build is next in line" (or n ahead) opens the AI tab. **One clip** (`/m/clip/<id>`, `?comment=` opens its comments; a missing clip says so).
+- **Global Search** (`/m/search`): Recent searches (Clear all, ✕ each); typing suggests People, Projects and Blogs with the match highlighted; results under People · Post · Projects · Parts & Agile Module · Marketplace · Blog (View all or one kind), People with Follow; `?q=` / `&kind=` kept in the address; a blog opens in the phone's reader (`/m/blog/<slug>`).
+- **Notification** (`/m/notifications`): the web bell's notices under All / Unread, grouped New · Today · Yesterday · by date; each with its button (opens its phone screen, marks it read) and ⋮ (Turn off notifications like this with Undo, Mute this project, Delete); the header ⋮ has Mark all as read, Notification settings, Clear all (asks first; clears this phone's list only).
+- **Guests** browse Home after Explore first; appreciating, following, commenting, saving, sharing, reporting, buying, and opening details, search, notifications or activity ask them in (the guest gate).
+
 ## Earn Coin tab (M8)
 
 From the owner's master page (Wallet Balance, Stacking, Refer & Earn, Buy IDEEZA Coin) on the web's IDZ balance, ledger, presale and demo wallet (`lib/wallet/`); staking and referrals are demo logic in `lib/wallet/{staking,referral}.ts`, recorded in the same demo wallet, so every balance agrees.
