@@ -6,6 +6,10 @@
 //     payment for 12 hours, the clock running, a plan to pick, Get it. Closed,
 //     it never pops up again — the offer moves to the sidebar's Upgrade card.
 //   OfferBanner — the same offer at the top of Plan & pricing.
+//   OfferMark / OfferSticker — the big "50%" with its yellow OFF sticker: one
+//     mark on every surface (pop-up, banner, sidebar card, plan cards), so the
+//     discount reads at a glance. The pop-up's hero, the banner and the card
+//     stand on .ix-offer-stage (globals.css), the brand stage.
 //   useWelcomeOffer — the signed-in account's offer, ticking.
 
 import * as React from "react";
@@ -18,7 +22,6 @@ import { Badge, Button, ModalFrame, Segmented } from "@/components/ideeza";
 import { linkVariants } from "@/components/ideeza/link";
 import { useAuth } from "@/lib/account/auth";
 import {
-  OFFER_HOURS,
   OFFER_OFF,
   closeOffer,
   countdown,
@@ -93,34 +96,75 @@ function firstPayment(tier: PlanTier, cycle: BillingCycle) {
   return { period, ...offerPrice(period) };
 }
 
+// On the brand stage (.ix-offer-stage) words are white; these are its three strengths.
+const ON_STAGE = "text-[color:var(--color-white)]";
+const ON_STAGE_SOFT = "text-[color:color-mix(in_srgb,var(--color-white)_80%,transparent)]";
+const GLASS =
+  "bg-[color:color-mix(in_srgb,var(--color-white)_12%,transparent)] ring-[length:var(--border-width-1)] ring-inset ring-[color:color-mix(in_srgb,var(--color-white)_20%,transparent)]";
+const DISPLAY = "font-[family-name:var(--font-family-display)] font-extrabold";
+
+const STICKER = {
+  xl: "rounded-[8px] px-[10px] py-[5px] text-3xl leading-none",
+  lg: "rounded-[7px] px-[8px] py-[4px] text-2xl leading-none",
+  md: "rounded-[5px] px-[6px] py-[3px] text-md leading-none",
+  sm: "rounded-[4px] px-[5px] py-[3px] text-xs leading-none",
+} as const;
+
+/** The yellow sale sticker: "OFF" beside the mark, or "50% OFF" on its own (a plan card's price). */
+export function OfferSticker({ size = "sm", children = `${OFF} OFF`, className }: { size?: keyof typeof STICKER; children?: React.ReactNode; className?: string }) {
+  return (
+    <span
+      className={cn(
+        "inline-block shrink-0 -rotate-6 whitespace-nowrap bg-[var(--color-yellow-400)] tracking-[0.02em] text-[color:var(--color-violet-950)] shadow-depth",
+        DISPLAY,
+        STICKER[size],
+        className,
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
+const MARK = {
+  xl: ["text-8xl", "gap-[10px]"],
+  lg: ["text-6xl", "gap-[8px]"],
+  md: ["text-4xl", "gap-[6px]"],
+  sm: ["text-2xl", "gap-[5px]"],
+} as const;
+
+/** The offer's mark: the percentage, big, with the OFF sticker. Its colour is the parent's. */
+export function OfferMark({ size = "xl", className }: { size?: keyof typeof MARK; className?: string }) {
+  return (
+    <span className={cn("inline-flex items-center", MARK[size][1], className)}>
+      <span className={cn("leading-none tabular-nums tracking-[-0.03em]", DISPLAY, MARK[size][0])}>{OFF}</span>
+      <OfferSticker size={size}>OFF</OfferSticker>
+    </span>
+  );
+}
+
+/** Time left: hh · mm · ss as glass chips on the stage, or plain text (`size="sm"`). */
 function Countdown({ ms, size = "lg" }: { ms: number; size?: "lg" | "sm" }) {
   const p = countdownParts(ms);
   if (size === "sm") return <span className="tabular-nums">{countdown(ms)}</span>;
   return (
-    <div role="timer" aria-label={`Offer ends in ${p.hours} hours ${p.minutes} minutes`} className="flex items-start justify-center gap-[8px]">
+    <div role="timer" aria-label={`Ends in ${Number(p.hours)} hours ${Number(p.minutes)} minutes`} className="flex items-center gap-[6px]">
       {(
         [
-          [p.hours, "hours"],
-          [p.minutes, "minutes"],
-          [p.seconds, "seconds"],
+          [p.hours, "h"],
+          [p.minutes, "m"],
+          [p.seconds, "s"],
         ] as const
-      ).map(([v, label], i) => (
-        <React.Fragment key={label}>
+      ).map(([v, unit], i) => (
+        <React.Fragment key={unit}>
           {i > 0 ? (
-            <span aria-hidden className="pt-[10px] text-3xl font-bold leading-3xl text-text-tertiary">
+            <span aria-hidden className={cn("text-xl font-bold leading-xl", ON_STAGE_SOFT)}>
               :
             </span>
           ) : null}
-          <span className="flex flex-col items-center gap-[4px]">
-            <span
-              aria-hidden
-              className="inline-flex h-[64px] w-[72px] items-center justify-center rounded-[var(--radius-xl)] bg-bg-subtle font-[family-name:var(--font-family-display)] text-4xl font-bold leading-4xl tabular-nums text-text-primary"
-            >
-              {v}
-            </span>
-            <span aria-hidden className="text-sm leading-sm text-text-tertiary">
-              {label}
-            </span>
+          <span aria-hidden className={cn("inline-flex h-[40px] min-w-[54px] items-baseline justify-center gap-[2px] rounded-[10px] px-[8px] pt-[7px]", GLASS)}>
+            <span className={cn("text-2xl font-bold leading-2xl tabular-nums", ON_STAGE)}>{v}</span>
+            <span className={cn("text-sm leading-sm", ON_STAGE_SOFT)}>{unit}</span>
           </span>
         </React.Fragment>
       ))}
@@ -128,37 +172,62 @@ function Countdown({ ms, size = "lg" }: { ms: number; size?: "lg" | "sm" }) {
   );
 }
 
+/** The paper tag on the hero: the picked plan's price, struck, and what it costs now. Left out
+ *  where the hero is too narrow for it beside the mark (a 320 px phone); the plan rows say the same. */
+function PriceTag({ name, span, was, now }: { name: string; span: string; was: number; now: number }) {
+  return (
+    <div
+      aria-hidden
+      className="relative hidden w-[132px] shrink-0 rotate-[5deg] [@container(min-width:320px)]:block rounded-[12px] bg-[var(--color-white)] px-[14px] pb-[12px] pt-[22px] shadow-modal motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:duration-normal motion-safe:ease-decelerate"
+    >
+      <span className="absolute left-1/2 top-[9px] size-[8px] -translate-x-1/2 rounded-full bg-[var(--color-violet-950)]" />
+      <p className="m-0 truncate text-md font-semibold leading-md text-[color:var(--color-gray-900)]">{name}</p>
+      <p className="m-0 text-lg leading-lg tabular-nums text-[color:var(--color-gray-500)] line-through decoration-[var(--color-red-500)] decoration-2">
+        {usd(was)}
+      </p>
+      <p className={cn("m-0 text-4xl leading-4xl tabular-nums text-[color:var(--color-violet-700)]", DISPLAY)}>{usd(now)}</p>
+      <p className="m-0 text-sm leading-sm text-[color:var(--color-gray-600)]">{span}</p>
+    </div>
+  );
+}
+
 function OfferDialog({ offer, onClose }: { offer: WelcomeOffer; onClose: () => void }) {
   const router = useRouter();
+  const titleId = React.useId();
   const [cycle, setCycle] = React.useState<BillingCycle>("monthly");
   const [tier, setTier] = React.useState<PlanTier>("builder");
   const ctaRef = React.useRef<HTMLButtonElement>(null);
   const picked = PAID.find((p) => p.tier === tier)!;
   const pay = firstPayment(tier, cycle);
-  const span = cycle === "yearly" ? "first year" : "first month";
+  const unit = cycle === "yearly" ? "year" : "month";
 
   const go = (href: string) => {
     onClose();
     router.push(href);
   };
 
-  return (
-    <ModalFrame
-      open
-      onClose={onClose}
-      size="sm"
-      sheet
-      initialFocus={ctaRef}
-      icon={
-        <span className="inline-flex size-[44px] items-center justify-center rounded-[var(--radius-xl)] bg-[image:var(--gradient-button-ai)] text-[color:var(--color-white)] shadow-depth">
-          <Icon icon={GiftIcon} size={22} />
-        </span>
-      }
-      title={`Welcome gift: ${OFF} off any plan`}
-      description={`Half price on your ${cycle === "yearly" ? "first year" : "first month"}. Only for the next ${OFFER_HOURS} hours, and only for you.`}
-    >
-      <div className="flex flex-col gap-[20px]">
+  const hero = (
+    <div className={cn("ix-offer-stage px-[24px] pb-[24px] pt-[20px] [container-type:inline-size]", ON_STAGE)}>
+      <p className={cn("m-0 inline-flex items-center gap-[6px] rounded-full px-[10px] py-[4px] text-sm font-semibold leading-sm", GLASS)}>
+        <Icon icon={GiftIcon} size={16} />A welcome gift, just for you
+      </p>
+      <div className="mt-[20px] flex items-center justify-between gap-[16px]">
+        <h2 id={titleId} className="m-0 flex min-w-0 flex-col items-start gap-[12px]">
+          <OfferMark size="xl" />
+          <span className="text-balance text-lg font-semibold leading-lg">your first {unit} of any plan</span>
+        </h2>
+        <PriceTag key={`${tier}-${cycle}`} name={picked.name} span={`first ${unit}`} was={pay.period} now={pay.final} />
+      </div>
+      <div className="mt-[20px] flex flex-wrap items-center gap-x-[12px] gap-y-[8px]">
+        <span className={cn("text-md font-semibold leading-md", ON_STAGE_SOFT)}>Ends in</span>
         <Countdown ms={offer.left} />
+      </div>
+    </div>
+  );
+
+  return (
+    <ModalFrame open onClose={onClose} size="sm" sheet initialFocus={ctaRef} labelledBy={titleId} title={`Welcome gift: ${OFF} off any plan`} hero={hero}>
+      <div className="flex flex-col gap-[16px]">
         <Segmented
           label="Billing"
           className="self-center"
@@ -201,9 +270,12 @@ function OfferDialog({ offer, onClose }: { offer: WelcomeOffer; onClose: () => v
                   </span>
                   <span className="text-sm leading-sm text-text-secondary">{p.credits.toLocaleString("en-US")} AI credits a month</span>
                 </span>
-                <span className="flex flex-col items-end">
-                  <span className="text-lg font-bold leading-lg tabular-nums text-text-primary">{usd(f.final)}</span>
-                  <span className="text-sm leading-sm tabular-nums text-text-tertiary line-through">{usd(f.period)}</span>
+                <span className="flex flex-col items-end gap-[4px]">
+                  <span className="flex items-baseline gap-[6px]">
+                    <span className="text-md leading-md tabular-nums text-text-tertiary line-through">{usd(f.period)}</span>
+                    <span className="text-xl font-bold leading-xl tabular-nums text-text-primary">{usd(f.final)}</span>
+                  </span>
+                  <Badge tone="success">You save {usd(f.saving)}</Badge>
                 </span>
               </button>
             );
@@ -217,11 +289,10 @@ function OfferDialog({ offer, onClose }: { offer: WelcomeOffer; onClose: () => v
             className="w-full"
             onClick={() => go(checkoutHref({ kind: "plan", tier, cycle }))}
           >
-            Get {picked.name} for {usd(pay.final)}
+            Claim {OFF} off: {picked.name} for {usd(pay.final)}
           </Button>
           <p className="m-0 text-center text-sm leading-sm text-text-tertiary">
-            Your {span} at half price, then {usd(pay.period)} {cycle === "yearly" ? "a year" : "a month"}. Cancel any time. Testnet demo: no real money
-            moves.
+            Then {usd(pay.period)} a {unit}. Cancel any time. Testnet demo: no real money moves.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-[16px] gap-y-[4px]">
             <NextLink href="/settings/plan" onClick={onClose} className={linkVariants({ size: "md" })}>
@@ -290,26 +361,25 @@ export function WelcomeOfferHost() {
   );
 }
 
-/** Plan & pricing's line about the offer, while it runs. */
+/** Plan & pricing's band about the offer, while it runs. */
 export function OfferBanner() {
   const offer = useWelcomeOffer();
   if (!offer.ready || !offer.live) return null;
   return (
-    <div className="flex w-full flex-wrap items-center gap-x-[16px] gap-y-[8px] rounded-2xl bg-[image:var(--gradient-button-ai)] px-[20px] py-[16px] text-[color:var(--color-white)]">
-      <span aria-hidden className="inline-flex size-[40px] shrink-0 items-center justify-center rounded-[var(--radius-xl)] bg-[color:color-mix(in_srgb,var(--color-white)_18%,transparent)]">
-        <Icon icon={GiftIcon} size={20} />
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="m-0 text-lg font-semibold leading-lg">Your welcome gift: {OFF} off your first payment</p>
-        <p className="m-0 text-md leading-md text-[color:color-mix(in_srgb,var(--color-white)_82%,transparent)]">
-          Any plan, monthly or annual. The prices below already include it.
-        </p>
+    <section
+      aria-label={`Welcome gift: ${OFF} off any plan`}
+      className={cn("ix-offer-stage flex w-full flex-wrap items-center gap-x-[28px] gap-y-[16px] overflow-hidden rounded-2xl px-[24px] py-[20px]", ON_STAGE)}
+    >
+      <OfferMark size="lg" />
+      <div className="min-w-[220px] flex-1">
+        <p className="m-0 text-balance text-xl font-semibold leading-xl">Your welcome gift: half price on any plan</p>
+        <p className={cn("m-0 text-md leading-md", ON_STAGE_SOFT)}>Your first month, or your first year. The prices below already include it.</p>
       </div>
-      <p className="m-0 flex items-center gap-[8px] rounded-full bg-[color:color-mix(in_srgb,var(--color-white)_16%,transparent)] px-[14px] py-[6px] text-md font-semibold leading-md">
-        Ends in <Countdown ms={offer.left} size="sm" />
-      </p>
-    </div>
+      <div className="flex flex-col gap-[6px]">
+        <span className={cn("text-sm font-semibold leading-sm", ON_STAGE_SOFT)}>Ends in</span>
+        <Countdown ms={offer.left} />
+      </div>
+    </section>
   );
 }
 
-export { Countdown as OfferCountdown };

@@ -35,8 +35,8 @@ import { Icon } from "@/components/dashboard/icon";
 import { useMe } from "@/components/dashboard/sidebar-account";
 import { Avatar, Badge, Banner, Button, ModalFrame, ProgressBar, Segmented } from "@/components/ideeza";
 import { checkoutHref } from "@/lib/create/checkout-route";
-import { OFFER_OFF, offerPrice } from "@/lib/account/welcome-offer";
-import { OfferBanner, useWelcomeOffer } from "./welcome-offer";
+import { offerPrice } from "@/lib/account/welcome-offer";
+import { OfferBanner, OfferSticker, useWelcomeOffer } from "./welcome-offer";
 import { discountFor, usd, type BillingCycle } from "@/lib/create/credit-pricing";
 import { useCreatePlan } from "@/lib/create/plan";
 import { useManualProjects } from "@/lib/manual/projects";
@@ -183,10 +183,11 @@ function PriceLine({ plan: p, cycle, big = true, offer = false }: { plan: Plan; 
         <span className="text-lg leading-lg text-text-secondary">{p.monthly > 0 && cycle === "yearly" ? "mo, billed yearly" : "month"}</span>
       </p>
       {offered ? (
-        <p className="flex flex-wrap items-center gap-x-[8px] text-md leading-md">
+        <p className="flex flex-wrap items-center gap-x-[10px] gap-y-[4px] text-md leading-md">
+          <OfferSticker size="md" />
           <span className="tabular-nums text-text-tertiary line-through">{price(per)}</span>
           <span className="font-semibold text-text-success">
-            {Math.round(OFFER_OFF * 100)}% off your {cycle === "yearly" ? "first year" : "first month"}
+            your {cycle === "yearly" ? "first year" : "first month"}
           </span>
         </p>
       ) : null}
@@ -438,9 +439,9 @@ function CompareHead({ plan: p, cycle, hydrated, offer, onAct }: { plan: Plan; c
         {p.monthly === 0 ? "$0" : `${price(per)} mo${c === "yearly" ? ", billed yearly" : ""}`}
       </span>
       {offered ? (
-        <span className="text-sm leading-sm">
-          <span className="tabular-nums text-text-tertiary line-through">{price(list)}</span>{" "}
-          <span className="font-semibold text-text-success">{Math.round(OFFER_OFF * 100)}% off</span>
+        <span className="flex items-center gap-[8px] text-sm leading-sm">
+          <span className="tabular-nums text-text-tertiary line-through">{price(list)}</span>
+          <OfferSticker />
         </span>
       ) : null}
       {cta.rel === "current" ? (

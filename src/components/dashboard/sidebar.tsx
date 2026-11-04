@@ -28,7 +28,7 @@ import {
   Compass01Icon,
   CpuIcon,
   FlashIcon,
-  GiftIcon,
+  ArrowRight01Icon,
   Folder01Icon,
   HistoryIcon,
   Home01Icon,
@@ -46,7 +46,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { checkoutHref } from "@/lib/create/checkout-route";
 import { OFFER_OFF, countdown } from "@/lib/account/welcome-offer";
-import { useWelcomeOffer } from "@/components/credits/welcome-offer";
+import { OfferMark, useWelcomeOffer } from "@/components/credits/welcome-offer";
 import { useCreatePlan } from "@/lib/create/plan";
 import { planOf } from "@/lib/create/plans";
 import { idzCompactOf } from "@/lib/wallet/idz";
@@ -608,9 +608,9 @@ function OfferCard({ left, collapsed, onLeave }: { left: number; collapsed: bool
         data-tour="plan"
         aria-label={label}
         title={`${label} · ends in ${countdown(left)}`}
-        className="relative mb-[12px] flex h-[40px] w-full items-center justify-center rounded-lg bg-[image:var(--gradient-button-ai)] text-[color:var(--color-white)] outline-none focus-visible:ring-2 focus-visible:ring-border-focus"
+        className="ix-offer-stage relative mb-[12px] flex h-[40px] w-full items-center justify-center overflow-hidden rounded-lg text-sm font-extrabold leading-sm text-[color:var(--color-white)] outline-none focus-visible:ring-2 focus-visible:ring-border-focus"
       >
-        <Icon icon={GiftIcon} />
+        <span aria-hidden>{Math.round(OFFER_OFF * 100)}%</span>
       </Link>
     );
   }
@@ -620,19 +620,22 @@ function OfferCard({ left, collapsed, onLeave }: { left: number; collapsed: bool
       data-tour="plan"
       onClick={onLeave}
       aria-label={label}
-      className="mb-[16px] flex w-full items-center gap-[12px] rounded-lg bg-[image:var(--gradient-button-ai)] px-[12px] py-[12px] text-[color:var(--color-white)] outline-none transition-[filter] duration-fast hover:brightness-110 focus-visible:ring-2 focus-visible:ring-border-focus"
+      className="ix-offer-stage mb-[16px] flex w-full items-center gap-[12px] overflow-hidden rounded-lg px-[14px] py-[12px] text-[color:var(--color-white)] outline-none transition-[filter] duration-fast hover:brightness-110 focus-visible:ring-2 focus-visible:ring-border-focus"
     >
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-md font-semibold leading-md">{Math.round(OFFER_OFF * 100)}% off any plan</span>
-        <span aria-hidden className="block truncate text-sm font-regular leading-sm text-[color:color-mix(in_srgb,var(--color-white)_84%,transparent)]">
-          Ends in <span className="tabular-nums">{countdown(left)}</span>
+      <span aria-hidden className="flex min-w-0 flex-1 flex-col gap-[8px]">
+        <span className="flex items-center gap-[8px]">
+          <OfferMark size="md" />
+          <span className="text-sm font-semibold leading-sm">any plan</span>
+        </span>
+        <span className="block truncate text-sm font-regular leading-sm text-[color:color-mix(in_srgb,var(--color-white)_84%,transparent)]">
+          Ends in <span className="font-semibold tabular-nums text-[color:var(--color-white)]">{countdown(left)}</span>
         </span>
       </span>
       <span
         aria-hidden
-        className="inline-flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full bg-[color:color-mix(in_srgb,var(--color-white)_20%,transparent)]"
+        className="inline-flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full bg-[color:color-mix(in_srgb,var(--color-white)_18%,transparent)]"
       >
-        <Icon icon={GiftIcon} />
+        <Icon icon={ArrowRight01Icon} />
       </span>
     </Link>
   );
