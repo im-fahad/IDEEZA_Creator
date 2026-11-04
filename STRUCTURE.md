@@ -58,6 +58,7 @@ ideeza-creator-panel/
    ├─ components/            UI, grouped by module/area
    │  ├─ app-chrome/         profile dropdown (shared chrome)
    │  ├─ dashboard/          sidebar (+ sidebar-account: account / wallet popovers), workspace-prompt (hero), command-palette (⌘K)
+   │  ├─ landing/            the public landing page /landing: nav, section-header, one file per section (art: public/landing/)
    │  ├─ credits/            Settings › Plan & pricing (User Panel V2 layouts): pricing-frame (sheet,
    │  │                      breadcrumb, pill tabs), plan-pricing-page, plans-panel, credits-panel,
    │  │                      billing-history, payment-method-panel, plan-banner (+ plan details),
