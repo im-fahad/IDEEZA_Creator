@@ -425,7 +425,7 @@ function BuildImagesSection() {
 type Tile = ReturnType<typeof mediaTilesOf>[number];
 
 /** 03b · the image viewer, full screen on the DS inverse surface. */
-function ImageViewer({
+export function ImageViewer({
   tiles,
   index,
   coverUrl,
