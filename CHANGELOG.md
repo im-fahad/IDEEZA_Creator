@@ -6,6 +6,7 @@ to build and how to check it is done, and links to its Jira ticket.
 
 | CL | Change | In the prototype | Jira | Production |
 | --- | --- | --- | --- | --- |
+| [CL-005](#cl-005-each-account-has-its-own-work-a-new-account-starts-fresh) | Each account has its own work; a new account starts fresh | 4 Nov 2026 | Not created yet | To do |
 | [CL-004](#cl-004-welcome-offer-50-off-the-first-payment-for-12-hours) | Welcome offer: 50% off the first payment, for 12 hours | 4 Nov 2026 | Not created yet | To do |
 | [CL-003](#cl-003-landing-page-the-way-into-ideeza) | Landing page, the way into IDEEZA | 4 Nov 2026 | Not created yet | To do |
 | [CL-002](#cl-002-sign-up-and-sign-in) | Sign up and sign in | 4 Nov 2026 | Not created yet | To do |
@@ -23,6 +24,40 @@ state, mobile); Design (DS components and tokens); Before → After screenshots.
 No code: no file names, functions or commit hashes. Screenshots go in
 docs/changelog/ as <date>-<short-name>-before.png / -after.png.
 -->
+
+---
+
+## CL-005 Each account has its own work; a new account starts fresh
+
+**In the prototype:** 4 November 2026 · **Jira:** not created yet · **Production:** To do
+
+**Screen:** Sign out (the sidebar's account menu, the editor's account menu,
+Settings › Account › Sign-in and security), Sign up, Sign in, Forgot password,
+and every page that shows your work.
+
+> In the prototype every account lives in the same browser, so signing out sets
+> that account's work aside in the browser and signing in brings it back.
+> Production keeps each account's work on the server, so you simply see only
+> your own, on any device.
+
+### What to build
+
+- [ ] Everything you make or own belongs to your account: projects and their files, AI chats and builds, AI credits, plan, orders and invoices, wallet and IDZ, your profile (name, photo, cover, links), messages, settings, the tour and tutorials progress, notifications and drafts.
+- [ ] A new account starts empty: no projects, chats or builds; the starting AI credits (*You have 18 free credits to start*); the starting wallet; the Free plan; its own name on its profile (from Sign up); the Welcome, the tour and the welcome offer ([CL-004](#cl-004-welcome-offer-50-off-the-first-payment-for-12-hours)).
+- [ ] Signing out and back in shows exactly what you left, and nothing of another account that used the same browser or device.
+- [ ] Signed in as one account, no page ever shows another account's work.
+- [ ] Forgot password → a new password signs you in with your own work.
+- [ ] The welcome offer is per account: each new account gets its own 12 hours.
+
+### Design
+
+No new screens: the existing pages, filled with the signed-in account's own work.
+
+### Before → After
+
+| Before | After |
+| --- | --- |
+| ![Before: a new account opened on the last account's work — its name (Rafiq Ahmed), wallet (1.8K IDZ), credits and offer](docs/changelog/2026-11-04-own-work-before.png) | ![After: a new account starts fresh — the Welcome, 18 free credits, its own name (Tania Khan) and the Free plan](docs/changelog/2026-11-04-own-work-after.png) |
 
 ---
 

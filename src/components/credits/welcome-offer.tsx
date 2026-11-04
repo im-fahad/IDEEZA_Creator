@@ -137,7 +137,7 @@ const MARK = {
 export function OfferMark({ size = "xl", className }: { size?: keyof typeof MARK; className?: string }) {
   return (
     <span className={cn("inline-flex items-center", MARK[size][1], className)}>
-      <span className={cn("leading-none tabular-nums tracking-[-0.03em]", DISPLAY, MARK[size][0])}>{OFF}</span>
+      <span className={cn("leading-none tabular-nums tracking-[-0.03em]", DISPLAY, MARK[size][0])}>{OFF}</span>{" "}
       <OfferSticker size={size}>OFF</OfferSticker>
     </span>
   );
@@ -213,7 +213,7 @@ function OfferDialog({ offer, onClose }: { offer: WelcomeOffer; onClose: () => v
       </p>
       <div className="mt-[20px] flex items-center justify-between gap-[16px]">
         <h2 id={titleId} className="m-0 flex min-w-0 flex-col items-start gap-[12px]">
-          <OfferMark size="xl" />
+          <OfferMark size="xl" />{" "}
           <span className="text-balance text-lg font-semibold leading-lg">your first {unit} of any plan</span>
         </h2>
         <PriceTag key={`${tier}-${cycle}`} name={picked.name} span={`first ${unit}`} was={pay.period} now={pay.final} />

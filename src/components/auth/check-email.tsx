@@ -30,14 +30,16 @@ export function CheckEmail() {
 
   if (!hydrated || !waiting) return null;
 
-  const verified = () => {
+  const verified = async () => {
     setBusy(true);
-    if (!verifyEmail(Date.now()).ok) {
+    const to = needsSourceQuestion(waiting) ? authHref("/sign-up/welcome", { next: waitingNext }) : waitingNext || "/";
+    if (!(await verifyEmail(Date.now())).ok) {
       setBusy(false);
       setRefused(true);
       return;
     }
-    router.replace(needsSourceQuestion(waiting) ? authHref("/sign-up/welcome", { next: waitingNext }) : waitingNext || "/");
+    // A reload, so every store starts from the new account's own work.
+    window.location.replace(to);
   };
 
   const changeEmail = () => {
