@@ -93,6 +93,8 @@ export function BuildPill() {
   // A build that was already finished before this screen opened has nothing new to say.
   if (!pill.lasting && job.updatedAt < (seenAt?.at ?? now) - SAY_ONCE_MS) return null;
   if (pathname === `/m/ai/chat/${job.chatId}`) return null;
+  // Home's Feed draws its own queue pill (Feed "Popup when user is in queue").
+  if (pathname === "/m" && statusOf(job) === "queued") return null;
 
   const glyph = pill.tone === "done" ? CheckmarkCircle02Icon : pill.tone === "working" ? Loading03Icon : Alert02Icon;
   return (

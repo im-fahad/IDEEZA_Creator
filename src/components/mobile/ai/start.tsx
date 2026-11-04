@@ -24,7 +24,6 @@ import { Screen } from "../screen";
 import { MORE_ICON, TopBar } from "../top-bar";
 import { ActionSheet, Sheet } from "../kit/sheet";
 import { BuyCreditsSheet } from "./buy-credits-sheet";
-import { BuildPill } from "./build-pill";
 import { CreditsFoot } from "./parts";
 import { PromptBox } from "./prompt-box";
 
@@ -189,7 +188,6 @@ export function AiStart() {
           )}
         </div>
       </Screen>
-      <BuildPill />
       <ActionSheet
         open={menu}
         onClose={() => setMenu(false)}

@@ -144,7 +144,14 @@ try {
   console.log(JSON.stringify({ out: null, result: null, errors: [...errors, String(e)] }, null, 2));
   process.exitCode = 1;
 } finally {
+  // Close Chrome properly first, so localStorage written this run reaches the profile on disk.
+  try {
+    await Promise.race([send("Browser.close"), sleep(3000)]);
+  } catch {
+    // already gone
+  }
   ws?.close();
+  await sleep(300);
   chrome.kill("SIGKILL");
   if (!args.profile) rmSync(profile, { recursive: true, force: true });
 }
