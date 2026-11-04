@@ -65,6 +65,20 @@ From "Feed · 2026 update" and the master page's Global Search and Notification.
 - **Notification** (`/m/notifications`): the web bell's notices under All / Unread, grouped New · Today · Yesterday · by date; each with its button (opens its phone screen, marks it read) and ⋮ (Turn off notifications like this with Undo, Mute this project, Delete); the header ⋮ has Mark all as read, Notification settings, Clear all (asks first; clears this phone's list only).
 - **Guests** browse Home after Explore first; appreciating, following, commenting, saving, sharing, reporting, buying, and opening details, search, notifications or activity ask them in (the guest gate).
 
+## Message tab (M6)
+
+From "People · 2026 update" (MS-01…51) and the Shared kit's message frames, on the web's Messages store, rules and actions (`lib/messages/`); the phone's own reading is `lib/messages/phone.ts`, its outbox `lib/messages/use-outbox.ts`.
+
+- **Messages** (`/m/messages`): Inbox · Requests with counts, live search, All · Unread · Archived and the Project sheet; rows with the relation badge, subject, last line, time, unread count and muted mark; swipe left to Archive / Unarchive with Undo. Conversations start from a profile, post or listing (`mStartHref` → `/m/messages/new`).
+- **Requests**: the quiet-mode and hidden-words lines as alerts; a request has Accept ("Moved to your Inbox."), Delete ("Request deleted.") and Block; replying keeps it in Requests. **States**: bones after 300 ms, empty Inbox and Requests, no results with Clear search, the offline banner over cached rows, Couldn't load with Try again.
+- **A thread** (`/m/messages/<id>`): "Name · relation" (tap for the profile) or "Team · N people" (tap for Members); the context card folding to one line while you read back and ending as Project deleted / Post removed; the safety line, day breaks, runs of bubbles, the scam hint under a risky message; marked read on opening.
+- **Composer**: + opens Photo (the photo pre-prompt once) · PDF · Project; thumbnails and chips with ✕ and the web's file rules inline; the field grows to five lines, Enter sends, the counter from 1,800 characters.
+- **Hold a message**: theirs Copy · Report message; yours within 15 minutes Copy · Edit · Delete (asks first), then Copy only; Edit shows "Editing message"; swipe right to reply (the quote above the sent bubble).
+- **Sending**: Sending… until stored; sent offline or refused, it stays on this phone as Not sent with Retry · Delete.
+- **⋯ menu**: View profile · Mute · Archive (Undo) · Report conversation (Also block) · Block (asks first, toast with Undo); blocked by you → Unblock in place of the composer; blocked by them → "You can't reply to this conversation."
+- **Team thread**: "Name · Role" with avatars, the Members sheet (Open Team), team ⋯; a deleted project replaces the composer with "This project was deleted."
+- **Attachments**: photos open the viewer (n of N, ← →, Save photo), PDFs the phone's preview, shared projects as cards. **Starting** (`/m/messages/new`): the existing thread, or a draft the first Send creates, or one card saying why it can't start.
+
 ## Earn Coin tab (M8)
 
 From the owner's master page (Wallet Balance, Stacking, Refer & Earn, Buy IDEEZA Coin) on the web's IDZ balance, ledger, presale and demo wallet (`lib/wallet/`); staking and referrals are demo logic in `lib/wallet/{staking,referral}.ts`, recorded in the same demo wallet, so every balance agrees.
