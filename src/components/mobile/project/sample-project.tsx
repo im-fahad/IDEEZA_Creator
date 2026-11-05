@@ -6,29 +6,27 @@
 // (`samplePostOf`). No owner control shows. The tabs are Overview · Products
 // · Media; the Overview has the Marketplace block when it is listed (the
 // Feed's `?tab=marketplace` lands there), the project's activity, the
-// products, the legal and chain facts, and About. Buying is Explore
-// marketplace's, which the phone hasn't opened yet, so Buy now is off with
-// its reason; Ask the creator opens a conversation about the post.
+// products, the legal and chain facts, and About. Buying is a testnet demo by
+// the active demo creator (project-earn/buyer/sample-shop.tsx: the banner, the
+// Marketplace block and the bar); Ask the creator opens a conversation about
+// the post.
 
 import * as React from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { BubbleChatIcon, PlayIcon, ShoppingCart01Icon } from "@hugeicons/core-free-icons";
+import { PlayIcon } from "@hugeicons/core-free-icons";
 import { Icon } from "@/components/dashboard/icon";
 import { Badge } from "@/components/ideeza/badge";
-import { Button, buttonVariants } from "@/components/ideeza/button";
-import { TestnetDemoBadge } from "@/components/ideeza/testnet-demo-badge";
 import { CATALOGUES } from "@/lib/manual/journey";
 import { formatDate } from "@/lib/manual/project-summary";
-import { BUY_LATER, VIEWER_TABS, parseViewerTab, type PhoneTab } from "@/lib/manual/phone-project";
+import { VIEWER_TABS, parseViewerTab, type PhoneTab } from "@/lib/manual/phone-project";
 import { startHref } from "@/lib/messages/links";
 import { ME } from "@/lib/messages/types";
 import { PIECE_LABEL, type InnovationPost, type PostMedia } from "@/lib/innovations/types";
 import { cn } from "@/lib/utils";
-import { BottomBar } from "../kit/bottom-bar";
 import { Sheet } from "../kit/sheet";
 import { Screen } from "../screen";
 import { TopBar } from "../top-bar";
+import { SampleMarketSection, SampleShop, SampleShopBanner, SampleShopBar } from "../project-earn/buyer/sample-shop";
 import { InfoRow, LIST_CARD, ListCard, ProductRow, SectionHeading, SubLine } from "./parts";
 
 const enc = encodeURIComponent;
@@ -43,22 +41,9 @@ export function SampleProject({ post, id }: { post: InnovationPost; id: string }
   const ask = `/m${startHref({ kind: "post", to: post.creator.id, slug: post.slug }, ME)}`;
 
   return (
-    <Screen
-      top={<TopBar back />}
-      footer={
-        <BottomBar className="flex-row gap-6 pt-8">
-          {post.listing && (
-            <Button size="xl" className="min-w-0 flex-1" disabled title={BUY_LATER} iconLeading={<Icon icon={ShoppingCart01Icon} size={20} />}>
-              Buy now
-            </Button>
-          )}
-          <Link href={ask} className={cn(buttonVariants({ hierarchy: "secondary", size: "xl" }), "min-w-0 flex-1")}>
-            <Icon icon={BubbleChatIcon} size={20} />
-            Ask the creator
-          </Link>
-        </BottomBar>
-      }
-    >
+    <SampleShop post={post} id={id}>
+    <Screen top={<TopBar back />} footer={<SampleShopBar ask={ask} />}>
+      <SampleShopBanner />
       <header className="flex flex-col gap-4 px-8 pb-8">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <h1 className="min-w-0 break-words text-2xl font-semibold leading-2xl text-text-primary">{post.title}</h1>
@@ -111,6 +96,7 @@ export function SampleProject({ post, id }: { post: InnovationPost; id: string }
         {tab === "media" && <SampleMedia post={post} />}
       </div>
     </Screen>
+    </SampleShop>
   );
 }
 
@@ -123,20 +109,7 @@ function SampleOverview({ post, id }: { post: InnovationPost; id: string }) {
   const stage = stageLabel(post.stage);
   return (
     <div className="flex flex-col gap-12">
-      {post.listing && (
-        <section aria-labelledby="sv-market" className="flex flex-col gap-4">
-          <div className="flex items-center gap-4">
-            <SectionHeading id="sv-market" title="Marketplace" />
-            <TestnetDemoBadge />
-          </div>
-          <ListCard label="Marketplace">
-            {post.listing.rows.map((r) => (
-              <InfoRow key={r.label} label={r.label} value={r.price} />
-            ))}
-          </ListCard>
-          <p className="text-sm leading-sm text-text-secondary">{BUY_LATER}</p>
-        </section>
-      )}
+      <SampleMarketSection />
       <section aria-labelledby="sv-activity" className="flex flex-col gap-4">
         <SectionHeading id="sv-activity" title="Project activity" />
         <div className={cn(LIST_CARD, "gap-3 px-8 py-6")}>

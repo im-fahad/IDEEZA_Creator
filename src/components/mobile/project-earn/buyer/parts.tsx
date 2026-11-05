@@ -1,0 +1,533 @@
+"use client";
+
+// The buyer's side of a project on the phone (Figma "Project Details · 2026
+// update" 18–19): the parts the Explore marketplace view, a Feed sample's
+// Marketplace block and the owner's previews share.
+// · DemoShopBanner — M01 Warning "Testnet demo · shopping as Mira" and "Shop
+//   as someone else", which picks Mira, Leo or Sam in a pick-one sheet (the
+//   web's "Shopping as" switch, `useActiveBuyer`);
+// · PreviewBanner — M01 Info with Exit preview (18, 19);
+// · ProjectTop — the name and its chips, the meta line, the description
+//   clamped to 3 lines (Show more); ViewerTabs (M14 Line Full);
+// · OfferCard / OfferRows — a listing's card: its price line, Info rows and a
+//   foot (the wallet line, the share-sale note);
+// · WalletLine — "Paying from Mira's demo wallet · 0x… · 0.5 test ETH";
+// · NftActivityLine, ProjectActivity (Now + Earlier, or "No journey shared
+//   yet."), LegalSection, HolderBenefits, AboutRows;
+// · PurchaseDoneSheet — 18d, after the wallet sheet confirms.
+
+import * as React from "react";
+import { ArrowDown01Icon, CheckmarkCircle01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
+import { Icon } from "@/components/dashboard/icon";
+import { Badge } from "@/components/ideeza/badge";
+import { Banner } from "@/components/ideeza/banner";
+import { Button } from "@/components/ideeza/button";
+import { useMinuteClock } from "@/components/projects/details/use-project-page-data";
+import type { Network, Token } from "@/lib/brief/types";
+import { historyOf, labelOf } from "@/lib/manual/journey";
+import { useJourney } from "@/lib/manual/journey-store";
+import { RIGHT_LABEL, rightsOf } from "@/lib/manual/legal";
+import type { ProjectLegal } from "@/lib/manual/p2-types";
+import { formatDate } from "@/lib/manual/project-summary";
+import { benefitDurationText } from "@/lib/manual/public";
+import { utilityBenefitsOf, utilityPillCopy } from "@/lib/market/listing-flow";
+import { useMarket } from "@/lib/market/market-store";
+import type { ListingView } from "@/lib/market/types";
+import { availableOf } from "@/lib/wallet/balances";
+import { demoAddress, shortAddress } from "@/lib/wallet/demo-wallet";
+import { DEMO_BUYERS } from "@/lib/wallet/identities";
+import { testCoin } from "@/lib/wallet/request-view";
+import type { DemoBuyerId } from "@/lib/wallet/types";
+import { useActiveBuyer, useDemoWallet } from "@/lib/wallet/use-demo-wallet";
+import { cn } from "@/lib/utils";
+import { ConfirmSheet } from "../../kit/confirm-sheet";
+import { Sheet } from "../../kit/sheet";
+import { LIST_CARD, LIST_ROW, ListCard, SectionHeading } from "../../project/parts";
+
+const NOTE = "text-sm leading-sm text-text-secondary";
+/** A text action on the kit's 44 px tap area. */
+const TEXT_ACTION =
+  "-my-6 inline-flex min-h-[44px] items-center self-start text-md font-medium leading-md outline-none hover:underline focus-visible:underline";
+
+// ─────────────────────────── banners ───────────────────────────
+
+/** 18b–18h: the Testnet demo banner and its one switch of who is shopping. */
+export function DemoShopBanner({ body }: { body: string }) {
+  const { buyer, setActiveBuyer } = useActiveBuyer();
+  const [open, setOpen] = React.useState(false);
+  return (
+    <div className="px-8 pb-6">
+      <Banner
+        tone="attention"
+        title={`Testnet demo · shopping as ${buyer.name}`}
+        action={
+          <button type="button" aria-haspopup="dialog" onClick={() => setOpen(true)} className={TEXT_ACTION}>
+            Shop as someone else
+          </button>
+        }
+      >
+        {body}
+      </Banner>
+      <Sheet open={open} onClose={() => setOpen(false)} title="Shopping as" description="Mira, Leo and Sam are demo creators with test tokens in a test wallet.">
+        <ul role="listbox" aria-label="Shopping as" className="-mx-8 flex flex-col">
+          {DEMO_BUYERS.map((b) => (
+            <li key={b.id}>
+              <button
+                type="button"
+                role="option"
+                aria-selected={b.id === buyer.id}
+                onClick={() => {
+                  setActiveBuyer(b.id);
+                  setOpen(false);
+                }}
+                className="flex h-[44px] w-full items-center justify-between gap-4 rounded-md px-8 text-left text-lg leading-lg text-text-primary outline-none hover:bg-bg-subtle focus-visible:ring-2 focus-visible:ring-border-focus"
+              >
+                {`${b.name} · demo creator`}
+                {b.id === buyer.id && (
+                  <span className="text-[color:var(--color-icon-brand)]">
+                    <Icon icon={Tick02Icon} size={16} />
+                  </span>
+                )}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </Sheet>
+    </div>
+  );
+}
+
+/** 18 / 19: what the owner is looking at, and the way out. */
+export function PreviewBanner({ title, body, onExit }: { title: string; body?: string; onExit: () => void }) {
+  return (
+    <div className="px-8 pb-4">
+      <Banner
+        tone="info"
+        title={title}
+        action={
+          <button type="button" onClick={onExit} className={TEXT_ACTION}>
+            Exit preview
+          </button>
+        }
+      >
+        {body}
+      </Banner>
+    </div>
+  );
+}
+
+// ─────────────────────────── the top of the page ───────────────────────────
+
+export function ProjectTop({
+  name,
+  chips,
+  meta,
+  description,
+  titleRef,
+}: {
+  name: string;
+  chips: React.ReactNode;
+  meta: string;
+  description: string;
+  titleRef?: React.Ref<HTMLHeadingElement>;
+}) {
+  const [expanded, setExpanded] = React.useState(false);
+  const [clamps, setClamps] = React.useState(false);
+  const ref = React.useRef<HTMLParagraphElement>(null);
+  const id = React.useId();
+  React.useLayoutEffect(() => {
+    const el = ref.current;
+    if (el && !expanded) setClamps(el.scrollHeight > el.clientHeight + 1);
+  }, [description, expanded]);
+  return (
+    <header className="flex flex-col gap-6 px-8 pb-8">
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <h1 ref={titleRef} className="min-w-0 break-words text-2xl font-semibold leading-2xl text-text-primary">
+            {name}
+          </h1>
+          {chips}
+        </div>
+        <p className={NOTE}>{meta}</p>
+      </div>
+      {description.trim() && (
+        <div className="flex flex-col gap-2">
+          <p ref={ref} id={id} className={cn("whitespace-pre-line break-words text-md leading-md text-text-secondary", !expanded && "line-clamp-3")}>
+            {description}
+          </p>
+          {(clamps || expanded) && (
+            <div>
+              <button
+                type="button"
+                aria-expanded={expanded}
+                aria-controls={id}
+                onClick={() => setExpanded((v) => !v)}
+                className="-my-6 inline-flex min-h-[44px] items-center text-sm font-medium leading-sm text-text-brand outline-none hover:underline focus-visible:underline"
+              >
+                {expanded ? "Show less" : "Show more"}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </header>
+  );
+}
+
+export type ViewerTab<T extends string> = { id: T; label: string };
+
+/** M14 Tabs, Line Full, pinned under the top bar while the page scrolls. */
+export function ViewerTabs<T extends string>({ tabs, tab, onChange }: { tabs: readonly ViewerTab<T>[]; tab: T; onChange: (t: T) => void }) {
+  const refs = React.useRef(new Map<T, HTMLButtonElement>());
+  const move = (from: number, dir: 1 | -1) => {
+    const next = tabs[(from + dir + tabs.length) % tabs.length];
+    onChange(next.id);
+    refs.current.get(next.id)?.focus();
+  };
+  return (
+    <div className="sticky top-0 z-10 bg-bg-page">
+      <div role="tablist" aria-label="Project" className="flex border-b-[length:var(--border-width-1)] border-solid border-border-default">
+        {tabs.map((t, i) => {
+          const on = t.id === tab;
+          return (
+            <button
+              key={t.id}
+              ref={(el) => {
+                if (el) refs.current.set(t.id, el);
+              }}
+              id={`tab-${t.id}`}
+              type="button"
+              role="tab"
+              aria-selected={on}
+              aria-controls={`panel-${t.id}`}
+              tabIndex={on ? 0 : -1}
+              onClick={() => onChange(t.id)}
+              onKeyDown={(e) => {
+                if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+                  e.preventDefault();
+                  move(i, e.key === "ArrowRight" ? 1 : -1);
+                }
+              }}
+              className={cn(
+                "-mb-[var(--border-width-1)] flex h-[40px] min-w-0 flex-1 items-center justify-center border-b-[length:var(--border-width-2)] border-solid px-2 text-md font-medium leading-md outline-none transition-colors duration-fast focus-visible:bg-bg-subtle",
+                on ? "border-[var(--color-border-brand)] text-text-brand" : "border-transparent text-text-secondary hover:text-text-primary",
+              )}
+            >
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/** True once `target` has scrolled up out of its scroller (the top bar takes the title then). */
+export function useScrolledPast(target: React.RefObject<HTMLElement | null>): boolean {
+  const [gone, setGone] = React.useState(false);
+  React.useEffect(() => {
+    const el = target.current;
+    const scroller = el?.closest(".overflow-y-auto");
+    if (!el || !scroller) return;
+    const io = new IntersectionObserver(([e]) => setGone(!e.isIntersecting && e.boundingClientRect.top < (e.rootBounds?.top ?? 0)), { root: scroller });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [target]);
+  return gone;
+}
+
+// ─────────────────────────── a listing's card ───────────────────────────
+
+export type OfferRow = { label: string; value: React.ReactNode };
+
+/** Info rows that wrap a long value (Royalties, Minting) instead of cutting it. */
+export function OfferRows({ rows }: { rows: readonly OfferRow[] }) {
+  return (
+    <ul className="flex flex-col">
+      {rows.map((r) => (
+        <li key={r.label} className={cn(LIST_ROW, "flex min-h-[44px] items-start justify-between gap-6 p-6")}>
+          <span className="shrink-0 text-md leading-md text-text-secondary">{r.label}</span>
+          <span className="min-w-0 break-words text-right text-md leading-md text-text-primary">{r.value}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** "Buy now · 0.05 ETH / Main NFT · 10% of the project", the facts, and a foot. */
+export function OfferCard({
+  title,
+  sub,
+  aside,
+  rows,
+  foot,
+  label,
+}: {
+  title: string;
+  sub?: string;
+  aside?: React.ReactNode;
+  rows: readonly OfferRow[];
+  foot?: React.ReactNode;
+  label?: string;
+}) {
+  const line = "border-[length:var(--border-width-1)] border-x-0 border-solid border-border-subtle";
+  return (
+    <section aria-label={label ?? title} className={LIST_CARD}>
+      <div className={cn("flex items-start justify-between gap-4 px-8 py-6", line, "border-t-0")}>
+        <div className="flex min-w-0 flex-col gap-1">
+          <p className="text-md font-semibold leading-md text-text-primary">{title}</p>
+          {sub && <p className={NOTE}>{sub}</p>}
+        </div>
+        {aside}
+      </div>
+      <OfferRows rows={rows} />
+      {foot && <div className={cn("flex flex-col gap-3 px-8 py-6", line, "border-b-0")}>{foot}</div>}
+    </section>
+  );
+}
+
+/** The wallet a purchase or a bid pays from, with what it has free of the listing's coin. */
+export function WalletLine({ buyerId, token, network, verb }: { buyerId: DemoBuyerId; token: Token; network: Network; verb: "buy" | "bid" }) {
+  const wallet = useDemoWallet();
+  const { data } = useMarket();
+  const now = useMinuteClock();
+  const name = DEMO_BUYERS.find((b) => b.id === buyerId)?.name ?? "Demo creator";
+  const connected = wallet?.identities[buyerId]?.connected === true;
+  const have = availableOf(buyerId, token, network, { wallet, market: data, now });
+  return (
+    <p className={cn(NOTE, "break-words tabular-nums")}>
+      {wallet === undefined
+        ? "Reading the demo wallet…"
+        : connected
+          ? `Paying from ${name}'s demo wallet · ${shortAddress(demoAddress(buyerId))} · ${testCoin(have, token)}`
+          : `${name}'s demo wallet isn't connected — you'll connect it when you ${verb}.`}
+    </p>
+  );
+}
+
+export function CardNote({ children }: { children: React.ReactNode }) {
+  return <p className={NOTE}>{children}</p>;
+}
+
+/** "Main NFT activity" and its one line. */
+export function NftActivityLine({ heading, line }: { heading: string; line: string }) {
+  return (
+    <section aria-label={heading} className="flex flex-col gap-1">
+      <h3 className="text-md font-medium leading-md text-text-primary">{heading}</h3>
+      <p className={NOTE}>{line}</p>
+    </section>
+  );
+}
+
+/** A listing that can't be bought now, in the web's words. */
+export function ClosedCard({ title, detail }: { title: string; detail?: string }) {
+  return (
+    <div className={cn(LIST_CARD, "gap-1 px-8 py-6")}>
+      <p className="text-md font-medium leading-md text-text-primary">{title}</p>
+      {detail && <p className="text-md leading-md tabular-nums text-text-secondary">{detail}</p>}
+    </div>
+  );
+}
+
+/** A heading that opens and closes what is under it (Purchase summary, Bid history). */
+export function Disclosure({
+  title,
+  open,
+  onToggle,
+  controls,
+  toggleRef,
+  className,
+}: {
+  title: string;
+  open: boolean;
+  onToggle: () => void;
+  controls: string;
+  toggleRef?: React.Ref<HTMLButtonElement>;
+  className?: string;
+}) {
+  return (
+    <button
+      ref={toggleRef}
+      type="button"
+      aria-expanded={open}
+      aria-controls={controls}
+      onClick={onToggle}
+      className={cn("-my-6 flex min-h-[44px] items-center gap-2 text-left text-md font-medium leading-md text-text-primary outline-none focus-visible:underline", className)}
+    >
+      {title}
+      <span aria-hidden className={cn("inline-flex text-[color:var(--color-icon-default)] transition-transform duration-fast motion-reduce:transition-none", open && "rotate-180")}>
+        <Icon icon={ArrowDown01Icon} size={16} />
+      </span>
+    </button>
+  );
+}
+
+// ─────────────────────────── the project's own sections ───────────────────────────
+
+/** The project's journey as a visitor reads it: the newest entry (Now), Earlier (n) opening the rest.
+ *  With nothing shared beyond the default Planning: "No journey shared yet." */
+export function ProjectActivity({ projectId, createdAt }: { projectId: string; createdAt: number }) {
+  const { hydrated, record } = useJourney(projectId);
+  const [open, setOpen] = React.useState(false);
+  const listId = React.useId();
+  const history = hydrated ? historyOf(record, projectId, { kind: "project" }, createdAt) : [];
+  const shared = history.some((e) => !e.isDefault);
+  const [current, ...earlier] = history;
+  return (
+    <section aria-labelledby="bv-activity" className="flex flex-col gap-4">
+      <SectionHeading id="bv-activity" title="Project activity" />
+      {!hydrated ? null : !shared || !current ? (
+        <p className={NOTE}>No journey shared yet.</p>
+      ) : (
+        <div className={cn(LIST_CARD, "gap-3 px-8 py-6")}>
+          <span className="flex flex-wrap items-center gap-4">
+            <span className="text-sm font-medium leading-sm text-text-secondary">Now</span>
+            <Badge tone="brand-outline">{labelOf(current)}</Badge>
+            <span className="text-md leading-md text-text-secondary">{formatDate(current.createdAt)}</span>
+          </span>
+          {current.description && <p className="line-clamp-3 text-md leading-md text-text-primary">{current.description}</p>}
+          {earlier.length > 0 && (
+            <>
+              <button
+                type="button"
+                aria-expanded={open}
+                aria-controls={listId}
+                onClick={() => setOpen((v) => !v)}
+                className="-my-6 inline-flex min-h-[44px] items-center self-start text-sm font-medium leading-sm text-text-brand outline-none hover:underline focus-visible:underline"
+              >
+                {open ? "Hide earlier" : `Earlier (${earlier.length})`}
+              </button>
+              <ol id={listId} hidden={!open} className="flex flex-col">
+                {earlier.map((e) => (
+                  <li key={e.id} className="flex flex-col gap-1 border-t-[length:var(--border-width-1)] border-solid border-border-subtle py-4 last:pb-0">
+                    <span className="flex flex-wrap items-center gap-4">
+                      <span className="text-md font-medium leading-md text-text-primary">{labelOf(e)}</span>
+                      <span className="text-sm leading-sm text-text-secondary">{formatDate(e.createdAt)}</span>
+                    </span>
+                    {e.description && <span className="text-md leading-md text-text-secondary">{e.description}</span>}
+                  </li>
+                ))}
+              </ol>
+            </>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+/** The project's rights as the maker typed them (the web's Legal information block), read-only. A right
+ *  with a link asks before it leaves IDEEZA. Absent while there are none. */
+export function LegalSection({ legal }: { legal: ProjectLegal | undefined }) {
+  const rights = rightsOf(legal);
+  const [url, setUrl] = React.useState<string | null>(null);
+  if (rights.length === 0) return null;
+  return (
+    <section aria-labelledby="bv-legal" className="flex flex-col gap-4">
+      <SectionHeading id="bv-legal" title="Legal information" />
+      <ListCard label="Legal information">
+        {rights.map((r) => {
+          const value = [r.text, ...(r.attorney ? [`Attorney: ${r.attorney}`] : [])].filter(Boolean).join(" · ");
+          const body = (
+            <>
+              <span className="shrink-0 text-md leading-md text-text-secondary">{RIGHT_LABEL[r.kind]}</span>
+              <span className={cn("min-w-0 flex-1 break-words text-right text-md leading-md", r.url ? "text-text-brand" : "text-text-primary")}>{value}</span>
+            </>
+          );
+          return (
+            <li key={r.id} className={LIST_ROW}>
+              {r.url ? (
+                <button
+                  type="button"
+                  aria-haspopup="dialog"
+                  onClick={() => setUrl(r.url ?? null)}
+                  className="flex min-h-[44px] w-full items-start gap-4 p-6 text-left outline-none hover:bg-bg-subtle focus-visible:bg-bg-subtle"
+                >
+                  {body}
+                </button>
+              ) : (
+                <div className="flex min-h-[44px] w-full items-start gap-4 p-6">{body}</div>
+              )}
+            </li>
+          );
+        })}
+      </ListCard>
+      <p className={NOTE}>As stated by you — not verified.</p>
+      <ConfirmSheet
+        open={url !== null}
+        onClose={() => setUrl(null)}
+        title="Open this link in a new tab?"
+        body="It leaves IDEEZA — only open links you trust."
+        verb="Open link"
+        onConfirm={() => {
+          if (url) window.open(url, "_blank", "noopener");
+          setUrl(null);
+        }}
+      />
+    </section>
+  );
+}
+
+/** What owning the Main NFT gives, while the live or sold Main listing names benefits. */
+export function HolderBenefits({ listing }: { listing: ListingView }) {
+  const benefits = utilityBenefitsOf(listing);
+  if (!benefits) return null;
+  const copy = utilityPillCopy(false);
+  return (
+    <section aria-labelledby="bv-benefits" className="flex flex-col gap-4">
+      <SectionHeading id="bv-benefits" title="Holder benefits" />
+      <p className={NOTE}>{copy.lead}</p>
+      <OfferRowsCard rows={benefits.map((b) => ({ label: b.name, value: benefitDurationText(b.duration) }))} label="Holder benefits" />
+      <p className={NOTE}>{copy.note}</p>
+    </section>
+  );
+}
+
+export function OfferRowsCard({ rows, label }: { rows: readonly OfferRow[]; label?: string }) {
+  return (
+    <div aria-label={label} className={LIST_CARD}>
+      <OfferRows rows={rows} />
+    </div>
+  );
+}
+
+/** About, as rows of facts (no row opens anything here). */
+export function AboutRows({ rows }: { rows: readonly OfferRow[] }) {
+  if (rows.length === 0) return null;
+  return (
+    <section aria-labelledby="bv-about" className="flex flex-col gap-4">
+      <SectionHeading id="bv-about" title="About" />
+      <OfferRowsCard rows={rows} label="About" />
+    </section>
+  );
+}
+
+// ─────────────────────────── 18d · Purchase successful ───────────────────────────
+
+export type DoneFacts = { sentence: string; transaction: string | null; paid: string | null };
+
+export function PurchaseDoneSheet({ done, onClose }: { done: DoneFacts | null; onClose: () => void }) {
+  const rows: OfferRow[] = [];
+  if (done?.transaction) rows.push({ label: "Transaction", value: `${shortAddress(done.transaction)} · Demo` });
+  if (done?.paid) rows.push({ label: "Paid", value: done.paid });
+  return (
+    <Sheet
+      open={done !== null}
+      onClose={onClose}
+      title="Purchase successful"
+      actions={
+        <Button size="xl" className="w-full" onClick={onClose}>
+          Done
+        </Button>
+      }
+    >
+      <div className="flex flex-col gap-4">
+        <span aria-hidden className="text-[color:var(--color-icon-success)]">
+          <Icon icon={CheckmarkCircle01Icon} size={40} />
+        </span>
+        <p className="text-md leading-md text-text-primary">{done?.sentence}</p>
+      </div>
+      {rows.length > 0 && <OfferRowsCard rows={rows} label="Purchase" />}
+    </Sheet>
+  );
+}

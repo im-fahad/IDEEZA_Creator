@@ -326,7 +326,7 @@ export function activityOf(req: WalletRequest, proof: Proof, id: string, project
   if (projectId) entry.projectId = projectId;
   if (proof.txHash) entry.txHash = proof.txHash;
   if (proof.signature) entry.signature = proof.signature;
-  if (req.kind === "transaction" && req.charge && req.purpose !== "purchase") entry.charge = sumCharge(req.charge);
+  if (req.kind === "transaction" && req.charge && (req.purpose !== "purchase" || req.offMarket)) entry.charge = sumCharge(req.charge);
   if (req.purpose === "buyIdz" && req.presale) {
     const { lockMs, ...bought } = req.presale;
     entry.presale = { ...bought, unlocksAt: proof.at + lockMs };
