@@ -186,6 +186,9 @@ export type WalletRequest = {
   stake?: StakeRecord;
   /** What the confirmed line pays in (a withdrawal, a reward claim). */
   credit?: Charge;
+  /** A purchase the market store doesn't hold (a Feed sample project bought on the phone,
+   *  `market/phone-sample-sales.ts`): no Sale debits it, so its activity line carries the charge. */
+  offMarket?: true;
 };
 
 export type RequestPhase =
