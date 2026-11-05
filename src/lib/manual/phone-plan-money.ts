@@ -95,7 +95,6 @@ export function versionsKeptLine(count: number): string {
 
 // ─────────────────────────── money ───────────────────────────
 
-
 /** A sale row's second line: "Main NFT · 10% share", or the edition's name. */
 export function saleItemLine(text: { item: string; share: string | null }): string {
   return text.share ? `${text.item} · ${text.share} share` : text.item;
