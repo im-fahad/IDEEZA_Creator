@@ -6,6 +6,7 @@ to build and how to check it is done, and links to its Jira ticket.
 
 | CL | Change | In the prototype | Jira | Production |
 | --- | --- | --- | --- | --- |
+| [CL-006](#cl-006-coupon-codes-when-buying-a-plan) | Coupon codes when buying a plan | In review (5 Nov 2026) | After release approval | Not started |
 | [CL-005](#cl-005-each-account-has-its-own-work-a-new-account-starts-fresh) | Each account has its own work; a new account starts fresh | 4 Nov 2026 | None: prototype only | Nothing to build |
 | [CL-004](#cl-004-welcome-offer-50-off-the-first-payment-for-12-hours) | Welcome offer: 50% off the first payment, for 12 hours | 4 Nov 2026 | [PR-9013](https://ideeza.atlassian.net/browse/PR-9013) | Ready for development |
 | [CL-003](#cl-003-landing-page-the-way-into-ideeza) | Landing page, the way into IDEEZA | 4 Nov 2026 | [PR-9009](https://ideeza.atlassian.net/browse/PR-9009) | Ready for development |
@@ -33,6 +34,74 @@ state, mobile); Design (DS components and tokens); Before → After screenshots.
 No code: no file names, functions or commit hashes. Screenshots go in
 docs/changelog/ as <date>-<short-name>-before.png / -after.png.
 -->
+
+---
+
+## CL-006 Coupon codes when buying a plan
+
+**In the prototype:** in review, 5 November 2026 · **Jira:** after release approval (a Story under [PR-9008](https://ideeza.atlassian.net/browse/PR-9008)) · **Production:** Not started
+
+**Screen:** Settings › Plan & pricing › Checkout (`/settings/plan/checkout?plan=…&cycle=…`),
+the invoice and Billing history. From the User Panel V2 Figma, ✅ Pricing ›
+Upgrade Package flow: *Have a Coupon?*, *Coupon active*, *Coupon Invalid*, *Coupon Applied*.
+
+> The prototype has no server, so the codes that work are one list in the app.
+> Production keeps codes on the server (with the same rules), checks them there
+> when they are applied and again when the payment is taken, and records each
+> use against the account.
+
+### What to build
+
+**The codes and their rules**
+- [ ] Each code has: the code; percent off **or** a dollar amount off; the paid plans it works on (or every paid plan); the last day it works.
+- [ ] Codes are not case- or space-sensitive (*ideeza 30* = *IDEEZA30*) and show in capitals.
+- [ ] A code comes off **what is left to pay today** (after the unused time of the plan being replaced). A dollar amount never takes the price below $0.
+- [ ] A code is for **today's payment only**; renewals are at the full price.
+- [ ] Each code works **once per account**.
+- [ ] **One discount per order.** With the 50% welcome offer ([CL-004](#cl-004-welcome-offer-50-off-the-first-payment-for-12-hours)) live, the bigger of the two is used; a tie keeps the offer.
+- [ ] Prototype codes (for testing): **IDEEZA30** 30% off every paid plan, until 31 Dec 2027 · **BUILDER5** $5 off Builder, until 30 Jun 2027 · **MAKER60** 60% off Tinkerer and Builder, until 31 Dec 2027 · **LAUNCH25** 25% off, ended 31 Oct 2026.
+
+**Checkout (order summary, under the divider, above Subtotal)**
+- [ ] A link **Have a coupon?** Pressed, it becomes the field's label with the field (*Enter coupon code*) and **Apply** beside it; Enter applies too.
+- [ ] Applied: the field shows ✓ and the code, read only, with ✕ (*Remove coupon IDEEZA30*) at the end, and under it *Off today's payment only. Renewals are at the full price.* A line **Coupon IDEEZA30 (30% off) −$3.00** joins the summary and **Due today** drops ($10.00 → $7.00 for Builder monthly).
+- [ ] ✕ takes the code off, puts the price back and leaves an empty field.
+- [ ] Errors, in red under the field, with the field's red border:
+  - empty: *Type a coupon code first.*
+  - wrong: *Sorry, this coupon is not valid. Check the spelling and try again.*
+  - ended: *Sorry, this coupon ended on 31 Oct 2026.*
+  - not for this plan: *Sorry, this coupon is for Builder only.* (or *for Tinkerer and Builder only.*)
+  - used before: *You've already used this coupon. Each one works once.*
+  - nothing to pay today: *There's nothing left to pay today, so this coupon isn't needed.*
+- [ ] Welcome offer bigger: the code is not added, in grey: *Your welcome offer already saves more ($5.00). One discount per order, so this coupon isn't added.*
+- [ ] Coupon bigger: its line replaces the welcome offer's, and the summary says *Your coupon saves more than the welcome offer, so the offer isn't used.* The offer is not used up.
+- [ ] No field when the unused time already covers the upgrade (nothing to pay).
+- [ ] **Pay checks the code again.** If it stopped working (for example it ended while the page was open), it comes off, the field shows why, the summary says *Your coupon was taken off, so the price changed. Nothing was charged. Check Due today, then pay again.*, and no payment starts.
+- [ ] The wallet's review lists *Coupon IDEEZA30 · −$3.00* above *Due today*, and charges the reduced amount.
+- [ ] A coupon that brings Due today to $0 needs no wallet: the plan starts, paid with *Covered by coupon*.
+- [ ] Pressing Pay twice starts one payment, never two.
+- [ ] *Upgrade completed* adds *You saved $3.00 with IDEEZA30.*
+- [ ] Apply and ✕ wait while a payment runs.
+
+**After the payment**
+- [ ] The plan order keeps the code, what it took off and its rule.
+- [ ] Invoice: its own line **Coupon IDEEZA30 (30% off) −$3.00** between Subtotal and Tax; Total and Amount paid are the reduced amount.
+- [ ] Billing history: under the row's Amount, *Coupon IDEEZA30 −$3.00*.
+
+**Phone**
+- [ ] At 375 px the field and Apply share one row and nothing scrolls sideways.
+
+### Design
+
+- *Have a coupon?*: Link (A03) brand, 16 / medium.
+- Field: Text Input, size 36, with the Left Icon (✓, 16, icon default) when applied and Support Text 12/16 under it (helper grey, or the error colour on an error).
+- **Apply**: Button Tonal, 36. ✕: Icon Button ghost, 32.
+- The coupon line uses the summary's success colour, like the other discounts.
+
+### Before → After
+
+| Before | After |
+| --- | --- |
+| ![Before: the order summary with no way to enter a coupon — Subtotal $10.00, Due today $10.00](docs/changelog/2026-11-05-plan-coupons-before.png) | ![After: Have a coupon? with IDEEZA30 applied — Coupon IDEEZA30 (30% off) −$3.00, Due today $7.00](docs/changelog/2026-11-05-plan-coupons-after.png) |
 
 ---
 
