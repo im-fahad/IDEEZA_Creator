@@ -68,5 +68,4 @@ test("money: a sale row's lines, ?sale= read against the rows", () => {
   assert.equal(p.saleFromQuery(rows, "s2"), rows[1]);
   assert.equal(p.saleFromQuery(rows, "nope"), null);
   assert.equal(p.saleFromQuery(rows, null), null);
-  assert.match(p.WITHDRAW_ON_WEB, /Settings › Get paid/);
 });

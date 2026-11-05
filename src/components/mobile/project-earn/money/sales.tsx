@@ -4,7 +4,7 @@
 // EarnCustomers, project-earnings.tsx and customers-tab.tsx, their words):
 // the Testnet demo badge by the heading; once there is a sale, Your earnings
 // (paid to you per coin, in dollars at the demo rates, the fee-and-splits
-// line, and Withdraw in Get paid — off on the phone, with why); then the
+// line, and Withdraw in Get paid, which opens the phone's Get paid); then the
 // sales as rows, newest first: who, the price, the item, the date and
 // benefits. A row opens its detail sheet (17e): who bought it, then the web's
 // detail lines (the wallet with Copy, Bought, Paid, the fee, You received,
@@ -25,7 +25,7 @@ import { earningsOf, formatUsd, type Earning } from "@/lib/account/payout";
 import { customerRowText, customersEmptyCopy, customersSummaryText, type CustomerRow } from "@/lib/manual/customers";
 import { can } from "@/lib/manual/permissions";
 import { phoneEarnHref } from "@/lib/manual/phone-earn";
-import { WITHDRAW_ON_WEB, saleFromQuery, saleItemLine, saleWhenLine } from "@/lib/manual/phone-plan-money";
+import { saleFromQuery, saleItemLine, saleWhenLine } from "@/lib/manual/phone-plan-money";
 import { phoneProjectHref } from "@/lib/manual/phone-project";
 import { startHref } from "@/lib/messages/links";
 import { ME } from "@/lib/messages/types";
@@ -133,7 +133,6 @@ function perCoin(earnings: readonly Earning[]): string {
 /** Your earnings (the web's ProjectEarnings): what this project's sales paid you. */
 function Earnings() {
   const { project, view } = useEarn();
-  const reasonId = React.useId();
   const earnings = React.useMemo(
     () => earningsOf(view.sales, [{ id: project.id, name: project.name, contributors: project.contributors ?? [] }]),
     [view.sales, project.id, project.name, project.contributors],
@@ -158,12 +157,9 @@ function Earnings() {
       <p className={EARN_NOTE}>
         Your share of each sale, after the 2.5% IDEEZA fee and the splits. Earnings from all your projects are one balance, and you withdraw them in Get paid.
       </p>
-      <Button hierarchy="secondary" size="xl" className="w-full" disabled aria-describedby={reasonId}>
+      <Link href="/m/settings/idz-pay" className={cn(buttonVariants({ hierarchy: "secondary", size: "xl" }), "w-full")}>
         Withdraw in Get paid
-      </Button>
-      <p id={reasonId} className={EARN_NOTE}>
-        {WITHDRAW_ON_WEB}
-      </p>
+      </Link>
     </section>
   );
 }

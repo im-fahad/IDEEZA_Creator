@@ -95,8 +95,6 @@ export function versionsKeptLine(count: number): string {
 
 // ─────────────────────────── money ───────────────────────────
 
-/** Withdrawing has no phone screen yet; the web's Settings › Get paid holds it. */
-export const WITHDRAW_ON_WEB = "Withdrawing is on the web, in Settings › Get paid.";
 
 /** A sale row's second line: "Main NFT · 10% share", or the edition's name. */
 export function saleItemLine(text: { item: string; share: string | null }): string {
