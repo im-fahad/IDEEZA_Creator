@@ -58,3 +58,53 @@ export const TabBarProvider = TabBarContext.Provider;
 export function useHasTabBar(): boolean {
   return React.useContext(TabBarContext);
 }
+
+function subscribeViewport(onChange: () => void) {
+  const vv = window.visualViewport;
+  vv?.addEventListener("resize", onChange);
+  vv?.addEventListener("scroll", onChange);
+  document.addEventListener("focusin", onChange);
+  document.addEventListener("focusout", onChange);
+  return () => {
+    vv?.removeEventListener("resize", onChange);
+    vv?.removeEventListener("scroll", onChange);
+    document.removeEventListener("focusin", onChange);
+    document.removeEventListener("focusout", onChange);
+  };
+}
+
+/** Where the keyboard leaves the page to type into (KIT-KB-01). */
+export type VisibleViewport = { height: number; top: number };
+
+function editing(): boolean {
+  const el = document.activeElement as HTMLElement | null;
+  if (!el) return false;
+  if (el.isContentEditable || el.tagName === "TEXTAREA") return true;
+  return el.tagName === "INPUT" && !/^(button|checkbox|radio|range|color|file|submit|reset|image)$/i.test((el as HTMLInputElement).type);
+}
+
+/** The part of the screen above the on-screen keyboard (iOS keeps the layout
+ *  behind it and may pan the view), so a screen's foot or a sheet's actions
+ *  ride on the keyboard. Null while no field has focus — a pinch zoom shrinks
+ *  the visual viewport too, and that is not a keyboard. */
+export function useVisibleViewport(): VisibleViewport | null {
+  const key = React.useSyncExternalStore(
+    subscribeViewport,
+    () => {
+      const vv = window.visualViewport;
+      if (!vv || !editing() || vv.height >= window.innerHeight - 1) return "";
+      return `${Math.round(vv.height)}:${Math.round(vv.offsetTop)}`;
+    },
+    () => "",
+  );
+  return React.useMemo(() => {
+    if (!key) return null;
+    const [height, top] = key.split(":").map(Number);
+    return { height, top };
+  }, [key]);
+}
+
+/** On <body> while the app is open (MobileRoot), so portalled sheets have it too:
+ *  XL and 2XL buttons keep the DS default side padding (20 / 24, Kit 10605:2786)
+ *  — owner rule "DS default modes" — while /m's spacing tokens take phone values. */
+export const DS_DEFAULT_BUTTON_PAD = ["[--btn-px-xl:var(--spacing-12)]", "[--btn-px-2xl:var(--spacing-16)]"] as const;

@@ -266,9 +266,12 @@ export type PhoneState = {
   faceIdOffered: boolean;
   /** Show the Face ID offer on the next screen (set by the first sign-in here). */
   faceIdPending: boolean;
-  /** The kit's pre-prompts (KIT-PM-01 camera, PM-02 photos) come once, at first use. */
+  /** The kit's pre-prompts (KIT-PM-01 camera, PM-02 photos, PM-03 microphone) come once, at
+   *  first use; PM-04 notifications once, after the first build starts. */
   cameraAsked: boolean;
   photosAsked: boolean;
+  micAsked: boolean;
+  notifyAsked: boolean;
 };
 
 export function normalizePhone(raw: unknown): PhoneState {
@@ -279,6 +282,8 @@ export function normalizePhone(raw: unknown): PhoneState {
     faceIdPending: r.faceIdPending === true,
     cameraAsked: r.cameraAsked === true,
     photosAsked: r.photosAsked === true,
+    micAsked: r.micAsked === true,
+    notifyAsked: r.notifyAsked === true,
   };
 }
 

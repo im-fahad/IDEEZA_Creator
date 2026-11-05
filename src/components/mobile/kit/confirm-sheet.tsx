@@ -5,11 +5,16 @@
 // Stacked, the action on top: Primary for a neutral confirm, Danger for a
 // destructive one. A typed confirm keeps the action off until the name is
 // typed exactly. ("Can't yet" sends you where to fix it: build that with
-// Sheet and a Primary that goes there.)
+// Sheet and a Primary that goes there.) While it works the sheet can't be
+// closed; if `onConfirm` throws, an M01 error says nothing changed and the
+// action becomes Try again (KIT-ER-03).
 
 import * as React from "react";
+import { Banner } from "@/components/ideeza/banner";
 import { Button } from "@/components/ideeza/button";
 import { TextInput } from "@/components/ideeza/text-input";
+import { cn } from "@/lib/utils";
+import { T } from "../type";
 import { Sheet } from "./sheet";
 
 export function ConfirmSheet({
@@ -41,21 +46,30 @@ export function ConfirmSheet({
   const [text, setText] = React.useState("");
   const [checked, setChecked] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
+  const [failed, setFailed] = React.useState(false);
+  const fieldId = React.useId();
   const matches = !typed || text.trim() === typed;
   // Kit rule: a field error shows on blur or submit, never while typing.
   const mismatch = !!typed && checked && text.trim() !== "" && !matches;
 
-  const close = () => {
+  const reset = () => {
     setText("");
     setChecked(false);
+    setFailed(false);
     onClose();
+  };
+  const close = () => {
+    if (!busy) reset();
   };
   const confirm = async () => {
     if (!matches || busy) return;
     setBusy(true);
+    setFailed(false);
     try {
       await onConfirm();
-      close();
+      reset();
+    } catch {
+      setFailed(true);
     } finally {
       setBusy(false);
     }
@@ -76,19 +90,27 @@ export function ConfirmSheet({
             loading={busy}
             onClick={confirm}
           >
-            {verb}
+            {failed ? "Try again" : verb}
           </Button>
-          <Button hierarchy="secondary" size="xl" className="w-full" onClick={close}>
+          <Button hierarchy="secondary" size="xl" className="w-full" disabled={busy} onClick={close}>
             {cancelLabel}
           </Button>
         </>
       }
     >
-      {body && <div className="text-md leading-md text-text-secondary">{body}</div>}
+      {failed && (
+        <Banner tone="error" title={`Couldn’t ${verb.charAt(0).toLowerCase()}${verb.slice(1)}`}>
+          Nothing changed. Try again.
+        </Banner>
+      )}
+      {body && <div className={T.body}>{body}</div>}
       {typed && (
-        <label className="flex flex-col gap-2">
-          <span className="text-md font-medium leading-md text-text-primary">{typedLabel}</span>
+        <div className="flex flex-col gap-3">
+          <label htmlFor={fieldId} className={T.label}>
+            {typedLabel}
+          </label>
           <TextInput
+            id={fieldId}
             size="xl"
             value={text}
             onValueChange={(v) => {
@@ -100,10 +122,8 @@ export function ConfirmSheet({
             autoComplete="off"
             autoCapitalize="off"
           />
-          {mismatch && (
-            <span className="text-sm leading-sm text-text-error">That doesn’t match “{typed}”.</span>
-          )}
-        </label>
+          {mismatch && <span className={cn(T.caption, "text-text-error")}>That doesn’t match “{typed}”.</span>}
+        </div>
       )}
     </Sheet>
   );

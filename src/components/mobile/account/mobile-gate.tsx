@@ -19,10 +19,8 @@ import { ENTRY_PATH, SETUP_PATH, mobileNext, readPhone, updatePhone, updatePhone
 import { owedOf, readDeviceId, useSecurity } from "@/lib/account/security";
 import { parseStored, useStoredKey } from "@/lib/key-store";
 import { Button } from "@/components/ideeza/button";
-import { HomeIndicator } from "../home-indicator";
 import { Sheet } from "../kit/sheet";
-import { StatusBar } from "../status-bar";
-import { SplashBody } from "./parts";
+import { SplashScreen } from "../screen";
 
 /** The screens a sign-in may owe before the app opens. */
 const OWED_PATH = /^\/m\/(two-step|restore)(\/|$)/;
@@ -69,7 +67,7 @@ export function MobileGate({ children }: { children: React.ReactNode }) {
     if (target) router.replace(target);
   }, [target, router]);
 
-  if (!ready || target) return <Splash />;
+  if (!ready || target) return <SplashScreen />;
 
   const tabScreen = !ENTRY_PATH.test(pathname) && !SETUP_PATH.test(pathname) && !OWED_PATH.test(pathname) && !/^\/m\/kit/.test(pathname);
   return (
@@ -80,15 +78,6 @@ export function MobileGate({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Splash() {
-  return (
-    <div className="flex h-full flex-col">
-      <StatusBar />
-      <SplashBody />
-      <HomeIndicator />
-    </div>
-  );
-}
 
 /** AU-08 · Face ID offer: once, after the first sign-in on this phone. */
 function FaceIdOffer({ email }: { email: string }) {

@@ -17,9 +17,15 @@
 // --dark     prefers-color-scheme: dark (light otherwise).
 // Prints {result, errors} as JSON: errors are console errors and uncaught
 // exceptions. Exits 1 when Chrome can't start.
+//
+// Each run talks only to its own Chrome: Chrome picks a free debugging port
+// (--remote-debugging-port=0) and writes it to <profile>/DevToolsActivePort,
+// which is read here, so parallel runs never attach to each other's browser.
+// At the end Chrome is closed over CDP and given up to 10 s to exit on its
+// own, so the localStorage it wrote reaches a --profile before it is killed.
 
 import { spawn } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -41,13 +47,14 @@ if (!url) {
 }
 
 const CHROME = process.env.CHROME_PATH ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
-const port = 9300 + Math.floor(Math.random() * 600);
 const profile = args.profile ? String(args.profile) : mkdtempSync(join(tmpdir(), "mshot-"));
+// A port file left by an earlier run would point at a dead (or someone else's) Chrome.
+rmSync(join(profile, "DevToolsActivePort"), { force: true });
 const chrome = spawn(
   CHROME,
   [
     "--headless=new",
-    `--remote-debugging-port=${port}`,
+    "--remote-debugging-port=0",
     `--user-data-dir=${profile}`,
     "--no-first-run",
     "--no-default-browser-check",
@@ -58,8 +65,25 @@ const chrome = spawn(
 );
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+let exited = false;
+const exit = new Promise((r) => chrome.once("exit", () => r((exited = true))));
+
+/** The port this run's Chrome chose: the first line of <profile>/DevToolsActivePort. */
+async function devtoolsPort() {
+  const file = join(profile, "DevToolsActivePort");
+  for (let i = 0; i < 120; i++) {
+    if (exited) throw new Error("Chrome exited before it started (is the profile in use by another Chrome?)");
+    if (existsSync(file)) {
+      const port = Number(readFileSync(file, "utf8").split("\n")[0]);
+      if (port > 0) return port;
+    }
+    await sleep(250);
+  }
+  throw new Error("Chrome did not start");
+}
 
 async function target() {
+  const port = await devtoolsPort();
   for (let i = 0; i < 60; i++) {
     try {
       const list = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
@@ -144,14 +168,20 @@ try {
   console.log(JSON.stringify({ out: null, result: null, errors: [...errors, String(e)] }, null, 2));
   process.exitCode = 1;
 } finally {
-  // Close Chrome properly first, so localStorage written this run reaches the profile on disk.
+  // Close Chrome properly first and wait for it to exit (up to 10 s), so localStorage written
+  // this run is flushed to the profile on disk; only a Chrome that hangs is killed.
+  let closing = false;
   try {
-    await Promise.race([send("Browser.close"), sleep(3000)]);
+    if (ws?.readyState === WebSocket.OPEN) {
+      closing = true;
+      await Promise.race([send("Browser.close"), sleep(3000)]);
+    }
   } catch {
     // already gone
   }
   ws?.close();
-  await sleep(300);
-  chrome.kill("SIGKILL");
+  if (!exited && !closing) chrome.kill("SIGTERM");
+  if (!exited) await Promise.race([exit, sleep(10_000)]);
+  if (!exited) chrome.kill("SIGKILL");
   if (!args.profile) rmSync(profile, { recursive: true, force: true });
 }

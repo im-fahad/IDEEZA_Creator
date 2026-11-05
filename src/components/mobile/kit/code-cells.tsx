@@ -9,6 +9,7 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { T } from "../type";
 
 export function CodeCells({
   value,
@@ -83,7 +84,8 @@ export function CodeCells({
             else if (e.key === "ArrowRight") focusAt(i + 1);
           }}
           className={cn(
-            "h-[44px] w-full min-w-0 flex-1 rounded-xl border-[length:var(--border-width-1-5)] border-solid bg-[var(--color-input-bg)] text-center text-lg font-semibold leading-lg text-[color:var(--color-input-text)] outline-none transition-[border-color,box-shadow] duration-fast",
+            T.section,
+            "h-[44px] w-full min-w-0 flex-1 rounded-xl border-[length:var(--border-width-1-5)] border-solid bg-[var(--color-input-bg)] text-center text-[color:var(--color-input-text)] outline-none transition-[border-color,box-shadow] duration-fast",
             "disabled:cursor-not-allowed disabled:border-[var(--color-input-border-disabled)] disabled:bg-[var(--color-input-bg-disabled)] disabled:text-text-disabled",
             invalid
               ? "border-[var(--color-input-border-error)] focus:shadow-focus-danger"

@@ -8,6 +8,7 @@
 import Link from "next/link";
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { T } from "../type";
 
 export function BottomBar({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
@@ -23,13 +24,15 @@ export function BottomBar({ children, className }: { children: React.ReactNode; 
 }
 
 /** A03 Link MD Brand with the kit's 44 px tap area (the bar's "Sign in", "Forgot password?"). */
-export const TEXT_LINK =
-  "-my-6 inline-flex min-h-[44px] items-center text-md font-medium leading-md text-text-brand outline-none hover:underline focus-visible:underline";
+export const TEXT_LINK = cn(
+  T.rowTitle,
+  "-my-6 inline-flex min-h-[44px] items-center text-text-brand outline-none hover:underline focus-visible:underline",
+);
 
 /** "New to IDEEZA? Create account" — the line under the bar's button. */
 export function SwitchLine({ text, link, href }: { text: string; link: string; href: string }) {
   return (
-    <p className="flex items-center justify-center gap-2 text-md leading-md text-text-secondary">
+    <p className={cn(T.body, "flex items-center justify-center gap-2")}>
       {text}
       <Link href={href} className={TEXT_LINK}>
         {link}

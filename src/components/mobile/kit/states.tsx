@@ -1,9 +1,10 @@
 "use client";
 
-// Shared kit states (KIT-SK / EM / ER / OF, MFR-28). Loading bones hold still
+// Shared kit states (KIT-SK / EM / ER / OF, MFR-28). Loading bones show only
+// after 300 ms (Note 10623:5922: a fast load doesn't flash) and hold still
 // with reduced motion (A21 Skeleton already does); the shells around them
-// stay real. Empty and error are M48 / M49 (StateCard) at
-// the content's full width; offline is an M01 Alert over what was loaded
+// stay real. Empty, error and not-found are kit/state.tsx (M48 / M49 at the
+// content's full width); offline is an M01 Alert over what was loaded
 // before, and coming back online says so in a toast.
 
 import * as React from "react";
@@ -24,8 +25,20 @@ export function ListRowBones() {
   );
 }
 
-/** KIT-SK-01: list rows down the content. */
+/** True once `ms` have passed since the bones' screen arrived: bones are for a wait you'd notice. */
+export function useDelayedBones(ms = 300): boolean {
+  const [show, setShow] = React.useState(false);
+  React.useEffect(() => {
+    const id = window.setTimeout(() => setShow(true), ms);
+    return () => window.clearTimeout(id);
+  }, [ms]);
+  return show;
+}
+
+/** KIT-SK-01: list rows down the content, after 300 ms (the space is held until then). */
 export function ListBones({ rows = 6 }: { rows?: number }) {
+  const show = useDelayedBones();
+  if (!show) return <div role="status" aria-label="Loading" />;
   return (
     <div role="status" aria-label="Loading" className="flex flex-col gap-6">
       {Array.from({ length: rows }, (_, i) => (

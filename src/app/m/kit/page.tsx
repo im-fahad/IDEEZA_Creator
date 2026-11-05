@@ -10,26 +10,35 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import {
   AlertCircleIcon,
-  ArrowRight01Icon,
   CopyLinkIcon,
-  Search01Icon,
+  Folder01Icon,
+  Settings02Icon,
   Share08Icon,
   UserBlock01Icon,
   WifiOff01Icon,
 } from "@hugeicons/core-free-icons";
-import { Icon } from "@/components/dashboard/icon";
+import { Avatar } from "@/components/ideeza/avatar";
 import { Banner } from "@/components/ideeza/banner";
 import { Button } from "@/components/ideeza/button";
-import { StateCard } from "@/components/ideeza/state-card";
+import { SearchInput } from "@/components/ideeza/search-input";
 import { ConfirmSheet } from "@/components/mobile/kit/confirm-sheet";
+import { Eyebrow } from "@/components/mobile/kit/eyebrow";
+import { LIST_CARD, ListCard, ListRow } from "@/components/mobile/kit/list";
+import { MEDIA_CHIP, MEDIA_GROUND } from "@/components/mobile/kit/media";
+import { usePrePrompt, PermissionSheet, type PermissionKind } from "@/components/mobile/kit/permission-sheet";
+import { PickSheet } from "@/components/mobile/kit/pick-list";
 import { ReportSheet, type ReportReason } from "@/components/mobile/kit/report-sheet";
 import { ActionSheet, Sheet } from "@/components/mobile/kit/sheet";
+import { EmptyState, ErrorState, NotFoundState } from "@/components/mobile/kit/state";
 import { ListBones } from "@/components/mobile/kit/states";
-import { useToast } from "@/components/mobile/kit/toast";
+import { MobileTabs, tabPanelProps, useTabParam } from "@/components/mobile/kit/tabs";
+import { BUILD_TOASTS, useToast } from "@/components/mobile/kit/toast";
 import { Screen } from "@/components/mobile/screen";
 import { TopBar } from "@/components/mobile/top-bar";
+import { T } from "@/components/mobile/type";
 import { useAuth } from "@/lib/account/auth";
 import { updateSecurity, withDemoDevice } from "@/lib/account/security";
+import { cn } from "@/lib/utils";
 
 const PROFILE_REASONS: ReportReason[] = [
   { id: "impersonation", label: "Pretending to be someone else" },
@@ -61,7 +70,22 @@ type Open =
   | "block"
   | "discard"
   | "delete"
-  | "cant-yet";
+  | "cant-yet"
+  | "pick"
+  | `pm-${PermissionKind}`;
+
+const SORTS = [
+  { value: "new", label: "Newest first" },
+  { value: "old", label: "Oldest first" },
+  { value: "name", label: "Name", helper: "A to Z" },
+] as const;
+type Sort = (typeof SORTS)[number]["value"];
+
+const TABS = [
+  { value: "inbox", label: "Inbox", count: 2, countLabel: "2 unread" },
+  { value: "requests", label: "Requests" },
+] as const;
+const TAB_VALUES = TABS.map((t) => t.value);
 
 const wait = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));
 
@@ -71,6 +95,10 @@ export default function SharedKitPage() {
   const { account } = useAuth();
   const [open, setOpen] = React.useState<Open>(null);
   const close = () => setOpen(null);
+  const [sort, setSort] = React.useState<Sort>("new");
+  const [tab, setTab] = useTabParam("tab", TAB_VALUES, "inbox");
+  const [query, setQuery] = React.useState("");
+  const mic = usePrePrompt("microphone");
 
   const copyLink = async () => {
     try {
@@ -141,6 +169,21 @@ export default function SharedKitPage() {
           <Row label="Couldn’t sign in with Google" note="AU-04c" onClick={() => router.push("/m/welcome?error=google")} />
         </Group>
 
+        <Group title="Pre-prompts (KIT-PM)">
+          <Row label="Camera" note="KIT-PM-01" onClick={() => setOpen("pm-camera")} />
+          <Row label="Photos" note="KIT-PM-02" onClick={() => setOpen("pm-photos")} />
+          <Row
+            label="Microphone, once"
+            note="KIT-PM-03 · usePrePrompt: asks the first time only"
+            onClick={() => mic.ask(() => toast({ title: "Listening" }))}
+          />
+          <Row label="Notifications" note="KIT-PM-04 · after the first build starts" onClick={() => setOpen("pm-notifications")} />
+        </Group>
+
+        <Group title="Pick one (_Select item)">
+          <Row label="Sort by" note={`PickSheet · ${SORTS.find((s) => s.value === sort)?.label}`} onClick={() => setOpen("pick")} />
+        </Group>
+
         <Group title="Toasts (M02)">
           <Row label="Success" note="KIT-TO-01" onClick={() => toast({ title: "Link copied" })} />
           <Row
@@ -148,13 +191,9 @@ export default function SharedKitPage() {
             note="KIT-TO-02"
             onClick={() => toast({ title: "Comment deleted", action: { label: "Undo", onClick: () => {} } })}
           />
-          <Row
-            label="Build running"
-            note="KIT-TO-03"
-            onClick={() =>
-              toast({ title: `Building ${PROJECT}`, lead: "none", action: { label: "Open", onClick: () => {} } })
-            }
-          />
+          <Row label="Build running" note="KIT-TO-03 · progress" onClick={() => toast(BUILD_TOASTS.running(PROJECT, 35, () => {}))} />
+          <Row label="Build ready" note="KIT-TO-03b" onClick={() => toast(BUILD_TOASTS.ready(() => {}))} />
+          <Row label="Build stopped" note="KIT-TO-03c" onClick={() => toast(BUILD_TOASTS.stopped(() => {}))} />
           <Row
             label="Error with Retry"
             note="KIT-TO-04"
@@ -165,49 +204,61 @@ export default function SharedKitPage() {
         </Group>
 
         <Group title="States">
-          <p className="text-sm leading-sm text-text-tertiary">Loading · KIT-SK-01</p>
+          <Note>Loading · KIT-SK-01</Note>
           <ListBones rows={2} />
-          <p className="text-sm leading-sm text-text-tertiary">Empty · KIT-EM-02</p>
-          <StateCard
-            tone="empty"
-            className="w-full"
-            icon={<Icon icon={Search01Icon} size={32} />}
+          <Note>Empty · KIT-EM-02</Note>
+          <EmptyState
             title="Nothing matches these filters"
             body="Try fewer filters, or clear them to see everything."
-            action={
-              <Button hierarchy="secondary" size="lg">
-                Clear filters
-              </Button>
-            }
+            action={{ label: "Clear filters", onClick: () => toast({ title: "Filters cleared" }) }}
           />
-          <p className="text-sm leading-sm text-text-tertiary">Error · KIT-ER-02</p>
-          <StateCard
-            tone="error"
-            className="w-full"
-            icon={<Icon icon={AlertCircleIcon} size={32} />}
+          <Note>Error · KIT-ER-02</Note>
+          <ErrorState
             title="Couldn’t load Messages"
             body="Check your connection, or try again in a moment."
-            action={
-              <Button hierarchy="secondary" size="lg">
-                Try again
-              </Button>
-            }
+            action={{ label: "Try again", onClick: () => toast({ title: "Loaded" }) }}
           />
-          <p className="text-sm leading-sm text-text-tertiary">Offline · KIT-OF-01</p>
+          <Note>Not found · KIT-ER-04 (a whole page)</Note>
+          <NotFoundState thing="project" />
+          <Note>Offline · KIT-OF-01</Note>
           <Banner tone="attention">You’re offline. Showing what was loaded before.</Banner>
-          <p className="text-sm leading-sm text-text-tertiary">Offline, nothing cached · KIT-OF-02</p>
-          <StateCard
-            tone="empty"
-            className="w-full"
-            icon={<Icon icon={WifiOff01Icon} size={32} />}
+          <Note>Offline, nothing cached · KIT-OF-02</Note>
+          <EmptyState
+            icon={WifiOff01Icon}
             title="You’re offline"
             body="Check your connection and try again."
-            action={
-              <Button hierarchy="secondary" size="lg">
-                Try again
-              </Button>
-            }
+            action={{ label: "Try again", onClick: () => toast({ title: "Still offline" }) }}
           />
+        </Group>
+
+        <Group title="Type, tabs and lists">
+          <Note>MobileTabs · M14 line</Note>
+          <MobileTabs label="Kit tabs" idBase="kit" value={tab} onChange={setTab} tabs={TABS} />
+          <p {...tabPanelProps("kit", tab)} className={T.body}>
+            {tab === "inbox" ? "The Inbox panel." : "The Requests panel."}
+          </p>
+          <Note>Eyebrow · Label/SM caps</Note>
+          <div className="flex items-center gap-8">
+            <Eyebrow>Concept</Eyebrow>
+            <Eyebrow tone="tertiary">Staked</Eyebrow>
+          </div>
+          <Note>ListCard · ListRow</Note>
+          <ListCard label="Example rows">
+            <ListRow icon={Folder01Icon} title="My projects" meta="3 projects" href="/m/projects" />
+            <ListRow icon={Settings02Icon} title="Language" value="English" onClick={() => setOpen("pick")} />
+            <ListRow title="Get paid" disabled reason="Verify your identity first" onClick={() => {}} />
+          </ListCard>
+          <Note>Search · A07 at 44</Note>
+          <SearchInput size="xl" value={query} onValueChange={setQuery} placeholder="Find a setting" aria-label="Find a setting" />
+          <Note>Avatar LG · XL, phone sizes</Note>
+          <div className="flex items-center gap-8">
+            <Avatar phone size="lg" initials="MK" />
+            <Avatar phone size="xl" initials="RA" />
+          </div>
+          <Note>Media ground and chip (dark in both themes)</Note>
+          <div className={cn(LIST_CARD, MEDIA_GROUND, "relative h-[96px] items-end justify-end p-6")}>
+            <span className={MEDIA_CHIP}>0:42</span>
+          </div>
         </Group>
       </div>
 
@@ -281,6 +332,21 @@ export default function SharedKitPage() {
         </Banner>
       </Sheet>
 
+      <PickSheet open={open === "pick"} onClose={close} title="Sort by" value={sort} options={SORTS} onPick={setSort} />
+      {(["camera", "photos", "notifications"] as const).map((k) => (
+        <PermissionSheet
+          key={k}
+          kind={k}
+          open={open === `pm-${k}`}
+          onContinue={() => {
+            close();
+            toast({ title: "Continue" });
+          }}
+          onNotNow={close}
+        />
+      ))}
+      {mic.sheet}
+
       <ReportSheet
         open={open === "report-profile"}
         onClose={close}
@@ -315,28 +381,20 @@ export default function SharedKitPage() {
 }
 
 function Group({ title, children }: { title: string; children: React.ReactNode }) {
+  const items = React.Children.toArray(children);
+  const rows = items.every((c) => React.isValidElement(c) && c.type === Row);
   return (
     <section className="flex flex-col gap-4">
-      <h2 className="text-md font-medium leading-md text-text-secondary">{title}</h2>
-      <div className="flex flex-col gap-4">{children}</div>
+      <h2 className={T.section}>{title}</h2>
+      {rows ? <ListCard>{children}</ListCard> : <div className="flex flex-col gap-4">{children}</div>}
     </section>
   );
 }
 
 function Row({ label, note, onClick }: { label: string; note: string; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex items-center gap-6 rounded-xl border-[length:var(--border-width-1)] border-solid border-border-subtle bg-bg-surface px-8 py-6 text-left outline-none transition-colors duration-fast hover:bg-bg-subtle focus-visible:ring-2 focus-visible:ring-border-focus"
-    >
-      <span className="flex min-w-0 flex-1 flex-col">
-        <span className="text-lg leading-lg text-text-primary">{label}</span>
-        <span className="text-sm leading-sm text-text-tertiary">{note}</span>
-      </span>
-      <span className="text-[color:var(--color-icon-secondary)]">
-        <Icon icon={ArrowRight01Icon} size={20} />
-      </span>
-    </button>
-  );
+  return <ListRow title={label} meta={note} onClick={onClick} />;
+}
+
+function Note({ children }: { children: React.ReactNode }) {
+  return <p className={cn(T.meta, "text-text-tertiary")}>{children}</p>;
 }

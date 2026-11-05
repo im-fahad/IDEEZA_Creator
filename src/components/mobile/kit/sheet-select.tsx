@@ -2,14 +2,14 @@
 
 // A06 Select (Size 44) on a phone: the field looks like the DS select, and
 // its list is a pick-one sheet (owner rule: every list rises from the bottom;
-// a pick-one sheet applies on tap and has no button). Rows are _Select item
-// MD, the picked one with its check.
+// a pick-one sheet applies on tap and has no button): the kit's PickSheet.
 
 import * as React from "react";
-import { ArrowDown01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
+import { ArrowDown01Icon } from "@hugeicons/core-free-icons";
 import { Icon } from "@/components/dashboard/icon";
 import { cn } from "@/lib/utils";
-import { Sheet } from "./sheet";
+import { T } from "../type";
+import { PickSheet } from "./pick-list";
 
 export type SheetOption = { value: string; label: string };
 
@@ -49,38 +49,14 @@ export function SheetSelect({
           className,
         )}
       >
-        <span className={cn("truncate text-lg leading-lg", picked ? "text-[color:var(--color-input-text)]" : "text-[color:var(--color-input-placeholder)]")}>
+        <span className={cn(T.bodyLg, "truncate", picked ? "text-[color:var(--color-input-text)]" : "text-[color:var(--color-input-placeholder)]")}>
           {picked?.label ?? placeholder}
         </span>
         <span className="text-[color:var(--color-icon-default)]">
           <Icon icon={ArrowDown01Icon} size={16} />
         </span>
       </button>
-      <Sheet open={open} onClose={() => setOpen(false)} title={title}>
-        <ul role="listbox" aria-label={title} className="-mx-8 flex flex-col">
-          {options.map((o) => (
-            <li key={o.value}>
-              <button
-                type="button"
-                role="option"
-                aria-selected={o.value === value}
-                onClick={() => {
-                  onChange(o.value);
-                  setOpen(false);
-                }}
-                className="flex h-[40px] w-full items-center justify-between gap-4 rounded-md px-8 text-left text-lg leading-lg text-text-primary outline-none hover:bg-bg-subtle focus-visible:ring-2 focus-visible:ring-border-focus"
-              >
-                {o.label}
-                {o.value === value && (
-                  <span className="text-[color:var(--color-icon-brand)]">
-                    <Icon icon={Tick02Icon} size={16} />
-                  </span>
-                )}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </Sheet>
+      <PickSheet open={open} onClose={() => setOpen(false)} title={title} value={value} options={options} onPick={onChange} />
     </>
   );
 }

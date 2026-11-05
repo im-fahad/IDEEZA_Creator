@@ -6,8 +6,9 @@ The coded mobile prototype at `/m`, built from the mobile Figma (`fKXxJ25dXvxWWa
 
 - **One page, two ways to see it.** On a phone `/m` fills the screen (edge to edge, safe-area insets, Add to Home Screen as "IDEEZA"). On a desktop it draws a 375 × 812 phone and runs the same page inside it in an iframe, so the desktop shows exactly what a phone shows; the address bar follows the screen inside, so a reload or a copied link opens the same screen.
 - **Phone chrome in the frame only:** the Figma status bar (live clock, cellular, wifi, battery) and home indicator; on a phone the OS draws them.
-- **Tab bar** (Figma Navbar Container `3070:11343`): Home · Earn Coin · AI (the orb) · Message · Profile, the current tab marked by the border/focus line above it; it stays mounted while you move between tabs.
-- **Top bar** (Mobile / Top bar): Back (the previous screen, Home when there is none), a centred title, up to 44 px actions on the right.
+- **Tab bar** (Figma Navbar Container `3070:11343`): Home · Earn Coin · AI (the orb) · Message · Profile, the current tab marked by the border/focus line above it; it stays mounted while you move between tabs. As on the web's sidebar, Message shows a dot while the Inbox has unread conversations and the orb a red dot while a build needs you. Each tab opens where you left it; tapping the tab you're on goes to its root, and on the root scrolls to the top. A guest's tab gate says where signing in lands.
+- **Top bar** (Mobile / Top bar): Back, a centred title, up to 44 px actions on the right. Back goes to the previous screen when this browser tab's history has one in the app, else to the screen's parent in place of it, so a deep link's Back never leaves IDEEZA and two screens can't send each other round in a loop.
+- **One type scale** (16 roles, `components/mobile/type.ts`) and the DS default radius inside /m (buttons 12, cards 12, Settings cards 8), sheets included.
 
 ## Account (M1)
 
@@ -166,10 +167,11 @@ From the owner's master page (Wallet Balance, Stacking, Refer & Earn, Buy IDEEZA
 
 `/m/kit` (prototype only) opens every pattern of the Figma "Shared kit · 2026 update" page:
 
-- **Sheets** (M09): handle, title + description + ✕, scrolling content, stacked XL actions, home indicator; one scrim; Escape, the scrim and dragging the handle down close it; focus stays inside and the app behind is inert. A tall sheet stops 61 px under the top.
+- **Sheets** (M09): handle, title + description + ✕, scrolling content, stacked XL actions, home indicator; one scrim, even with a sheet opened over a sheet; Escape, the scrim and dragging the handle down close it; focus stays inside and the app behind is inert. A tall sheet stops 61 px under the top; with the keyboard up the sheet fits above it.
 - **Menus** (M12 action sheet): a centred title, 40 px rows with a 16 px icon, the one red destructive row last, Cancel.
-- **Confirms**: neutral (KIT-CF-01, "Keep editing"), destructive (Block, KIT-RB-20), typed delete (KIT-CF-03: the action stays off until the name matches; the mismatch shows on leaving the field), can't-yet (KIT-CF-04: sends you where to fix it).
-- **Report sheet** (KIT-RB-10…19b): a reason list per target, a 500-character note, Also block; Send report stays off until a reason is picked; Sending…, couldn't send (note kept, Try again), offline (kept until back online), Report sent (and "You blocked … too").
-- **Toasts** (M02): one at a time, 8 px above whatever is at the foot (tab bar, bottom bar or home indicator), 4 s, 6 s with an action; success, error and no-icon leads. "Back online" shows when the connection returns.
-- **States**: list-row bones (KIT-SK-01), empty and error cards (M48 / M49), the offline banner (M01).
-- **Also in the kit**: code cells, a pick-one sheet select (A06 on a phone), the Bottom action bar; links to the account states the demo can't cause.
+- **Confirms**: neutral (KIT-CF-01, "Keep editing"), destructive (Block, KIT-RB-20), typed delete (KIT-CF-03: the action stays off until the name matches; the mismatch shows on leaving the field), can't-yet (KIT-CF-04: sends you where to fix it). While one works it can't be closed; if it fails, an error says nothing changed and the action becomes Try again.
+- **Report sheet** (KIT-RB-10…19b): a reason list per target, a 500-character note, Also block; Send report stays off until a reason is picked; Sending…, couldn't send (note kept, Try again), offline (closing keeps the report for that target, reopening brings it back, Send report turns on when back online), Report sent (and "You blocked … too"). Typing the note folds the reasons to the picked one.
+- **Toasts** (M02): one at a time, 8 px above whatever is at the foot (tab bar, bottom bar, home indicator — or an open sheet's actions, over the sheet, still tappable), kept there as the screen changes; 4 s, 6 s with an action (a 44 px tap area); success, error and no-icon leads; the build toasts (Building … with its progress bar, Build ready, Build stopped). "Back online" shows when the connection returns.
+- **Permission pre-prompts** (KIT-PM-01…04): camera, photos, microphone and notifications sheets, each once per phone.
+- **States**: list-row bones after 300 ms (KIT-SK-01), empty, error and not-found cards (M48 / M49, ER-04 "This project isn't here" + Go to Feed), the offline banner (M01).
+- **Also in the kit**: M14 tabs, the eyebrow, the list card and rows, the 44 px search, the media chip, code cells, the pick-one sheet (and A06 select over it), the Bottom action bar; links to the account states the demo can't cause.

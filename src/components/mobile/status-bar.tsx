@@ -9,6 +9,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { useFramed } from "./device";
+import { T } from "./type";
 
 function clock(): string {
   const d = new Date();
@@ -45,7 +46,7 @@ function FramedStatusBar({ tone, className }: { tone: StatusTone; className?: st
         className,
       )}
     >
-      <span className="text-md font-semibold leading-md tracking-wide text-text-primary tabular-nums">{time}</span>
+      <span className={cn(T.name, "tabular-nums")}>{time}</span>
       <svg width="67" height="12" viewBox="0 0 67 12" className="mt-[5px] text-[color:var(--color-bg-inverse)]">
         <rect opacity="0.35" x="42.83" y="0.5" width="21" height="10.33" rx="2.17" fill="none" stroke="currentColor" />
         <path opacity="0.4" d="M65.33 3.67v4c.8-.34 1.33-1.13 1.33-2s-.53-1.66-1.33-2Z" fill="currentColor" />

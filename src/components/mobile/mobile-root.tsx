@@ -6,14 +6,21 @@
 // exactly what a phone shows. The iframe reports where it is, and the desktop
 // page keeps its own address in step, so a reload or a copied link opens the
 // same screen.
+//
+// Inside /m the DS radius tokens keep their default mode (owner rule, DS
+// default modes): tokens.css switches them to the Mobile mode below 768 px
+// only where no `#m-app` is on the page, and `:root` carries that rule, so
+// portalled sheets get it too; the XL buttons' side padding likewise (on
+// <body>, DS_DEFAULT_BUTTON_PAD). Spacing and type keep their phone values.
 
 import * as React from "react";
-import { usePathname } from "next/navigation";
-import { FramedProvider, PATH_MESSAGE, useDeviceMode } from "./device";
+import { usePathname, useRouter } from "next/navigation";
+import { DS_DEFAULT_BUTTON_PAD, FramedProvider, PATH_MESSAGE, useDeviceMode, useVisibleViewport } from "./device";
 import { MobileGate } from "./account/mobile-gate";
-import { SplashBody } from "./account/parts";
 import { BackOnlineToast } from "./kit/states";
 import { PendingToast, ToastProvider } from "./kit/toast";
+import { useNavTrail } from "./nav-trail";
+import { SplashScreen } from "./screen";
 
 /** The app's root element: sheets mark it inert while they are open. */
 export const MOBILE_APP_ID = "m-app";
@@ -23,7 +30,7 @@ export function MobileRoot({ children }: { children: React.ReactNode }) {
   if (mode === "pending")
     return (
       <div className="flex h-dvh flex-col bg-bg-page">
-        <SplashBody />
+        <SplashScreen />
       </div>
     );
   if (mode === "desktop") return <PhoneFrame />;
@@ -58,7 +65,20 @@ function PhoneFrame() {
 
 function MobileApp({ framed, children }: { framed: boolean; children: React.ReactNode }) {
   const pathname = usePathname();
-  const keyboardHeight = useVisibleHeight();
+  const router = useRouter();
+  const keyboard = useVisibleViewport();
+  useNavTrail();
+
+  React.useEffect(() => {
+    document.body.classList.add(...DS_DEFAULT_BUTTON_PAD);
+    return () => document.body.classList.remove(...DS_DEFAULT_BUTTON_PAD);
+  }, []);
+
+  // "/m/" is served as is (skipTrailingSlashRedirect): one address per screen, so the tabs and the gate match it.
+  const slash = pathname.length > 2 && pathname.endsWith("/");
+  React.useEffect(() => {
+    if (slash) router.replace(pathname.replace(/\/+$/, "") + window.location.search);
+  }, [slash, pathname, router]);
 
   // After every render, so a new query (?step=2) is reported as well as a new page.
   React.useEffect(() => {
@@ -74,7 +94,7 @@ function MobileApp({ framed, children }: { framed: boolean; children: React.Reac
       <div
         id={MOBILE_APP_ID}
         className="relative h-dvh overflow-hidden bg-bg-page font-sans text-text-primary"
-        style={keyboardHeight ? { height: keyboardHeight } : undefined}
+        style={keyboard ? { height: keyboard.height, ...(keyboard.top ? { transform: `translateY(${keyboard.top}px)` } : {}) } : undefined}
       >
         <ToastProvider rootId={MOBILE_APP_ID}>
           {/* Pages read their query (useSearchParams); they only ever render in the browser. */}
@@ -86,25 +106,5 @@ function MobileApp({ framed, children }: { framed: boolean; children: React.Reac
         </ToastProvider>
       </div>
     </FramedProvider>
-  );
-}
-
-function subscribeViewport(onChange: () => void) {
-  const vv = window.visualViewport;
-  vv?.addEventListener("resize", onChange);
-  return () => vv?.removeEventListener("resize", onChange);
-}
-
-/** The height left above the on-screen keyboard (iOS keeps the layout behind
- *  it), so the screen's foot — Sign in, Create account — rides on the keyboard
- *  (KIT-KB-01); null when no keyboard is up. */
-function useVisibleHeight(): number | null {
-  return React.useSyncExternalStore(
-    subscribeViewport,
-    () => {
-      const vv = window.visualViewport;
-      return vv && vv.height < window.innerHeight - 1 ? Math.round(vv.height) : null;
-    },
-    () => null,
   );
 }
