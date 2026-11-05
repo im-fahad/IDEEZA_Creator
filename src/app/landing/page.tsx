@@ -7,7 +7,7 @@ import { WhatYouCanDo } from "@/components/landing/what-you-can-do";
 import { ProblemSolution } from "@/components/landing/problem-solution";
 import { Ownership } from "@/components/landing/ownership";
 import { CreatorCommunity } from "@/components/landing/creator-community";
-import { Events } from "@/components/landing/events";
+import { Events } from "@/components/landing/events/section";
 import { Manufacturing } from "@/components/landing/manufacturing";
 import { Ecosystem } from "@/components/landing/ecosystem";
 import { MobileApp } from "@/components/landing/mobile-app";
@@ -37,9 +37,9 @@ export default function LandingPage() {
         <ProblemSolution />
         <Ownership />
         <CreatorCommunity />
-        <Events />
         <Manufacturing />
         <Ecosystem />
+        <Events />
         <MobileApp />
         <FinalCta />
       </main>
