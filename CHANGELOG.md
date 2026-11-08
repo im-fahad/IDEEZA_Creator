@@ -57,7 +57,6 @@ cards (18542:22943).
   - **The IDEEZA National Tour** — *Building Africa's Hardware Creator Ecosystem*
 - [ ] The cards are one still picture: no card is a link and none reacts to hover or click.
 - [ ] One **Explore Events** button, centred under the cards.
-- [ ] Only real events and their real photos; events are content the team adds later, so they come from data (CMS or admin), not hard-coded.
 - [ ] Wide screens: three cards in a row. Phone: one row that swipes sideways with the next card peeking in; no horizontal scroll of the page at 375 px.
 
 ### Design
