@@ -9,16 +9,34 @@
 // Module is the enclosure alone where the build has an Assembly piece.
 
 import * as React from "react";
-import { MinusSignIcon, PlusSignIcon, Rotate01Icon } from "@hugeicons/core-free-icons";
+import { Layers01Icon, MinusSignIcon, PlusSignIcon, Rotate01Icon } from "@hugeicons/core-free-icons";
 import { Icon } from "@/components/dashboard/icon";
 import { Button } from "@/components/ideeza/button";
+import { Checkbox } from "@/components/ideeza/checkbox";
 import { AssemblyViewer } from "@/components/create/model-panel/assembly-viewer";
 import { INITIAL_VIEW, viewReducer, type View, type ViewAction } from "@/components/create/model-panel/model-panel";
 import type { Assembly } from "@/lib/three/assembly";
 import { SYSTEM_LABEL } from "@/lib/three/assembly";
 import { cn } from "@/lib/utils";
+import { Sheet } from "../kit/sheet";
 
-export function ModelView({ assembly, shellNote, onRetryMesh }: { assembly: Assembly; shellNote: "pending" | "failed" | null; onRetryMesh?: () => void }) {
+/**
+ * `hero` is the build result's big view (the chat's finished card): a taller
+ * stage, one-tap Explode / Put together and a Layers sheet for the systems,
+ * in place of the slider. The deliverable page keeps the slider.
+ */
+export function ModelView({
+  assembly,
+  shellNote,
+  onRetryMesh,
+  hero = false,
+}: {
+  assembly: Assembly;
+  shellNote: "pending" | "failed" | null;
+  onRetryMesh?: () => void;
+  hero?: boolean;
+}) {
+  const [layersOpen, setLayersOpen] = React.useState(false);
   const systemOf = React.useCallback((id: string) => assembly.parts.find((p) => p.id === id)?.system, [assembly.parts]);
   const [view, dispatch] = React.useReducer((v: View, a: ViewAction) => viewReducer(v, a, systemOf), INITIAL_VIEW);
   const [ready, setReady] = React.useState(false);
@@ -35,7 +53,7 @@ export function ModelView({ assembly, shellNote, onRetryMesh }: { assembly: Asse
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="relative h-[230px] overflow-hidden rounded-xl border-[length:var(--border-width-1)] border-solid border-border-subtle bg-bg-brand-subtle">
+      <div className={cn("relative overflow-hidden rounded-xl border-[length:var(--border-width-1)] border-solid border-border-subtle bg-bg-brand-subtle", hero ? "h-[260px]" : "h-[230px]")}>
         {failed ? (
           <div className="flex h-full flex-col items-center justify-center gap-4 p-8 text-center">
             <p className="text-md font-medium leading-md text-text-primary">We couldn&apos;t open the 3D model</p>
@@ -92,22 +110,73 @@ export function ModelView({ assembly, shellNote, onRetryMesh }: { assembly: Asse
           </div>
         )}
       </div>
-      <label className="flex flex-col gap-3">
-        <span className="flex items-center justify-between">
-          <span className="text-md font-medium leading-md text-text-primary">Explode</span>
-          <span className="rounded-full bg-bg-subtle px-3 text-xs leading-xs tabular-nums text-text-secondary">{view.explode}%</span>
-        </span>
-        <input
-          type="range"
-          min={0}
-          max={100}
-          step={5}
-          value={view.explode}
-          onChange={(e) => dispatch({ t: "explode", v: Number(e.target.value) })}
-          className="h-[24px] w-full accent-[var(--color-bg-brand)]"
-          aria-valuetext={`${view.explode}% apart`}
-        />
-      </label>
+      {hero ? (
+        <div className="grid grid-cols-2 gap-4">
+          <Button
+            hierarchy={view.explode > 0 ? "primary" : "secondary"}
+            size="lg"
+            className="w-full"
+            aria-pressed={view.explode > 0}
+            disabled={!ready || failed}
+            onClick={() => dispatch({ t: "explode", v: view.explode > 0 ? 0 : 100 })}
+          >
+            {view.explode > 0 ? "Put together" : "Explode"}
+          </Button>
+          <Button
+            hierarchy="secondary"
+            size="lg"
+            className="w-full"
+            disabled={!ready || failed || assembly.systems.length === 0}
+            onClick={() => setLayersOpen(true)}
+            iconLeading={<Icon icon={Layers01Icon} size={16} />}
+          >
+            Layers
+          </Button>
+        </div>
+      ) : (
+        <label className="flex flex-col gap-3">
+          <span className="flex items-center justify-between">
+            <span className="text-md font-medium leading-md text-text-primary">Explode</span>
+            <span className="rounded-full bg-bg-subtle px-3 text-xs leading-xs tabular-nums text-text-secondary">{view.explode}%</span>
+          </span>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            step={5}
+            value={view.explode}
+            onChange={(e) => dispatch({ t: "explode", v: Number(e.target.value) })}
+            className="h-[24px] w-full accent-[var(--color-bg-brand)]"
+            aria-valuetext={`${view.explode}% apart`}
+          />
+        </label>
+      )}
+      {hero && (
+        <Sheet open={layersOpen} onClose={() => setLayersOpen(false)} title="Layers" description="Show or hide each system inside the model.">
+          <ul className="flex flex-col rounded-xl border-[length:var(--border-width-1)] border-solid border-border-subtle">
+            {assembly.systems.map((s, i) => {
+              const shown = !view.hidden.has(s.id);
+              return (
+                <li key={s.id} className={cn(i > 0 && "border-t-[length:var(--border-width-1)] border-solid border-border-subtle")}>
+                  <label className="flex min-h-[56px] cursor-pointer items-center gap-5 px-6">
+                    <input type="checkbox" className="sr-only" checked={shown} onChange={() => dispatch({ t: "toggleSystem", id: s.id })} aria-label={`Show ${s.label}`} />
+                    <Checkbox checked={shown} decorative />
+                    <span className="flex-1 text-lg leading-lg text-text-primary">{s.label}</span>
+                    <span className="text-sm leading-sm text-text-secondary">
+                      {s.count} {s.count === 1 ? "part" : "parts"}
+                    </span>
+                  </label>
+                </li>
+              );
+            })}
+          </ul>
+          {view.hidden.size > 0 && (
+            <Button hierarchy="secondary" size="lg" className="w-full" onClick={() => dispatch({ t: "showAll" })}>
+              Show all
+            </Button>
+          )}
+        </Sheet>
+      )}
       <p role="status" className={cn("text-center text-sm leading-sm", selected ? "text-text-primary" : "text-text-secondary")}>
         {hint}
       </p>

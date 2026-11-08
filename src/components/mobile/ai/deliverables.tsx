@@ -227,25 +227,27 @@ function Pieces({ job, back }: { job: BuildJob; back: string }) {
 }
 
 /** One product's assembly, from its own parts, spec and (the primary's) concept mesh. */
-function JobModel({
+export function JobModel({
   job,
   productId,
   enclosure,
   shellNote,
   onRetryMesh,
+  hero = false,
 }: {
   job: BuildJob;
   productId: string;
   enclosure: boolean;
   shellNote: "pending" | "failed" | null;
   onRetryMesh?: () => void;
+  hero?: boolean;
 }) {
   const assembly = React.useMemo(() => {
     const p = productsOf(job).find((x) => x.id === productId) ?? productsOf(job)[0];
     const whole = deriveAssembly({ title: p.title, parts: p.parts, spec: p.spec, meshUrl: p.id === "primary" ? job.modelGlbUrl : undefined });
     return enclosure ? enclosureOnly(whole) : whole;
   }, [job, productId, enclosure]);
-  return <ModelView assembly={assembly} shellNote={shellNote} onRetryMesh={onRetryMesh} />;
+  return <ModelView assembly={assembly} shellNote={shellNote} onRetryMesh={onRetryMesh} hero={hero} />;
 }
 
 /** Parts in this build (25): the counts, then every part — name, reference,

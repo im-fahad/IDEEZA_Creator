@@ -1,14 +1,14 @@
 "use client";
 
-// The build on a phone (15 · 16 · 17 · 18 · A3–A6): the Build sheet that
-// confirms the spend (with Buy credits in place when short), then the build
-// card — its state in the web's own words (build-status.tsx `stateRowFor`),
-// the whole build's percentage, a tab per product and a row per piece, each
-// row's status from the web's needs rules; a failed piece is retried from
-// its row (free), a queued build can be cancelled, a stopped one tried again,
-// a paused one waits for credits. Once every piece is ready, the summary
-// (18): what was made, the source concepts, Save project and Review the
-// pieces. Each piece row opens its deliverable.
+// The build on a phone (create-flow round 2, the owner's approved sample
+// QymWEbLugMwQEk7NpJVRy2): the Build sheet that confirms the spend (with Buy
+// credits in place when short); while it runs, the approved concept stays big
+// with one stage line and one bar — no percentage per piece; a product's
+// pieces sit behind one Pieces button, and a failed piece stays on the page
+// with its Retry (free). Once every piece is ready the result IS the page: a
+// big 3D of the product (Assembly first, else the 3D Module) with one-tap
+// Explode and Layers, the concept image a tap away, a switcher when the build
+// has two or more products, and Save pinned at the foot (FinishedFoot).
 
 import * as React from "react";
 import Link from "next/link";
@@ -16,10 +16,10 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight01Icon,
-  CheckmarkCircle02Icon,
   CpuIcon,
   CodeIcon,
   CubeIcon,
+  DashboardSquare01Icon,
   FloppyDiskIcon,
   PackageIcon,
   PlugSocketIcon,
@@ -51,7 +51,8 @@ import { failedPieceNote, pieceWord, type PieceLite } from "@/lib/mobile-ai/flow
 import { cn } from "@/lib/utils";
 import { Sheet } from "../kit/sheet";
 import { BuyCreditsSheet } from "./buy-credits-sheet";
-import { CARD, Eyebrow, ProgressRing } from "./parts";
+import { JobModel } from "./deliverables";
+import { CARD } from "./parts";
 import type { ConceptFlow, Gate } from "./use-concept-flow";
 
 export const PIECE_ICON: Record<BuildItemKind, IconValue> = {
@@ -65,6 +66,8 @@ export const PIECE_ICON: Record<BuildItemKind, IconValue> = {
 
 /** The piece rows' own labels: "Parts list" where the web's tab says Parts. */
 export const PIECE_ROW_LABEL: Record<BuildItemKind, string> = { ...ITEM_LABELS, parts: "Parts list" };
+
+type Product = ReturnType<typeof productsOf>[number];
 
 // ─────────────────────────── the Build sheet ───────────────────────────
 
@@ -106,7 +109,7 @@ export function BuildConfirmSheet({
         description={
           short
             ? `You have ${balance} credits and this build needs ${cost}. Buy credits and the build starts — nothing is charged until it does.`
-            : "The build runs in the background. You can leave and we will tell you when each piece is ready."
+            : "The build runs in the background. You can leave and we will tell you when it is ready."
         }
         actions={
           short ? (
@@ -166,281 +169,358 @@ export function BuildConfirmSheet({
   );
 }
 
+// ─────────────────────────── shared bits ───────────────────────────
+
+/** A product's state in one word: what the switcher chip says under its name. */
+function productState(p: Product, systemFailure: boolean, queued: boolean): { text: string; tone: "brand" | "success" | "error" | "plain" } {
+  const live = p.items.filter((i) => i.status !== "skipped");
+  const ready = live.filter((i) => i.status === "ready").length;
+  if (live.some((i) => i.status === "failed")) {
+    const n = live.filter((i) => i.status === "failed").length;
+    return { text: systemFailure ? "Stopped" : `${n} ${n === 1 ? "piece" : "pieces"} didn't finish`, tone: "error" };
+  }
+  if (live.length > 0 && ready === live.length) return { text: `Ready · ${live.length} pieces`, tone: "success" };
+  if (queued) return { text: "Waiting", tone: "plain" };
+  return { text: "Building", tone: "brand" };
+}
+
+function ProductChips({
+  products,
+  shownId,
+  onProduct,
+  systemFailure,
+  queued,
+}: {
+  products: Product[];
+  shownId: string;
+  onProduct: (id: string) => void;
+  systemFailure: boolean;
+  queued: boolean;
+}) {
+  return (
+    <div role="tablist" aria-label="Products" className="-mx-8 flex gap-4 overflow-x-auto px-8 [scrollbar-width:none]">
+      {products.map((p) => {
+        const on = p.id === shownId;
+        const s = productState(p, systemFailure, queued);
+        return (
+          <button
+            key={p.id}
+            type="button"
+            role="tab"
+            aria-selected={on}
+            onClick={() => onProduct(p.id)}
+            className={cn(
+              "relative flex min-h-[56px] min-w-[156px] flex-1 items-center gap-4 rounded-xl bg-bg-surface px-4 text-left outline-none focus-visible:ring-2 focus-visible:ring-border-focus",
+              on ? "border-[length:var(--border-width-2)] border-solid border-border-brand" : "border-[length:var(--border-width-1)] border-solid border-border-subtle",
+            )}
+          >
+            <span className="relative size-[38px] shrink-0 overflow-hidden rounded-lg bg-bg-subtle">
+              {p.conceptImageUrl && <Image src={p.conceptImageUrl} alt="" fill sizes="38px" className="object-cover" unoptimized />}
+            </span>
+            <span className="flex min-w-0 flex-col">
+              <span className="truncate text-sm font-medium leading-sm text-text-primary">{p.name}</span>
+              <span
+                className={cn(
+                  "truncate text-xs leading-xs",
+                  s.tone === "success" && "text-text-success",
+                  s.tone === "brand" && "text-text-brand",
+                  s.tone === "error" && "font-medium text-text-error",
+                  s.tone === "plain" && "text-text-secondary",
+                )}
+              >
+                {s.text}
+              </span>
+            </span>
+            {s.tone === "error" && <span aria-hidden className="absolute right-3 top-3 size-[8px] rounded-full bg-bg-error" />}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/** A failed piece on the page, with its free Retry. */
+function FailedPiece({ job, product, kind, pieces }: { job: BuildJob; product: Product; kind: BuildItemKind; pieces: PieceLite[] }) {
+  const { retryBuildItem } = useCreateHistory();
+  return (
+    <div className="flex flex-col gap-4 rounded-xl border-[length:var(--border-width-1)] border-solid border-border-error bg-bg-error-subtle p-6">
+      <div className="flex items-start gap-4">
+        <span className="shrink-0 text-[color:var(--color-icon-error)]">
+          <Icon icon={PIECE_ICON[kind]} size={20} />
+        </span>
+        <span className="flex min-w-0 flex-1 flex-col gap-1">
+          <span className="text-md font-medium leading-md text-text-error">{PIECE_ROW_LABEL[kind]} didn&apos;t finish</span>
+          <span className="text-sm leading-sm text-text-secondary">{failedPieceNote(kind, pieces)}</span>
+        </span>
+      </div>
+      <Button
+        hierarchy="secondary"
+        size="lg"
+        className="w-full"
+        iconLeading={<Icon icon={Refresh01Icon} size={16} />}
+        onClick={() => retryBuildItem(job.id, kind, product.id)}
+      >
+        Retry {ITEM_LABELS[kind]} <CreditBadge credits={0} />
+      </Button>
+    </div>
+  );
+}
+
+/** One product's pieces, behind one button: each opens its deliverable; a failed one retries free. */
+function PiecesSheet({ job, product, open, onClose }: { job: BuildJob; product: Product; open: boolean; onClose: () => void }) {
+  const router = useRouter();
+  const { retryBuildItem } = useCreateHistory();
+  const status = statusOf(job);
+  const systemFailure = job.failure === "system";
+  const pieces: PieceLite[] = product.items.map((i) => ({ kind: i.kind, status: i.status, progress: i.progress, omitted: i.omitted }));
+  const live = product.items.filter((i) => i.status !== "skipped");
+  const ready = live.filter((i) => i.status === "ready").length;
+  return (
+    <Sheet open={open} onClose={onClose} title="Pieces" description={`${product.name} · ${ready} of ${live.length} ready`}>
+      <ul className="flex flex-col divide-y divide-border-subtle overflow-hidden rounded-xl border-[length:var(--border-width-1)] border-solid border-border-subtle">
+        {product.items
+          .filter((i) => i.status !== "skipped" || i.omitted)
+          .map((item) => {
+            const word = pieceWord({ kind: item.kind, status: item.status, progress: item.progress, omitted: item.omitted }, pieces, { systemFailure, queued: status === "queued" });
+            const failed = item.status === "failed" && !systemFailure;
+            return (
+              <li key={item.kind} className="flex min-h-[56px] items-center gap-5 px-6">
+                <span className={cn("shrink-0", failed ? "text-[color:var(--color-icon-error)]" : "text-[color:var(--color-icon-brand)]")}>
+                  <Icon icon={PIECE_ICON[item.kind]} size={20} />
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    router.push(`/m/ai/build/${job.id}?product=${product.id}&tab=${item.kind}`);
+                  }}
+                  className="min-h-[44px] min-w-0 flex-1 text-left text-lg leading-lg text-text-primary outline-none focus-visible:underline"
+                >
+                  {PIECE_ROW_LABEL[item.kind]}
+                </button>
+                <span
+                  className={cn(
+                    "shrink-0 text-sm leading-sm",
+                    word.tone === "done" && "text-text-success",
+                    word.tone === "error" && "text-text-error",
+                    word.tone === "working" && "text-text-brand",
+                    (word.tone === "plain" || word.tone === "muted") && "text-text-secondary",
+                  )}
+                >
+                  {item.status === "building" ? "Building" : word.word}
+                </span>
+                {failed ? (
+                  <button
+                    type="button"
+                    onClick={() => retryBuildItem(job.id, item.kind, product.id)}
+                    aria-label={`Retry ${ITEM_LABELS[item.kind]} — free`}
+                    className="inline-flex size-[36px] shrink-0 items-center justify-center rounded-full bg-bg-error text-[color:var(--color-icon-on-brand)] outline-none focus-visible:ring-2 focus-visible:ring-border-focus"
+                  >
+                    <Icon icon={Refresh01Icon} size={18} />
+                  </button>
+                ) : (
+                  <span className="shrink-0 text-[color:var(--color-icon-default)]">
+                    <Icon icon={ArrowRight01Icon} size={16} />
+                  </span>
+                )}
+              </li>
+            );
+          })}
+      </ul>
+    </Sheet>
+  );
+}
 
 // ─────────────────────────── the build card ───────────────────────────
 
-const EYEBROW: Record<string, string> = {
-  queued: "Build queue",
-  paused: "Build paused",
-  failed: "Build failed",
-  running: "Building",
-  partial: "Building",
-  ready: "Build finished",
-};
-
 export function BuildCard({ job, product, onProduct }: { job: BuildJob; product: string; onProduct: (id: string) => void }) {
-  const router = useRouter();
-  const { builds, retryBuildItem, retryBuild, cancelBuild, failBuildSystem } = useCreateHistory();
+  const { builds, retryBuild, cancelBuild, failBuildSystem } = useCreateHistory();
   const now = useMinuteClock();
   const [buying, setBuying] = React.useState(false);
+  const [piecesOpen, setPiecesOpen] = React.useState(false);
   const status = statusOf(job);
   const row = stateRowFor(job, now, queuedAhead(job, builds), true);
   const products = productsOf(job);
   const shown = products.find((p) => p.id === product) ?? products[0];
   const roll = rollupBuild(job);
   const percent = status === "ready" ? 100 : status === "queued" || status === "failed" ? 0 : roll.progress;
-  const eyebrow = job.blocked ? EYEBROW.paused : EYEBROW[status];
   const name = job.projectChoiceName?.trim() || job.title;
   const each = new Set(products.map((p) => p.items.filter((i) => i.status !== "skipped").length));
   const piecesLine = each.size === 1 ? `${[...each][0]} pieces each` : `${allItems(job).filter((i) => i.status !== "skipped").length} pieces`;
   const pieces: PieceLite[] = shown.items.map((i) => ({ kind: i.kind, status: i.status, progress: i.progress, omitted: i.omitted }));
   const systemFailure = job.failure === "system";
+  const live = shown.items.filter((i) => i.status !== "skipped");
+  const done = live.filter((i) => i.status === "ready").length;
+  const current = live.find((i) => i.status === "building") ?? live.find((i) => i.status !== "ready" && i.status !== "failed");
+  const stage =
+    status === "queued"
+      ? "Waiting in the build queue"
+      : job.blocked
+        ? "Paused"
+        : current
+          ? `Step ${Math.min(done + 1, live.length)} of ${live.length} · Building the ${PIECE_ROW_LABEL[current.kind]}`
+          : `${done} of ${live.length} pieces ready`;
+  const failed = systemFailure ? [] : shown.items.filter((i) => i.status === "failed");
+  const tone = row.badge.tone === "success" ? "success" : row.badge.tone === "error" ? "error" : row.badge.tone === "warning" ? "warning" : row.badge.tone === "brand" ? "brand" : "neutral";
 
   return (
-    <section aria-label={row.sectionLabel} className="flex flex-col gap-6">
-      <div className={cn(CARD, "flex flex-col gap-5 p-7")}>
-        <div className="flex items-center justify-between gap-4">
-          <Eyebrow>{eyebrow}</Eyebrow>
-          <Badge tone={row.badge.tone === "success" ? "success" : row.badge.tone === "error" ? "error" : row.badge.tone === "warning" ? "warning" : row.badge.tone === "brand" ? "brand" : "neutral"}>
-            ● {row.badge.text}
-          </Badge>
+    <section aria-label={row.sectionLabel} className="flex flex-col gap-5">
+      <div className={cn(CARD, "flex flex-col gap-5 p-4")}>
+        <div className="relative aspect-[16/10] w-full overflow-hidden rounded-lg bg-bg-subtle">
+          {shown.conceptImageUrl && <Image src={shown.conceptImageUrl} alt={`${shown.name}, the approved concept`} fill sizes="343px" className="object-cover" unoptimized />}
+          <span className="absolute left-4 top-4">
+            {/* One stage line says where the build is; the badge keeps only the state, no percentage. */}
+            <Badge tone={tone}>● {row.badge.text.replace(/\s*·\s*\d+%$/, "")}</Badge>
+          </span>
         </div>
-        <div className="flex items-end justify-between gap-4">
+        <div className="flex flex-col gap-5 px-2 pb-2">
           <div className="flex min-w-0 flex-col">
-            <p className="truncate text-lg font-medium leading-lg text-text-primary">{name}</p>
+            <p className="truncate text-lg font-semibold leading-lg text-text-primary">{name}</p>
             <p className="text-sm leading-sm text-text-secondary">
               {products.length} {products.length === 1 ? "product" : "products"} · {piecesLine}
             </p>
           </div>
-          <p className="text-3xl font-semibold leading-3xl tabular-nums text-text-brand">{percent}%</p>
+          {products.length > 1 && <ProductChips products={products} shownId={shown.id} onProduct={onProduct} systemFailure={systemFailure} queued={status === "queued"} />}
+          <div className="flex flex-col gap-3">
+            <p className="text-md font-medium leading-md text-text-primary">{stage}</p>
+            <ProgressBar value={percent} label={`${name} build progress`} />
+            <p className="text-sm leading-sm text-text-secondary">
+              {row.banner ? `${row.banner.title}. ${row.banner.body}` : "Runs in the background. You can leave, and we'll notify you when it's ready."}
+            </p>
+            {row.meta && <p className="text-sm leading-sm text-text-tertiary">{row.meta}</p>}
+          </div>
+          {job.blocked === "credits" && (
+            <button type="button" onClick={() => setBuying(true)} className="-my-3 min-h-[40px] w-fit text-md font-medium leading-md text-text-brand hover:underline">
+              Buy credits
+            </button>
+          )}
+          {row.actions === "cancelQueued" && (
+            <button type="button" onClick={() => cancelBuild(job.id)} className="-my-3 min-h-[40px] w-fit text-md font-medium leading-md text-text-brand hover:underline">
+              Cancel this build
+            </button>
+          )}
+          {row.actions === "retryAll" && (
+            <button type="button" onClick={() => retryBuild(job.id)} className="-my-3 inline-flex min-h-[40px] w-fit items-center gap-2 text-md font-medium leading-md text-text-brand hover:underline">
+              Try this build again <CreditBadge credits={jobCost(job)} />
+            </button>
+          )}
+          {isOverrunning(job, now) && (
+            <button type="button" onClick={() => failBuildSystem(job.id)} className="-my-3 min-h-[40px] w-fit text-md font-medium leading-md text-text-error hover:underline">
+              Stop and refund
+            </button>
+          )}
+          {failed.map((item) => (
+            <FailedPiece key={item.kind} job={job} product={shown} kind={item.kind} pieces={pieces} />
+          ))}
+          <Button hierarchy="secondary" size="lg" className="w-full" onClick={() => setPiecesOpen(true)} iconLeading={<Icon icon={DashboardSquare01Icon} size={16} />}>
+            Pieces · {done} of {live.length} ready
+          </Button>
         </div>
-        <ProgressBar value={percent} label={`${name} build progress`} />
-        <p className="text-sm leading-sm text-text-secondary">
-          {row.banner
-            ? `${row.banner.title}. ${row.banner.body}`
-            : status === "ready"
-              ? row.footer
-              : "Runs in the background. You can leave, and we'll notify you as each piece is ready."}
-        </p>
-        {row.meta && <p className="text-sm leading-sm text-text-tertiary">{row.meta}</p>}
-        {job.blocked === "credits" && (
-          <button type="button" onClick={() => setBuying(true)} className="-my-3 min-h-[40px] w-fit text-md font-medium leading-md text-text-brand hover:underline">
-            Buy credits
-          </button>
-        )}
-        {row.actions === "cancelQueued" && (
-          <button type="button" onClick={() => cancelBuild(job.id)} className="-my-3 min-h-[40px] w-fit text-md font-medium leading-md text-text-brand hover:underline">
-            Cancel this build
-          </button>
-        )}
-        {row.actions === "retryAll" && (
-          <button type="button" onClick={() => retryBuild(job.id)} className="-my-3 inline-flex min-h-[40px] w-fit items-center gap-2 text-md font-medium leading-md text-text-brand hover:underline">
-            Try this build again <CreditBadge credits={jobCost(job)} />
-          </button>
-        )}
-        {isOverrunning(job, now) && (
-          <button type="button" onClick={() => failBuildSystem(job.id)} className="-my-3 min-h-[40px] w-fit text-md font-medium leading-md text-text-error hover:underline">
-            Stop and refund
-          </button>
-        )}
       </div>
-
-      {products.length > 1 && (
-        <div role="tablist" aria-label="Products" className="-mx-8 flex gap-4 overflow-x-auto px-8 [scrollbar-width:none]">
-          {products.map((p) => {
-            const live = p.items.filter((i) => i.status !== "skipped");
-            const pct = live.length ? Math.round(live.reduce((s, i) => s + i.progress, 0) / live.length) : 0;
-            const on = p.id === shown.id;
-            return (
-              <button
-                key={p.id}
-                type="button"
-                role="tab"
-                aria-selected={on}
-                onClick={() => onProduct(p.id)}
-                className={cn(
-                  "inline-flex min-h-[40px] shrink-0 items-center gap-3 rounded-full px-6 text-md leading-md outline-none focus-visible:ring-2 focus-visible:ring-border-focus",
-                  on ? "border-[length:var(--border-width-1)] border-solid border-border-subtle bg-bg-surface text-text-primary" : "text-text-secondary",
-                )}
-              >
-                {p.name}
-                <span className="rounded-full bg-bg-subtle px-3 text-xs leading-xs tabular-nums text-text-secondary">{pct}%</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      <ul className="flex flex-col gap-4" aria-label={`${shown.name} pieces`}>
-        {shown.items
-          .filter((i) => i.status !== "skipped" || i.omitted)
-          .map((item) => {
-            const word = pieceWord(
-              { kind: item.kind, status: item.status, progress: item.progress, omitted: item.omitted },
-              pieces,
-              { systemFailure, queued: status === "queued" },
-            );
-            const failed = item.status === "failed" && !systemFailure;
-            return (
-              <li key={item.kind}>
-                <div
-                  className={cn(
-                    CARD,
-                    "flex flex-col gap-3 p-6",
-                    failed && "border-border-error",
-                  )}
-                >
-                  <div className="flex items-center gap-5">
-                    <span
-                      className={cn(
-                        "inline-flex size-[36px] shrink-0 items-center justify-center rounded-lg",
-                        failed ? "bg-bg-error-subtle text-[color:var(--color-icon-error)]" : "bg-bg-brand-subtle text-[color:var(--color-icon-brand)]",
-                      )}
-                    >
-                      <Icon icon={PIECE_ICON[item.kind]} size={18} />
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => router.push(`/m/ai/build/${job.id}?product=${shown.id}&tab=${item.kind}`)}
-                      className="min-w-0 flex-1 text-left text-lg leading-lg text-text-primary outline-none focus-visible:underline"
-                    >
-                      {PIECE_ROW_LABEL[item.kind]}
-                    </button>
-                    <span
-                      className={cn(
-                        "shrink-0 text-sm leading-sm",
-                        word.tone === "done" && "text-text-success",
-                        word.tone === "error" && "text-text-error",
-                        word.tone === "working" && "text-text-brand",
-                        (word.tone === "plain" || word.tone === "muted") && "text-text-secondary",
-                      )}
-                    >
-                      {item.status === "building" ? "Building" : word.word}
-                    </span>
-                    {(item.status === "building" || item.status === "ready") && (
-                      <ProgressRing value={item.status === "ready" ? 100 : item.progress} label={`${PIECE_ROW_LABEL[item.kind]} progress`} size={36} />
-                    )}
-                    {failed && (
-                      <button
-                        type="button"
-                        onClick={() => retryBuildItem(job.id, item.kind, shown.id)}
-                        aria-label={`Retry ${ITEM_LABELS[item.kind]} — free`}
-                        className="inline-flex size-[36px] shrink-0 items-center justify-center rounded-full bg-bg-error text-[color:var(--color-icon-on-brand)] outline-none focus-visible:ring-2 focus-visible:ring-border-focus"
-                      >
-                        <Icon icon={Refresh01Icon} size={18} />
-                      </button>
-                    )}
-                  </div>
-                  {failed && <p className="text-sm leading-sm text-text-secondary">{failedPieceNote(item.kind, pieces)}</p>}
-                </div>
-              </li>
-            );
-          })}
-      </ul>
+      <PiecesSheet job={job} product={shown} open={piecesOpen} onClose={() => setPiecesOpen(false)} />
       <BuyCreditsSheet open={buying} onClose={() => setBuying(false)} need={jobCost(job)} />
     </section>
   );
 }
 
-// ─────────────────────────── finished (18) ───────────────────────────
+// ─────────────────────────── finished: the result is the page ───────────────────────────
 
-export function FinishedCard({
-  job,
-  flow,
-  onSave,
-  onOpenConcept,
-}: {
-  job: BuildJob;
-  flow: ConceptFlow;
-  onSave: () => void;
-  onOpenConcept: (productId: string) => void;
-}) {
+export function FinishedCard({ job, flow, product, onProduct }: { job: BuildJob; flow: ConceptFlow; product: string; onProduct: (id: string) => void }) {
+  const { setBuildModelFailed } = useCreateHistory();
+  const [view, setView] = React.useState<"3d" | "image">("3d");
+  const [piecesOpen, setPiecesOpen] = React.useState(false);
   const products = productsOf(job);
-  const live = allItems(job).filter((i) => i.status !== "skipped");
+  const shown = products.find((p) => p.id === product) ?? products[0];
+  const index = products.findIndex((p) => p.id === shown.id);
+  const live = shown.items.filter((i) => i.status !== "skipped");
+  const projectName = flow.projectName || job.projectChoiceName?.trim() || job.title;
+  const hasAssembly = shown.items.some((i) => i.kind === "assembly" && i.status === "ready");
+  const has3d = hasAssembly || shown.items.some((i) => i.kind === "3d" && i.status === "ready");
+  const isPrimary = shown.id === "primary";
+  const shellNote = !isPrimary ? null : job.modelFailed ? "failed" : !job.modelGlbUrl ? "pending" : null;
+  const showing = has3d ? view : "image";
+  const seg = (on: boolean) =>
+    cn(
+      "min-h-[40px] flex-1 rounded-lg text-md font-medium leading-md outline-none focus-visible:ring-2 focus-visible:ring-border-focus",
+      on ? "bg-bg-surface text-text-primary shadow-sm" : "text-text-secondary",
+    );
+  return (
+    <section aria-label="Build finished" className="flex flex-col gap-5">
+      {products.length > 1 && <ProductChips products={products} shownId={shown.id} onProduct={onProduct} systemFailure={false} queued={false} />}
+      <div className={cn(CARD, "flex flex-col gap-5 p-4")}>
+        <div className="flex items-start justify-between gap-4 px-2 pt-1">
+          <div className="flex min-w-0 flex-col">
+            <p className="truncate text-lg font-semibold leading-lg text-text-primary">{shown.name}</p>
+            <p className="truncate text-sm leading-sm text-text-secondary">
+              {products.length > 1 ? `${projectName} · Product ${index + 1} of ${products.length}` : `${projectName} · All ${live.length} pieces ready`}
+            </p>
+          </div>
+          <Badge tone="success">● Ready</Badge>
+        </div>
+        {has3d && shown.conceptImageUrl && (
+          <div role="group" aria-label="What to show" className="flex gap-2 rounded-xl bg-bg-subtle p-2">
+            <button type="button" aria-pressed={showing === "3d"} onClick={() => setView("3d")} className={seg(showing === "3d")}>
+              3D
+            </button>
+            <button type="button" aria-pressed={showing === "image"} onClick={() => setView("image")} className={seg(showing === "image")}>
+              Concept image
+            </button>
+          </div>
+        )}
+        {showing === "3d" ? (
+          <JobModel
+            key={shown.id}
+            job={job}
+            productId={shown.id}
+            enclosure={!hasAssembly}
+            shellNote={shellNote}
+            onRetryMesh={isPrimary ? () => setBuildModelFailed(job.id, false) : undefined}
+            hero
+          />
+        ) : (
+          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-bg-subtle">
+            {shown.conceptImageUrl && <Image src={shown.conceptImageUrl} alt={`${shown.name}, the approved concept`} fill sizes="343px" className="object-cover" unoptimized />}
+          </div>
+        )}
+      </div>
+      <Button hierarchy="secondary" size="xl" className="w-full" onClick={() => setPiecesOpen(true)} iconLeading={<Icon icon={DashboardSquare01Icon} size={18} />}>
+        Pieces · {live.length} ready
+      </Button>
+      <PiecesSheet job={job} product={shown} open={piecesOpen} onClose={() => setPiecesOpen(false)} />
+    </section>
+  );
+}
+
+/** Save, pinned at the foot once the build is finished. */
+export function FinishedFoot({ job, flow, onSave }: { job: BuildJob; flow: ConceptFlow; onSave: () => void }) {
+  const products = productsOf(job);
   const name = flow.projectName || job.projectChoiceName?.trim() || job.title;
   const saved = flow.saveInfo?.mode.kind === "saved" ? flow.saveInfo.mode.project : null;
-  const each = new Set(products.map((p) => p.items.filter((i) => i.status !== "skipped").length));
+  const line = saved
+    ? `Saved to ${saved.name}. Open the project for what's next.`
+    : flow.saveInfo?.mode.kind === "join"
+      ? `Adds ${products.length > 1 ? "these products" : job.title} to ${flow.saveInfo.mode.project.name}, with every deliverable.`
+      : products.length > 1
+        ? `Keeps ${products.length === 2 ? "both" : "all"} products of “${name}” and every deliverable together.`
+        : `Keeps the product and every deliverable together in “${name}”.`;
   return (
-    <section aria-label="Build finished" className="flex flex-col gap-6">
-      <div className="flex flex-col items-center gap-4 rounded-xl border-[length:var(--border-width-1)] border-solid border-[var(--color-border-success)] bg-bg-success-subtle px-8 py-10 text-center">
-        <span className="inline-flex size-[44px] items-center justify-center rounded-full bg-bg-success text-[color:var(--color-icon-on-brand)]">
-          <Icon icon={CheckmarkCircle02Icon} size={24} />
-        </span>
-        <p className="text-2xl font-semibold leading-2xl text-text-success">All {live.length} pieces are ready</p>
-        <p className="text-sm leading-sm text-text-secondary">
-          {saved
-            ? `Saved to ${saved.name}. Open the project for what's next.`
-            : flow.saveInfo?.mode.kind === "join"
-              ? `Add ${products.length > 1 ? "these products" : job.title} to ${flow.saveInfo.mode.project.name} to keep every deliverable with the project.`
-              : products.length > 1
-              ? `Save “${name}” to keep ${products.length === 2 ? "both" : "all"} products and every deliverable together.`
-              : `Save “${name}” to keep the product and every deliverable together.`}
-        </p>
-      </div>
-      <dl className="grid grid-cols-3 gap-4">
-        {[
-          [String(products.length), products.length === 1 ? "Product" : "Products"],
-          [String(live.length), "Ready pieces"],
-          [each.size === 1 ? String([...each][0]) : "—", "Pieces each"],
-        ].map(([v, k]) => (
-          <div key={k} className={cn(CARD, "flex flex-col gap-1 p-6")}>
-            <dd className="text-2xl font-semibold leading-2xl text-text-brand">{v}</dd>
-            <dt className="text-sm leading-sm text-text-secondary">{k}</dt>
-          </div>
-        ))}
-      </dl>
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-medium leading-lg text-text-primary">Source concepts</h3>
-          <span className="text-sm leading-sm text-text-tertiary">Read only</span>
-        </div>
-        <ul className="flex flex-col gap-3">
-          {products.map((p) => (
-            <li key={p.id}>
-              <button
-                type="button"
-                onClick={() => onOpenConcept(p.id)}
-                className={cn(CARD, "flex w-full items-center gap-5 p-5 text-left outline-none focus-visible:ring-2 focus-visible:ring-border-focus")}
-              >
-                <span className="relative size-[48px] shrink-0 overflow-hidden rounded-lg bg-bg-subtle">
-                  {p.conceptImageUrl && <Image src={p.conceptImageUrl} alt="" fill sizes="48px" className="object-cover" unoptimized />}
-                </span>
-                <span className="flex min-w-0 flex-1 flex-col">
-                  <span className="truncate text-md font-medium leading-md text-text-primary">{p.name}</span>
-                  <span className="text-sm leading-sm text-text-success">
-                    Concept ready · {p.items.filter((i) => i.status !== "skipped").length} pieces
-                  </span>
-                </span>
-                <Icon icon={ArrowRight01Icon} size={16} />
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
-      <p className="flex items-center gap-4 rounded-xl border-[length:var(--border-width-1)] border-solid border-[var(--color-border-success)] bg-bg-success-subtle p-6 text-sm leading-sm text-text-primary">
-        <span className="text-[color:var(--color-icon-success)]">
-          <Icon icon={CheckmarkCircle02Icon} size={20} />
-        </span>
-        Saving keeps your concepts, build history and deliverables linked.
-      </p>
-      <div className="flex flex-col gap-4">
-        {saved ? (
-          <Link href={`/m/projects/${saved.id}`} className={cn(buttonVariants({ size: "xl" }), "w-full")}>
-            View project
-          </Link>
-        ) : (
-          <Button size="xl" className="w-full" iconLeading={<Icon icon={FloppyDiskIcon} size={20} />} onClick={onSave}>
-            {flow.saveInfo?.mode.kind === "join"
-              ? `Add to ${flow.saveInfo.mode.project.name}`
-              : flow.saveInfo?.mode.kind === "version"
-                ? `Save version ${flow.saveInfo.mode.version}`
-                : "Save project"}
-          </Button>
-        )}
-        <Link href={`/m/ai/build/${job.id}`} className={cn(buttonVariants({ hierarchy: "secondary", size: "xl" }), "w-full")}>
-          Review the pieces
+    <div className="flex flex-col gap-3 px-8">
+      {saved ? (
+        <Link href={`/m/projects/${saved.id}`} className={cn(buttonVariants({ size: "xl" }), "w-full")}>
+          View project
         </Link>
-      </div>
-    </section>
+      ) : (
+        <Button size="xl" className="w-full" iconLeading={<Icon icon={FloppyDiskIcon} size={20} />} onClick={onSave}>
+          {flow.saveInfo?.mode.kind === "join"
+            ? `Add to ${flow.saveInfo.mode.project.name}`
+            : flow.saveInfo?.mode.kind === "version"
+              ? `Save version ${flow.saveInfo.mode.version}`
+              : products.length > 1
+                ? `Save project · ${products.length} products`
+                : "Save project"}
+        </Button>
+      )}
+      <p className="text-center text-xs leading-xs text-text-secondary">{line}</p>
+    </div>
   );
 }

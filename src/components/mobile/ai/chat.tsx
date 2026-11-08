@@ -24,12 +24,12 @@ import { MORE_ICON, TopBar } from "../top-bar";
 import { ActionSheet } from "../kit/sheet";
 import { OfflineBanner } from "../kit/states";
 import { useToast } from "../kit/toast";
-import { BuildCard, BuildConfirmSheet, FinishedCard } from "./build";
+import { BuildCard, BuildConfirmSheet, FinishedCard, FinishedFoot } from "./build";
 import { BuildLogSheet } from "./build-log-sheet";
-import { BuildBar, ConceptSheet, ConceptsCard, RefineSheet } from "./concepts";
+import { BuildBar, BuildOptionsSheet, ConceptImageViewer, ConceptSheet, ConceptStage, ConceptsMini, RefineSheet } from "./concepts";
 import { DeleteChatSheet } from "./delete-chat-sheet";
 import { NetworkCard } from "./network";
-import { CreditsFoot, HeldComposer, PromptBubble, Stepper } from "./parts";
+import { CreditsFoot, PromptBubble, Stepper } from "./parts";
 import { PromptBox } from "./prompt-box";
 import { SaveSheet } from "./save-sheet";
 import { ProductQuestion, ProjectSheet, ReadingCard, RequiredStep } from "./setup";
@@ -66,6 +66,9 @@ export function AiChat({ chatId }: { chatId: string }) {
   const [deleting, setDeleting] = React.useState(false);
   const [draft, setDraft] = React.useState("");
   const [buildProduct, setBuildProduct] = React.useState("primary");
+  const [conceptProduct, setConceptProduct] = React.useState("primary");
+  const [optionsOpen, setOptionsOpen] = React.useState(false);
+  const [imageFor, setImageFor] = React.useState<string | null>(null);
 
   const job = flow.activeBuild;
   const jobStatus = job ? statusOf(job) : null;
@@ -126,9 +129,32 @@ export function AiChat({ chatId }: { chatId: string }) {
       ? `${conceptsDrawn} ${conceptsDrawn === 1 ? "concept" : "concepts"} · ${conceptsDrawn * CONCEPT_COST} ${conceptsDrawn === 1 ? "credit" : "credits"}`
       : "1 credit per concept";
 
-  const footer = flow.held ? (
+  const answered = setup?.status === "answered";
+  // Image first (the owner's approved sample): once the concepts are on the
+  // page the composer gives way — changes go through each product's Change
+  // sheet — and the Build line is pinned at the foot; once the build is
+  // finished, Save is.
+  const conceptStage = answered && flow.rail.rows.length > 0;
+  const finished = !!job && jobStatus === "ready";
+  const buildBar = conceptStage && (!job || !flow.held);
+
+  const footer = finished && job ? (
     <div className="pt-4">
-      <HeldComposer text="This build uses these concepts. Change the product from its page." />
+      <FinishedFoot job={job} flow={flow} onSave={() => setSaveOpen(true)} />
+      <CreditsFoot right={footRight} />
+    </div>
+  ) : buildBar ? (
+    <div className="flex flex-col gap-3 pt-4">
+      {job && flow.state.changedSinceBuild && (
+        <p className="px-8 text-sm leading-sm text-text-secondary">Changed since this build — build again to carry the change into the deliverables.</p>
+      )}
+      <div className="px-8">
+        <BuildBar flow={flow} onBuild={startBuild} onOptions={() => setOptionsOpen(true)} />
+      </div>
+      <CreditsFoot right={footRight} />
+    </div>
+  ) : conceptStage || flow.held ? (
+    <div className="pt-2">
       <CreditsFoot right={footRight} />
     </div>
   ) : (
@@ -156,8 +182,6 @@ export function AiChat({ chatId }: { chatId: string }) {
       <CreditsFoot right={footRight} />
     </div>
   );
-
-  const answered = setup?.status === "answered";
 
   return (
     <>
@@ -192,21 +216,14 @@ export function AiChat({ chatId }: { chatId: string }) {
           )}
           {asking && !needsProductQ && projectDismissed && <RequiredStep onOpen={() => setProjectDismissed(false)} />}
 
-          {job && jobStatus === "ready" && (
-            <FinishedCard job={job} flow={flow} onSave={() => setSaveOpen(true)} onOpenConcept={(id) => setSheetFor(id)} />
-          )}
-          {job && <BuildCard job={job} product={buildProduct} onProduct={setBuildProduct} />}
+          {finished && job && <FinishedCard job={job} flow={flow} product={buildProduct} onProduct={setBuildProduct} />}
+          {job && !finished && <BuildCard job={job} product={buildProduct} onProduct={setBuildProduct} />}
 
-          {answered && flow.rail.rows.length > 0 && <ConceptsCard flow={flow} now={now} onOpen={(id) => setSheetFor(id)} />}
-          {answered && <NetworkCard flow={flow} />}
-          {answered && (!job || !flow.held) && flow.rail.rows.length > 0 && (
-            <>
-              {job && flow.state.changedSinceBuild && (
-                <p className="text-sm leading-sm text-text-secondary">Changed since this build — build again to carry the change into the deliverables.</p>
-              )}
-              <BuildBar flow={flow} onBuild={startBuild} />
-            </>
+          {conceptStage && !job && (
+            <ConceptStage flow={flow} now={now} selected={conceptProduct} onSelect={setConceptProduct} onChange={setSheetFor} onImage={setImageFor} />
           )}
+          {conceptStage && job && <ConceptsMini flow={flow} onOpen={setSheetFor} />}
+          {answered && <NetworkCard flow={flow} />}
         </div>
       </Screen>
 
@@ -224,7 +241,6 @@ export function AiChat({ chatId }: { chatId: string }) {
         flow={flow}
         productId={sheetFor}
         onClose={() => setSheetFor(null)}
-        onSelect={setSheetFor}
         onRefine={(turnId) => {
           setSheetFor(null);
           setRefineTurn(turnId);
@@ -235,6 +251,8 @@ export function AiChat({ chatId }: { chatId: string }) {
         }}
       />
       <RefineSheet flow={flow} turnId={refineTurn} onClose={() => setRefineTurn(null)} />
+      <BuildOptionsSheet flow={flow} open={optionsOpen} onClose={() => setOptionsOpen(false)} />
+      <ConceptImageViewer flow={flow} productId={imageFor} onClose={() => setImageFor(null)} />
       <SpecSheet flow={flow} productId={specFor} onClose={() => setSpecFor(null)} />
       <BuildConfirmSheet
         flow={flow}
