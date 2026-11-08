@@ -6,6 +6,7 @@ to build and how to check it is done, and links to its Jira ticket.
 
 | CL | Change | In the prototype | Jira | Production |
 | --- | --- | --- | --- | --- |
+| [CL-007](#cl-007-landing-page-events-section-moments-from-ideeza) | Landing page: Events section, Moments From IDEEZA | 8 Nov 2026 | [PR-9089](https://ideeza.atlassian.net/browse/PR-9089) | Ready for development |
 | [CL-006](#cl-006-coupon-codes-when-buying-a-plan) | Coupon codes when buying a plan | 5 Nov 2026 | [PR-9062](https://ideeza.atlassian.net/browse/PR-9062) | Ready for development |
 | [CL-005](#cl-005-each-account-has-its-own-work-a-new-account-starts-fresh) | Each account has its own work; a new account starts fresh | 4 Nov 2026 | None: prototype only | Nothing to build |
 | [CL-004](#cl-004-welcome-offer-50-off-the-first-payment-for-12-hours) | Welcome offer: 50% off the first payment, for 12 hours | 4 Nov 2026 | [PR-9013](https://ideeza.atlassian.net/browse/PR-9013) | Ready for development |
@@ -34,6 +35,42 @@ state, mobile); Design (DS components and tokens); Before → After screenshots.
 No code: no file names, functions or commit hashes. Screenshots go in
 docs/changelog/ as <date>-<short-name>-before.png / -after.png.
 -->
+
+---
+
+## CL-007 Landing page: Events section, Moments From IDEEZA
+
+**In the prototype:** 8 November 2026 · **Jira:** [PR-9089](https://ideeza.atlassian.net/browse/PR-9089) · **Production:** Ready for development
+
+**Screen:** the landing page (`/landing`, and `/` for anyone signed out), a new
+section between The Ecosystem and Mobile Application. From the Figma *IDEEZA
+Website V-2*, page "Join Waitlist" › Event, the list frame's header and event
+cards (18542:22943).
+
+### What to build
+
+- [ ] The section sits just above **Mobile Application**.
+- [ ] Header, centred like every landing section: eyebrow **Events**, title **Moments From IDEEZA**, lead *Moments from IDEEZA hackathons, university tours, and product launches around the world — see where our community is building.*
+- [ ] Three event cards, each the event's own photo with its title and one line over it:
+  - **IDEEZA Hardware Hackathon** — *Build Hardware with AI*
+  - **IDEEZA Launch In Ethiopia** — *IDEEZA's First Introduction to the African Ecosystem*
+  - **The IDEEZA National Tour** — *Building Africa's Hardware Creator Ecosystem*
+- [ ] The cards are one still picture: no card is a link and none reacts to hover or click.
+- [ ] One **Explore Events** button, centred under the cards.
+- [ ] Only real events and their real photos; events are content the team adds later, so they come from data (CMS or admin), not hard-coded.
+- [ ] Wide screens: three cards in a row. Phone: one row that swipes sideways with the next card peeking in; no horizontal scroll of the page at 375 px.
+
+### Design
+
+- Dark mode of the design system; the header is the landing section header (eyebrow chip, Display/MD title, lead).
+- Card: a 20-radius frame with a soft lilac ring, 12 inside it the photo at radius 14 with a border/strong ring, fading to the page colour (bg/page) from the middle down; title Heading/H2 in text/primary, line Body/LG Medium in text/secondary.
+- **Explore Events** is the page's one secondary button (no fill, gradient glass ring, pill), like Explore Marketplace and Explore Community.
+
+### Before → After
+
+| Before | After |
+| --- | --- |
+| ![Before: The Ecosystem goes straight into Mobile Application](docs/changelog/2026-11-08-events-landing-before.png) | ![After: Moments From IDEEZA, three event cards and Explore Events](docs/changelog/2026-11-08-events-landing-after.png) |
 
 ---
 
