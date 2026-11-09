@@ -6,6 +6,7 @@ to build and how to check it is done, and links to its Jira ticket.
 
 | CL | Change | In the prototype | Jira | Production |
 | --- | --- | --- | --- | --- |
+| [CL-009](#cl-009-mobile-app-splash-onboarding-welcome-and-log-in) | Mobile app: splash, onboarding, Welcome and Log In | 9 Nov 2026 | Not created yet | Not started |
 | [CL-008](#cl-008-mobile-app-create-flow-the-image-first-the-3d-as-the-result) | Mobile app create flow: the image first, the 3D as the result | 9 Nov 2026 | Not created yet | Not started |
 | [CL-007](#cl-007-landing-page-events-section-moments-from-ideeza) | Landing page: Events section, Moments From IDEEZA | 8 Nov 2026 | [PR-9089](https://ideeza.atlassian.net/browse/PR-9089) | Ready for development |
 | [CL-006](#cl-006-coupon-codes-when-buying-a-plan) | Coupon codes when buying a plan | 5 Nov 2026 | [PR-9062](https://ideeza.atlassian.net/browse/PR-9062) | Ready for development |
@@ -36,6 +37,67 @@ state, mobile); Design (DS components and tokens); Before → After screenshots.
 No code: no file names, functions or commit hashes. Screenshots go in
 docs/changelog/ as <date>-<short-name>-before.png / -after.png.
 -->
+
+---
+
+## CL-009 Mobile app: splash, onboarding, Welcome and Log In
+
+**In the prototype:** 9 November 2026 · **Jira:** not created yet (a Story under PR-9007 once Jira is connected) · **Production:** Not started
+
+**Screen:** the mobile app's way in, in the phone prototype at `/m`: the splash
+on opening, the onboarding (`/m/onboarding`), Welcome (`/m/welcome`), Log In
+(`/m/sign-in`) and Sign up (`/m/sign-up`). Built from the owner's onboarding
+design (4 screens) and dark auth design (8 screens). Every screen before
+signing in is dark, in the light theme too.
+
+### What to build
+
+**Splash**
+- [ ] On the brand night: the IDEEZA logo with a slow glow, *Build Hardware at the Speed of Software*, faint circuit traces behind, and three steps at the foot — **Idea → Concept → Build** — lighting one after another, in place of a spinner.
+- [ ] Shown while the app opens (about 1.2 s on the first open), and while signing in (*Signing you in*). With reduced motion nothing moves.
+
+**Onboarding (first open, signed out)**
+- [ ] Order on the first open: Splash → Onboarding → Welcome. Once the maker skips or finishes it, it doesn't come back.
+- [ ] Four screens, each an illustration, a title and one line; dots under them, **Continue** at the foot, **Skip** at the top; swiping works too.
+  1. *Turn Your Idea Into a Real Product* — *Describe your hardware idea in a single prompt. Our AI instantly generates the PCB, Coding, and 3D enclosure.*
+  2. *No Engineering Skills? No Problem* — *Let AI build it for you, or dive in manually if you're an engineer. Both paths lead to the same place.*
+  3. *From Design to Manufacturing* — *Ready to build it for real? Connect with verified manufacturing partners and bring your product to life.*
+  4. *Your Invention, Now your Digital Asset* — *Register your product as a digital asset, own it as an NFT, and showcase it to a global creator community.*
+- [ ] **Continue** on the last screen, or **Skip**, goes to Welcome.
+
+**Welcome**
+- [ ] The logo in the middle; **Sign up** (primary) and **Log In** (secondary) at the foot. Nothing else: no Explore first, no Apple sign-in (owner decision).
+- [ ] Offline: *You’re offline. Connect to sign up or log in.*
+
+**Log In**
+- [ ] Title *Enter your Email to Log In*; **Email** (*Enter your email*), **Password** (*8 characters and more*, with show/hide); **Remember me** and **Forgot password**; **Log In**.
+- [ ] *Or login with* → **Google** and **Facebook**; at the foot *Don’t Have an Account? Sign Up*.
+- [ ] Errors under their field: *Enter your email.*, *Invalid email address*, *Enter your password.*, *Your password is incorrect!*
+- [ ] Account suspended: the title becomes *Welcome to IDEEZA*, a red alert *Account Suspended — Your account has been suspended due to a violation of our platform policies. Check your email or contact support@ideeza.io*, and the button reads **Account Suspended** (disabled).
+- [ ] Kept from before: too many tries with a countdown, email not verified → **Send code**, offline with the input kept, session expired.
+- [ ] **Remember me** unticked: the maker is signed out when the app is closed. Ticked: they stay signed in.
+
+**Sign up**
+- [ ] Same dark layout: centered *Create your IDEEZA account* / *Then choose your handle.*, the form, **Create account**, and at the foot *Have an Account? Log In*.
+
+Demo stand-ins (prototype only): suspended and expired have no cause in the demo, so `?demo=suspended|expired` shows them; Remember me unticked lasts while the browser tab does.
+
+### Design
+
+- Mobile design system only: brand night (violet-950 → gray-950) with violet and blue glows, Primary / Secondary XL buttons, Text inputs XL, Checkbox, the mobile alert, the mobile type scale (title, body, caption).
+- Dark tokens on every screen before signing in, whatever the app's theme.
+
+### Before → After
+
+| Before | After |
+| --- | --- |
+| — | ![After: the branded splash with Idea, Concept, Build](docs/changelog/2026-11-09-m-splash-after.png) |
+| — | ![After: the four onboarding screens](docs/changelog/2026-11-09-m-onboarding-after.png) |
+| ![Before: Welcome with a hero and four sign-in buttons](docs/changelog/2026-11-09-m-welcome-before.png) | ![After: Welcome, the logo with Sign up and Log In](docs/changelog/2026-11-09-m-welcome-after.png) |
+| — | ![After: Log In](docs/changelog/2026-11-09-m-login-after.png) |
+| — | ![After: Log In, wrong password](docs/changelog/2026-11-09-m-login-error-after.png) |
+| — | ![After: Log In, account suspended](docs/changelog/2026-11-09-m-login-suspended-after.png) |
+| — | ![After: Sign up](docs/changelog/2026-11-09-m-signup-after.png) |
 
 ---
 
