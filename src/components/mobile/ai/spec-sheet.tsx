@@ -117,7 +117,9 @@ function Groups({
   const hints = concept?.hints;
   const edits = state.edits.get(turnId) ?? {};
   const locked = state.locked.has(turnId);
-  const editable = !locked && !flow.held;
+  // A product left out of the build isn't built yet: its spec stays open, so a
+  // size that doesn't fit can be fixed before it is built into the build later.
+  const editable = !locked && (!flow.held || flow.leftOutProducts.some((p) => p.id === productId));
   const edit = (next: SpecEdits) => {
     if (editable) flow.editSpec(productId, cleanEdits(next));
   };

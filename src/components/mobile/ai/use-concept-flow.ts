@@ -30,7 +30,7 @@ import {
 import { summaryFromParts, type ConceptSummary } from "@/lib/create/concept";
 import { CONCEPT_COST, useCredits } from "@/lib/create/credits";
 import type { RenderQuality } from "@/lib/create/quality";
-import { cleanPick, withQuality, type PieceQuality } from "@/lib/create/pieces";
+import { cleanPick, pickCost, withQuality, type PiecePick, type PieceQuality } from "@/lib/create/pieces";
 import { companionId as slugFor, parseProductRequest, type Companion } from "@/lib/create/companions";
 import {
   buildHolds,
@@ -156,6 +156,7 @@ export function useConceptFlow(chatId: string) {
     addSetupProduct,
     setSetupLeftOut,
     startBuild,
+    addBuildProduct,
     setTurnConcept,
     setSpecEdits,
     setPieces,
@@ -167,7 +168,7 @@ export function useConceptFlow(chatId: string) {
   const chat = getChat(chatId);
 
   // The projects a single product could join: not one sold in full (the guards' lock).
-  const { projects } = useManualProjects();
+  const { projects, updateProject } = useManualProjects();
   const guards = useGuards();
   const addTo = React.useMemo(() => {
     const setup = chat?.turns.find((t) => t.role === "setup");
@@ -675,6 +676,83 @@ export function useConceptFlow(chatId: string) {
     [chat, labels, startBuild, editsAt, readForBuild],
   );
 
+  /** The products the maker drew and then left out of this build (Build
+   *  options): each one's concept, ready to build into it later — no new
+   *  drawing (the owner's approved sample, "Not in this build"). */
+  const leftOutProducts = React.useMemo(() => {
+    if (!chat || !activeBuild) return [];
+    const setup = chat.turns.find((t): t is SetupTurn => t.role === "setup" && t.status === "answered" && !!t.answer);
+    if (!setup?.answer) return [];
+    const inJob = new Set((activeBuild.companions ?? []).map((c) => c.id));
+    return setup.companions
+      .filter((c) => setup.answer!.picked.includes(c.id) && state.leftOut.has(c.id) && !inJob.has(c.id))
+      .flatMap((c) => {
+        let turn: AssistantTurn | null = null;
+        for (let i = chat.turns.length - 1; i >= 0; i -= 1) {
+          const x = chat.turns[i];
+          if (x.role === "assistant" && x.companionOf === c.id && x.status === "ready" && x.imageUrl) {
+            turn = x;
+            break;
+          }
+        }
+        if (!turn?.imageUrl) return [];
+        const pick: PiecePick = state.picks.get(c.id) ?? cleanPick(undefined, chat.quality);
+        return [{ id: c.id, name: c.name, imageUrl: turn.imageUrl, turn, pick, cost: pickCost(pick) }];
+      });
+  }, [chat, activeBuild, state.leftOut, state.picks]);
+
+  /** Build a left-out product into this build, from its drawn concept: read,
+   *  checked against its size, charged on its own, booked. A build already
+   *  saved gets the product in its project too. */
+  const buildLeftOut = React.useCallback(
+    async (companionId: string): Promise<"booked" | "short" | { blocked: string } | null> => {
+      const job = activeBuild;
+      if (!chat || !job || !answeredSetupId || preparing) return null;
+      const item = leftOutProducts.find((p) => p.id === companionId);
+      if (!item) return null;
+      if (!canAfford(item.cost)) return "short";
+      setPreparing(true);
+      try {
+        const brief = conceptBriefOf(chat.turns, item.turn.id);
+        const concept = await readForBuild(item.turn, brief);
+        const edits = editsAt(companionId, concept.parts, item.turn.id);
+        const spec = deriveSpec(concept.parts, concept.hints, edits);
+        if (blocksBuild(spec)) return { blocked: companionId };
+        const parts = partsForBuild(concept.parts, spec.battery, edits);
+        if (!charge(`${job.id}:product:${companionId}`, item.cost, "build")) return "short";
+        addBuildProduct(
+          job.id,
+          {
+            id: companionId,
+            name: item.name,
+            conceptImageUrl: item.imageUrl,
+            conceptPrompt: brief,
+            title: item.name || concept.title,
+            summary: summaryFromParts(parts),
+            description: concept.description,
+            parts,
+            spec,
+          },
+          item.pick,
+        );
+        setSetupLeftOut(chat.id, answeredSetupId, companionId, false);
+        const holder = saveInfo?.mode.kind === "saved" ? saveInfo.mode.project : null;
+        if (holder) {
+          updateProject(holder.id, {
+            products: [
+              ...(holder.products ?? []),
+              { name: item.name || concept.title, description: concept.description ?? "", source: { buildId: job.id, productId: companionId } },
+            ],
+          });
+        }
+        return "booked";
+      } finally {
+        setPreparing(false);
+      }
+    },
+    [chat, activeBuild, answeredSetupId, preparing, leftOutProducts, canAfford, readForBuild, editsAt, charge, addBuildProduct, setSetupLeftOut, saveInfo, updateProject],
+  );
+
   return {
     hydrated,
     creditsHydrated,
@@ -713,6 +791,8 @@ export function useConceptFlow(chatId: string) {
     removeNetwork,
     prepareBuild,
     confirmBuild,
+    leftOutProducts,
+    buildLeftOut,
     preparing,
     submitting,
   };

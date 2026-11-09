@@ -9,6 +9,11 @@
 // big 3D of the product (Assembly first, else the 3D Module) with one-tap
 // Explode and Layers, the concept image a tap away, a switcher when the build
 // has two or more products, and Save pinned at the foot (FinishedFoot).
+// A build where a piece failed still opens on its result: the failed piece
+// keeps its Retry and the foot saves what's ready (the piece stays "Not
+// built"). A product the maker left out of the build sits in the switcher as
+// "Drawn · not built", and builds into this build from its concept — no new
+// drawing.
 
 import * as React from "react";
 import Link from "next/link";
@@ -50,6 +55,7 @@ import { aboutTime, pickCost } from "@/lib/create/pieces";
 import { failedPieceNote, pieceWord, type PieceLite } from "@/lib/mobile-ai/flow";
 import { cn } from "@/lib/utils";
 import { Sheet } from "../kit/sheet";
+import { useToast } from "../kit/toast";
 import { BuyCreditsSheet } from "./buy-credits-sheet";
 import { JobModel } from "./deliverables";
 import { CARD } from "./parts";
@@ -68,6 +74,7 @@ export const PIECE_ICON: Record<BuildItemKind, IconValue> = {
 export const PIECE_ROW_LABEL: Record<BuildItemKind, string> = { ...ITEM_LABELS, parts: "Parts list" };
 
 type Product = ReturnType<typeof productsOf>[number];
+type LeftOut = ConceptFlow["leftOutProducts"][number];
 
 // ─────────────────────────── the Build sheet ───────────────────────────
 
@@ -186,22 +193,28 @@ function productState(p: Product, systemFailure: boolean, queued: boolean): { te
 
 function ProductChips({
   products,
+  leftOut = [],
   shownId,
   onProduct,
   systemFailure,
   queued,
 }: {
   products: Product[];
+  leftOut?: LeftOut[];
   shownId: string;
   onProduct: (id: string) => void;
   systemFailure: boolean;
   queued: boolean;
 }) {
+  const chips = [
+    ...products.map((p) => ({ id: p.id, name: p.name, image: p.conceptImageUrl, s: productState(p, systemFailure, queued) })),
+    ...leftOut.map((l) => ({ id: l.id, name: l.name, image: l.imageUrl, s: { text: "Drawn · not built", tone: "plain" as const } })),
+  ];
   return (
     <div role="tablist" aria-label="Products" className="-mx-8 flex gap-4 overflow-x-auto px-8 [scrollbar-width:none]">
-      {products.map((p) => {
+      {chips.map((p) => {
         const on = p.id === shownId;
-        const s = productState(p, systemFailure, queued);
+        const s = p.s;
         return (
           <button
             key={p.id}
@@ -215,7 +228,7 @@ function ProductChips({
             )}
           >
             <span className="relative size-[38px] shrink-0 overflow-hidden rounded-lg bg-bg-subtle">
-              {p.conceptImageUrl && <Image src={p.conceptImageUrl} alt="" fill sizes="38px" className="object-cover" unoptimized />}
+              {p.image && <Image src={p.image} alt="" fill sizes="38px" className="object-cover" unoptimized />}
             </span>
             <span className="flex min-w-0 flex-col">
               <span className="truncate text-sm font-medium leading-sm text-text-primary">{p.name}</span>
@@ -425,15 +438,49 @@ export function BuildCard({ job, product, onProduct }: { job: BuildJob; product:
 
 // ─────────────────────────── finished: the result is the page ───────────────────────────
 
-export function FinishedCard({ job, flow, product, onProduct }: { job: BuildJob; flow: ConceptFlow; product: string; onProduct: (id: string) => void }) {
+/** Is the build finished enough to show its result: every piece ready, or
+ *  some failed and the rest ready (Save what's ready). */
+export function isFinished(job: BuildJob): boolean {
+  const status = statusOf(job);
+  if (status === "ready") return true;
+  return status === "partial" && job.failure !== "system" && allItems(job).some((i) => i.status === "ready");
+}
+
+export function FinishedCard({
+  job,
+  flow,
+  product,
+  onProduct,
+  onSpec,
+}: {
+  job: BuildJob;
+  flow: ConceptFlow;
+  product: string;
+  onProduct: (id: string) => void;
+  onSpec: (productId: string) => void;
+}) {
   const { setBuildModelFailed } = useCreateHistory();
   const [view, setView] = React.useState<"3d" | "image">("3d");
   const [piecesOpen, setPiecesOpen] = React.useState(false);
   const products = productsOf(job);
+  const leftOut = flow.leftOutProducts;
+  const total = products.length + leftOut.length;
+  const projectName = flow.projectName || job.projectChoiceName?.trim() || job.title;
+  const left = leftOut.find((l) => l.id === product);
+  if (left) {
+    return (
+      <section aria-label="Not in this build" className="flex flex-col gap-5">
+        <ProductChips products={products} leftOut={leftOut} shownId={left.id} onProduct={onProduct} systemFailure={false} queued={false} />
+        <LeftOutCard flow={flow} item={left} projectName={projectName} index={products.length + leftOut.indexOf(left)} total={total} onSpec={onSpec} />
+      </section>
+    );
+  }
   const shown = products.find((p) => p.id === product) ?? products[0];
   const index = products.findIndex((p) => p.id === shown.id);
   const live = shown.items.filter((i) => i.status !== "skipped");
-  const projectName = flow.projectName || job.projectChoiceName?.trim() || job.title;
+  const ready = live.filter((i) => i.status === "ready").length;
+  const failed = shown.items.filter((i) => i.status === "failed");
+  const pieces: PieceLite[] = shown.items.map((i) => ({ kind: i.kind, status: i.status, progress: i.progress, omitted: i.omitted }));
   const hasAssembly = shown.items.some((i) => i.kind === "assembly" && i.status === "ready");
   const has3d = hasAssembly || shown.items.some((i) => i.kind === "3d" && i.status === "ready");
   const isPrimary = shown.id === "primary";
@@ -446,16 +493,20 @@ export function FinishedCard({ job, flow, product, onProduct }: { job: BuildJob;
     );
   return (
     <section aria-label="Build finished" className="flex flex-col gap-5">
-      {products.length > 1 && <ProductChips products={products} shownId={shown.id} onProduct={onProduct} systemFailure={false} queued={false} />}
+      {total > 1 && <ProductChips products={products} leftOut={leftOut} shownId={shown.id} onProduct={onProduct} systemFailure={false} queued={false} />}
       <div className={cn(CARD, "flex flex-col gap-5 p-4")}>
         <div className="flex items-start justify-between gap-4 px-2 pt-1">
           <div className="flex min-w-0 flex-col">
             <p className="truncate text-lg font-semibold leading-lg text-text-primary">{shown.name}</p>
             <p className="truncate text-sm leading-sm text-text-secondary">
-              {products.length > 1 ? `${projectName} · Product ${index + 1} of ${products.length}` : `${projectName} · All ${live.length} pieces ready`}
+              {total > 1
+                ? `${projectName} · Product ${index + 1} of ${total}`
+                : failed.length
+                  ? `${projectName} · ${ready} of ${live.length} pieces ready`
+                  : `${projectName} · All ${live.length} pieces ready`}
             </p>
           </div>
-          <Badge tone="success">● Ready</Badge>
+          {failed.length ? <Badge tone="warning">● {ready} of {live.length} ready</Badge> : <Badge tone="success">● Ready</Badge>}
         </div>
         {has3d && shown.conceptImageUrl && (
           <div role="group" aria-label="What to show" className="flex gap-2 rounded-xl bg-bg-subtle p-2">
@@ -483,26 +534,115 @@ export function FinishedCard({ job, flow, product, onProduct }: { job: BuildJob;
           </div>
         )}
       </div>
+      {failed.map((item) => (
+        <FailedPiece key={item.kind} job={job} product={shown} kind={item.kind} pieces={pieces} />
+      ))}
       <Button hierarchy="secondary" size="xl" className="w-full" onClick={() => setPiecesOpen(true)} iconLeading={<Icon icon={DashboardSquare01Icon} size={18} />}>
-        Pieces · {live.length} ready
+        {failed.length ? `Pieces · ${ready} of ${live.length} ready` : `Pieces · ${live.length} ready`}
       </Button>
       <PiecesSheet job={job} product={shown} open={piecesOpen} onClose={() => setPiecesOpen(false)} />
     </section>
   );
 }
 
-/** Save, pinned at the foot once the build is finished. */
+/** A product drawn and left out of the build: its concept, and Build it now — no new drawing. */
+function LeftOutCard({
+  flow,
+  item,
+  projectName,
+  index,
+  total,
+  onSpec,
+}: {
+  flow: ConceptFlow;
+  item: LeftOut;
+  projectName: string;
+  index: number;
+  total: number;
+  onSpec: (productId: string) => void;
+}) {
+  const toast = useToast();
+  const [buying, setBuying] = React.useState(false);
+  const build = async () => {
+    const result = await flow.buildLeftOut(item.id);
+    if (result === "short") setBuying(true);
+    else if (result === "booked") toast({ title: `Building ${item.name}. It runs in the background.`, lead: "success" });
+    else if (result && "blocked" in result) {
+      toast({ title: `${item.name} doesn't fit the size you set. Fix it in its spec.`, lead: "error" });
+      onSpec(result.blocked);
+    }
+  };
+  return (
+    <div className={cn(CARD, "flex flex-col gap-5 p-4")}>
+      <div className="flex items-start justify-between gap-4 px-2 pt-1">
+        <div className="flex min-w-0 flex-col">
+          <p className="truncate text-lg font-semibold leading-lg text-text-primary">{item.name}</p>
+          <p className="truncate text-sm leading-sm text-text-secondary">
+            {projectName} · Product {index + 1} of {total}
+          </p>
+        </div>
+        <Badge tone="neutral">Not in this build</Badge>
+      </div>
+      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-bg-subtle">
+        <Image src={item.imageUrl} alt={`${item.name}, the drawn concept`} fill sizes="343px" className="object-cover" unoptimized />
+      </div>
+      <div className="flex flex-col gap-1 px-2">
+        <p className="text-md font-medium leading-md text-text-primary">You left this one out</p>
+        <p className="text-sm leading-sm text-text-secondary">
+          Its concept stays in {projectName}. Build it any time, no need to draw it again.
+        </p>
+      </div>
+      <Button size="lg" className="w-full" loading={flow.preparing} onClick={build}>
+        Build {item.name} <CreditBadge credits={item.cost} onBrand />
+      </Button>
+      <BuyCreditsSheet open={buying} onClose={() => setBuying(false)} need={item.cost} />
+    </div>
+  );
+}
+
+/** Save, pinned at the foot once the build is finished — what's ready when a piece failed. */
 export function FinishedFoot({ job, flow, onSave }: { job: BuildJob; flow: ConceptFlow; onSave: () => void }) {
   const products = productsOf(job);
   const name = flow.projectName || job.projectChoiceName?.trim() || job.title;
-  const saved = flow.saveInfo?.mode.kind === "saved" ? flow.saveInfo.mode.project : null;
+  const mode = flow.saveInfo?.mode;
+  const saved = mode?.kind === "saved" ? mode.project : null;
+  const live = allItems(job).filter((i) => i.status !== "skipped");
+  const readyCount = live.filter((i) => i.status === "ready").length;
+  const failed = products.flatMap((p) => p.items.filter((i) => i.status === "failed").map((i) => ({ product: p, kind: i.kind })));
+  const partial = failed.length > 0;
+  const leftOut = flow.leftOutProducts;
+  const notBuilt =
+    failed.length === 1
+      ? products.length > 1
+        ? `${failed[0].product.name}'s ${PIECE_ROW_LABEL[failed[0].kind].toLowerCase()} stays “Not built”. You can retry it after saving.`
+        : `${PIECE_ROW_LABEL[failed[0].kind]} stays “Not built”. You can retry it after saving.`
+      : `${failed.length} pieces stay “Not built”. You can retry them after saving.`;
+  const builtNames = products.map((p) => p.name).join(" and ");
   const line = saved
     ? `Saved to ${saved.name}. Open the project for what's next.`
-    : flow.saveInfo?.mode.kind === "join"
-      ? `Adds ${products.length > 1 ? "these products" : job.title} to ${flow.saveInfo.mode.project.name}, with every deliverable.`
-      : products.length > 1
-        ? `Keeps ${products.length === 2 ? "both" : "all"} products of “${name}” and every deliverable together.`
-        : `Keeps the product and every deliverable together in “${name}”.`;
+    : partial
+      ? notBuilt
+      : leftOut.length
+        ? `Saves ${builtNames} and keeps the ${leftOut.map((l) => l.name).join(" and ")} concept in ${name}.`
+        : mode?.kind === "join"
+          ? `Adds ${products.length > 1 ? "these products" : job.title} to ${mode.project.name}, with every deliverable.`
+          : products.length > 1
+            ? `Keeps ${products.length === 2 ? "both" : "all"} products of “${name}” and every deliverable together.`
+            : `Keeps the product and every deliverable together in “${name}”.`;
+  const label =
+    mode?.kind === "join"
+      ? partial
+        ? `Add what's ready to ${mode.project.name}`
+        : `Add to ${mode.project.name}`
+      : mode?.kind === "version"
+        ? `Save version ${mode.version}`
+        : partial
+          ? products.length > 1
+            ? `Save what's ready · ${readyCount} of ${live.length} pieces`
+            : "Save what's ready"
+          : products.length > 1
+            ? `Save project · ${products.length} products`
+            : "Save project";
   return (
     <div className="flex flex-col gap-3 px-8">
       {saved ? (
@@ -511,13 +651,7 @@ export function FinishedFoot({ job, flow, onSave }: { job: BuildJob; flow: Conce
         </Link>
       ) : (
         <Button size="xl" className="w-full" iconLeading={<Icon icon={FloppyDiskIcon} size={20} />} onClick={onSave}>
-          {flow.saveInfo?.mode.kind === "join"
-            ? `Add to ${flow.saveInfo.mode.project.name}`
-            : flow.saveInfo?.mode.kind === "version"
-              ? `Save version ${flow.saveInfo.mode.version}`
-              : products.length > 1
-                ? `Save project · ${products.length} products`
-                : "Save project"}
+          {label}
         </Button>
       )}
       <p className="text-center text-xs leading-xs text-text-secondary">{line}</p>

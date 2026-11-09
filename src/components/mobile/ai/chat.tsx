@@ -18,13 +18,13 @@ import { Skeleton } from "@/components/ideeza/skeleton";
 import { StateCard } from "@/components/ideeza/state-card";
 import { useSecondClock } from "@/components/create/use-clock";
 import { CONCEPT_COST } from "@/lib/create/credits";
-import { jobCost, statusOf } from "@/lib/create/history";
+import { jobCost } from "@/lib/create/history";
 import { Screen } from "../screen";
 import { MORE_ICON, TopBar } from "../top-bar";
 import { ActionSheet } from "../kit/sheet";
 import { OfflineBanner } from "../kit/states";
 import { useToast } from "../kit/toast";
-import { BuildCard, BuildConfirmSheet, FinishedCard, FinishedFoot } from "./build";
+import { BuildCard, BuildConfirmSheet, FinishedCard, FinishedFoot, isFinished } from "./build";
 import { BuildLogSheet } from "./build-log-sheet";
 import { BuildBar, BuildOptionsSheet, ConceptImageViewer, ConceptSheet, ConceptStage, ConceptsMini, RefineSheet } from "./concepts";
 import { DeleteChatSheet } from "./delete-chat-sheet";
@@ -71,7 +71,6 @@ export function AiChat({ chatId }: { chatId: string }) {
   const [imageFor, setImageFor] = React.useState<string | null>(null);
 
   const job = flow.activeBuild;
-  const jobStatus = job ? statusOf(job) : null;
 
   const startBuild = async () => {
     const result = await flow.prepareBuild();
@@ -135,7 +134,9 @@ export function AiChat({ chatId }: { chatId: string }) {
   // sheet — and the Build line is pinned at the foot; once the build is
   // finished, Save is.
   const conceptStage = answered && flow.rail.rows.length > 0;
-  const finished = !!job && jobStatus === "ready";
+  // A piece that failed doesn't hold the result back: the rest is shown and
+  // can be saved, the failed piece with its Retry (Save what's ready).
+  const finished = !!job && isFinished(job);
   const buildBar = conceptStage && (!job || !flow.held);
 
   const footer = finished && job ? (
@@ -216,7 +217,7 @@ export function AiChat({ chatId }: { chatId: string }) {
           )}
           {asking && !needsProductQ && projectDismissed && <RequiredStep onOpen={() => setProjectDismissed(false)} />}
 
-          {finished && job && <FinishedCard job={job} flow={flow} product={buildProduct} onProduct={setBuildProduct} />}
+          {finished && job && <FinishedCard job={job} flow={flow} product={buildProduct} onProduct={setBuildProduct} onSpec={setSpecFor} />}
           {job && !finished && <BuildCard job={job} product={buildProduct} onProduct={setBuildProduct} />}
 
           {conceptStage && !job && (
