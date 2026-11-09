@@ -53,15 +53,15 @@ export function Screen({
 
 /** AU-01 Splash: the logo held at the screen's centre whatever the bars around it,
  *  so it doesn't jump when the app takes over from the page's first paint. */
-export function SplashScreen() {
+export function SplashScreen({ text }: { text?: string }) {
   return (
     <div className="relative flex h-full flex-col">
-      <StatusBar />
       <div className="absolute inset-0 flex flex-col">
-        <SplashBody />
+        <SplashBody text={text} />
       </div>
+      <StatusBar tone="media" className="relative" />
       <div className="flex-1" />
-      <HomeIndicator />
+      <HomeIndicator tone="media" className="relative" />
     </div>
   );
 }

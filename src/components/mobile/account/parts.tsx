@@ -5,13 +5,13 @@
 // checklist, the M01 alert slot, and Splash.
 
 import * as React from "react";
-import { CheckmarkCircle02Icon, CircleIcon } from "@hugeicons/core-free-icons";
+import { AiMagicIcon, CheckmarkCircle02Icon, CircleIcon, CpuIcon, Image01Icon } from "@hugeicons/core-free-icons";
 import { Icon } from "@/components/dashboard/icon";
 import { IdeezaLogo } from "@/components/brand/ideeza-logo";
 import { Banner, type BannerTone } from "@/components/ideeza/banner";
-import { Spinner } from "@/components/ideeza/spinner";
 import { phonePasswordChecks } from "@/lib/account/phone";
 import { cn } from "@/lib/utils";
+import { T } from "../type";
 
 export function AccountHeading({ title, children }: { title: string; children?: React.ReactNode }) {
   return (
@@ -54,14 +54,108 @@ export function AccountAlert({ alert }: { alert: AlertSpec | null }) {
   );
 }
 
-/** AU-01 · Splash: the full logo and a brand spinner, while the app works out where to open
- *  (AU-04a adds "Signing you in…" under them). */
+/** AU-01 · Splash: IDEEZA's brand moment while the app works out where to
+ *  open (AU-04a adds "Signing you in…" under it). Always on the brand's night
+ *  (the dark theme's tokens, whatever the phone's theme), like the landing
+ *  page: a violet and blue glow, faint circuit traces, the logo with a
+ *  breathing light behind it and the landing's line, and in place of a
+ *  spinner the three steps IDEEZA takes — Idea, Concept, Build — lighting up
+ *  in turn. Under reduced motion it stands still, every step lit. */
 export function SplashBody({ text }: { text?: string }) {
   return (
-    <div role="status" aria-label={text ?? "Opening IDEEZA"} className="flex flex-1 flex-col items-center justify-center gap-16 px-8 text-text-primary">
-      <IdeezaLogo height={72} decorative />
-      <Spinner size={16} />
-      {text && <p className="text-md leading-md text-text-secondary">{text}</p>}
+    <div
+      role="status"
+      aria-label={text ?? "Opening IDEEZA"}
+      data-theme="dark"
+      className="relative isolate flex flex-1 flex-col items-center overflow-hidden bg-bg-page px-8 text-text-primary"
+    >
+      <SplashBackdrop />
+      <div className="flex flex-1 flex-col items-center justify-center gap-8">
+        <span className="relative flex items-center justify-center">
+          <span
+            aria-hidden
+            className="pointer-events-none absolute left-1/2 top-1/2 size-[240px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,var(--color-violet-500)_0%,transparent_65%)] opacity-60 motion-safe:animate-[m-splash-breathe_2.4s_ease-in-out_infinite_alternate]"
+          />
+          <IdeezaLogo height={72} decorative className="relative" />
+        </span>
+        <p className={cn(T.bodyLg, "max-w-[280px] text-balance text-center text-text-secondary")}>Build Hardware at the Speed of Software</p>
+      </div>
+      <div className="flex flex-col items-center gap-6 pb-[72px]">
+        <SplashSteps />
+        <p className={cn(T.meta, "min-h-[18px]")}>{text ?? ""}</p>
+      </div>
+    </div>
+  );
+}
+
+const SPLASH_STEPS = [
+  { label: "Idea", icon: AiMagicIcon },
+  { label: "Concept", icon: Image01Icon },
+  { label: "Build", icon: CpuIcon },
+] as const;
+
+/** Idea → Concept → Build, each lighting up in turn: the splash's progress. */
+function SplashSteps() {
+  return (
+    <div aria-hidden className="flex items-start">
+      {SPLASH_STEPS.map((step, i) => (
+        <React.Fragment key={step.label}>
+          {i > 0 && <span className="mt-[22px] h-[1px] w-[28px] bg-[linear-gradient(90deg,var(--color-violet-500),var(--color-blue-500))] opacity-50" />}
+          <span className="flex w-[56px] flex-col items-center gap-2">
+            <span
+              style={{ animationDelay: `${i * 0.5}s` }}
+              className="flex size-[44px] items-center justify-center rounded-xl border-[length:var(--border-width-1)] border-solid border-[var(--color-violet-400)] [background-color:color-mix(in_srgb,var(--color-violet-500)_22%,transparent)] text-[color:var(--color-violet-300)] motion-safe:animate-[m-splash-step_1.5s_ease-in-out_infinite]"
+            >
+              <Icon icon={step.icon} size={20} />
+            </span>
+            <span className={T.micro}>{step.label}</span>
+          </span>
+        </React.Fragment>
+      ))}
+    </div>
+  );
+}
+
+/** The night behind the splash: a violet wash from the top, two soft glows and faint circuit traces. */
+export function SplashBackdrop() {
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
+      <div className="absolute inset-0 bg-[radial-gradient(120%_65%_at_50%_0%,var(--color-violet-950)_0%,transparent_75%)]" />
+      <div className="absolute -left-[96px] top-[180px] size-[300px] rounded-full bg-[var(--color-violet-600)] opacity-35 blur-[90px]" />
+      <div className="absolute -right-[96px] bottom-[140px] size-[260px] rounded-full bg-[var(--color-blue-600)] opacity-25 blur-[90px]" />
+      <svg
+        viewBox="0 0 375 812"
+        preserveAspectRatio="xMidYMid slice"
+        className="absolute inset-0 size-full text-[color:var(--color-violet-300)] opacity-[0.14] [mask-image:radial-gradient(70%_55%_at_50%_45%,#000_20%,transparent_100%)]"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1"
+      >
+        <path d="M0 210h64l24 24h70" />
+        <path d="M375 168h-58l-30 30v56" />
+        <path d="M30 0v96l26 26v64" />
+        <path d="M330 0v70l-22 22h-60" />
+        <path d="M0 560h78l30-30h56" />
+        <path d="M375 610h-70l-26 26v80" />
+        <path d="M52 812v-92l30-30h40" />
+        <path d="M300 812v-60l-34-34h-48" />
+        <path d="M150 0v40l20 20h36" />
+        <path d="M0 400h40" />
+        <path d="M375 380h-46l-18 18" />
+        <g fill="currentColor" stroke="none">
+          <circle cx="158" cy="234" r="3" />
+          <circle cx="287" cy="254" r="3" />
+          <circle cx="56" cy="186" r="3" />
+          <circle cx="248" cy="92" r="3" />
+          <circle cx="164" cy="530" r="3" />
+          <circle cx="279" cy="716" r="3" />
+          <circle cx="122" cy="690" r="3" />
+          <circle cx="218" cy="718" r="3" />
+          <circle cx="206" cy="60" r="3" />
+          <circle cx="40" cy="400" r="3" />
+          <circle cx="311" cy="398" r="3" />
+        </g>
+      </svg>
     </div>
   );
 }

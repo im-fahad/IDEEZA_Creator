@@ -195,3 +195,44 @@ html[data-sidebar="collapsed"] aside[data-collapsed="false"] {
     radial-gradient(70% 100% at 0% 100%, color-mix(in srgb, var(--color-violet-600) 65%, transparent) 0%, transparent 66%),
     linear-gradient(160deg, var(--color-violet-900) 0%, var(--color-violet-950) 60%, var(--color-gray-950) 100%);
 }
+
+/* The mobile splash (components/mobile/account/parts.tsx): the light behind
+ * the logo breathes, and the three steps light up in turn. Both run only
+ * under motion-safe; at rest the splash stands still, every step lit. */
+@keyframes m-splash-breathe {
+  from {
+    transform: translate(-50%, -50%) scale(0.9);
+    opacity: 0.45;
+  }
+  to {
+    transform: translate(-50%, -50%) scale(1.08);
+    opacity: 0.75;
+  }
+}
+@keyframes m-splash-step {
+  0%,
+  100% {
+    border-color: color-mix(in srgb, var(--color-violet-400) 30%, transparent);
+    background-color: color-mix(in srgb, var(--color-white) 4%, transparent);
+    color: color-mix(in srgb, var(--color-white) 45%, transparent);
+    box-shadow: none;
+  }
+  35%,
+  60% {
+    border-color: var(--color-violet-400);
+    background-color: color-mix(in srgb, var(--color-violet-500) 26%, transparent);
+    color: var(--color-violet-300);
+    box-shadow: 0 0 24px color-mix(in srgb, var(--color-violet-500) 55%, transparent);
+  }
+}
+/* The mobile onboarding (components/mobile/account/onboarding.tsx): each screen slides in. */
+@keyframes m-onb-in {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

@@ -15,14 +15,15 @@ import { Field, PasswordInput, errorProps, useFieldIds } from "@/components/auth
 import { Button } from "@/components/ideeza/button";
 import { Checkbox } from "@/components/ideeza/checkbox";
 import { TextInput } from "@/components/ideeza/text-input";
-import { ACCOUNT_CONTENT, AccountAlert, AccountHeading, PasswordChecklist } from "@/components/mobile/account/parts";
+import { ACCOUNT_CONTENT, AccountAlert, PasswordChecklist } from "@/components/mobile/account/parts";
 import { TermsSheet } from "@/components/mobile/account/terms-sheet";
-import { BottomBar, SwitchLine } from "@/components/mobile/kit/bottom-bar";
+import { SwitchLine } from "@/components/mobile/kit/bottom-bar";
 import { useOnline } from "@/components/mobile/kit/states";
 import { Screen } from "@/components/mobile/screen";
-import { TopBar } from "@/components/mobile/top-bar";
+import { T } from "@/components/mobile/type";
 import { createPhoneAccount, isEmail } from "@/lib/account/auth";
 import { issueCode, mobileNext, phonePasswordProblem } from "@/lib/account/phone";
+import { cn } from "@/lib/utils";
 
 /** The time of an action (kept out of render, where reading the clock is impure). */
 const clockNow = () => Date.now();
@@ -79,18 +80,17 @@ export default function SignUpPage() {
 
   return (
     <Screen
-      top={<TopBar back title="Create account" />}
       footer={
-        <BottomBar>
-          <Button type="submit" form="sign-up" size="xl" className="w-full" loading={busy} disabled={!valid || !online}>
-            Create account
-          </Button>
-          <SwitchLine text="Have an account?" link="Sign in" href={signInHref(false)} />
-        </BottomBar>
+        <div className="px-8 pb-4 pt-4">
+          <SwitchLine text="Have an Account?" link="Log In" href={signInHref(false)} />
+        </div>
       }
     >
-      <form id="sign-up" noValidate onSubmit={create} className={ACCOUNT_CONTENT}>
-        <AccountHeading title="Create your IDEEZA account">Then choose your handle.</AccountHeading>
+      <form id="sign-up" noValidate onSubmit={create} className={cn(ACCOUNT_CONTENT, "pt-10")}>
+        <div className="flex flex-col items-center gap-2 text-center">
+          <h1 className={T.title}>Create your IDEEZA account</h1>
+          <p className={T.body}>Then choose your handle.</p>
+        </div>
         <AccountAlert
           alert={
             online
@@ -157,6 +157,9 @@ export default function SignUpPage() {
             and Privacy Policy, and I’m at least 16 years old.
           </span>
         </label>
+        <Button type="submit" size="xl" className="w-full" loading={busy} disabled={!valid || !online}>
+          Create account
+        </Button>
       </form>
       <TermsSheet open={terms} onClose={() => setTerms(false)} />
     </Screen>
