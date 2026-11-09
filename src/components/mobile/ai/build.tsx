@@ -58,6 +58,7 @@ import { Sheet } from "../kit/sheet";
 import { useToast } from "../kit/toast";
 import { BuyCreditsSheet } from "./buy-credits-sheet";
 import { JobModel } from "./deliverables";
+import { T } from "../type";
 import { CARD } from "./parts";
 import type { ConceptFlow, Gate } from "./use-concept-flow";
 
@@ -576,8 +577,8 @@ function LeftOutCard({
     <div className={cn(CARD, "flex flex-col gap-5 p-4")}>
       <div className="flex items-start justify-between gap-4 px-2 pt-1">
         <div className="flex min-w-0 flex-col">
-          <p className="truncate text-lg font-semibold leading-lg text-text-primary">{item.name}</p>
-          <p className="truncate text-sm leading-sm text-text-secondary">
+          <p className={cn(T.section, "truncate")}>{item.name}</p>
+          <p className={cn(T.meta, "truncate")}>
             {projectName} · Product {index + 1} of {total}
           </p>
         </div>
@@ -587,8 +588,8 @@ function LeftOutCard({
         <Image src={item.imageUrl} alt={`${item.name}, the drawn concept`} fill sizes="343px" className="object-cover" unoptimized />
       </div>
       <div className="flex flex-col gap-1 px-2">
-        <p className="text-md font-medium leading-md text-text-primary">You left this one out</p>
-        <p className="text-sm leading-sm text-text-secondary">
+        <p className={T.rowTitle}>You left this one out</p>
+        <p className={T.meta}>
           Its concept stays in {projectName}. Build it any time, no need to draw it again.
         </p>
       </div>
@@ -654,7 +655,7 @@ export function FinishedFoot({ job, flow, onSave }: { job: BuildJob; flow: Conce
           {label}
         </Button>
       )}
-      <p className="text-center text-xs leading-xs text-text-secondary">{line}</p>
+      <p className={cn(T.micro, "text-center")}>{line}</p>
     </div>
   );
 }

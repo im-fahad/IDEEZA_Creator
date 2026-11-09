@@ -25,6 +25,8 @@ import { CodeCells } from "../kit/code-cells";
 import { useOnline } from "../kit/states";
 import { AccountAlert, AccountHeading, type AlertSpec } from "./parts";
 import { TEXT_LINK } from "../kit/bottom-bar";
+import { T } from "../type";
+import { cn } from "@/lib/utils";
 
 type Phase = "typing" | "checking" | "wrong" | "expired" | "offline" | "done";
 
@@ -235,18 +237,18 @@ function DemoEmailCard({ purpose, code, busy, onFill }: { purpose: CodePurpose; 
       <div className="flex items-center gap-4">
         <IdeezaLogo mark height={24} decorative />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold leading-sm text-text-primary">IDEEZA</p>
-          <p className="text-sm leading-sm text-text-tertiary">Demo email, shown here instead of your inbox</p>
+          <p className={T.name}>IDEEZA</p>
+          <p className={cn(T.meta, "text-text-tertiary")}>Demo email, shown here instead of your inbox</p>
         </div>
         <Badge tone="warning">Demo</Badge>
       </div>
       {code ? (
         <>
           <div className="flex flex-col gap-2">
-            <h2 id={titleId} className="text-lg font-semibold leading-lg text-text-primary">
+            <h2 id={titleId} className={T.section}>
               {purpose === "verify" ? "Verify your email" : "Reset your password"}
             </h2>
-            <p className="text-md leading-md text-text-secondary">
+            <p className={T.body}>
               {purpose === "verify"
                 ? "Confirm this is your email to finish creating your IDEEZA account."
                 : "Someone asked to reset your IDEEZA password. If it was you, set a new one."}
@@ -257,7 +259,7 @@ function DemoEmailCard({ purpose, code, busy, onFill }: { purpose: CodePurpose; 
           </Button>
         </>
       ) : (
-        <p id={titleId} className="text-md leading-md text-text-secondary">
+        <p id={titleId} className={T.body}>
           No email came. If an account exists for this address, the code is on its way.
         </p>
       )}
