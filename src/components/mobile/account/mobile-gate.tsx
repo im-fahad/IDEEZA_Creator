@@ -49,6 +49,20 @@ function redirectFor(pathname: string, search: string, signedIn: boolean, explor
   return pathname === "/m" ? "/m/welcome" : `/m/welcome?next=${encodeURIComponent(here)}`;
 }
 
+/** The splash holds this long the first time the app opens in a tab (a cold
+ *  start), so it reads as the app's opening and not a flash; after that it
+ *  shows only while the app works out where to go. */
+const SPLASH_MS = 1200;
+const SPLASH_SEEN = "ideeza:m:splash-seen";
+
+function splashSeen(): boolean {
+  try {
+    return window.sessionStorage.getItem(SPLASH_SEEN) === "1";
+  } catch {
+    return true;
+  }
+}
+
 export function MobileGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -67,7 +81,23 @@ export function MobileGate({ children }: { children: React.ReactNode }) {
     if (target) router.replace(target);
   }, [target, router]);
 
-  if (!ready || target) return <SplashScreen />;
+  const [holding, setHolding] = React.useState(true);
+  React.useEffect(() => {
+    const id = window.setTimeout(
+      () => {
+        try {
+          window.sessionStorage.setItem(SPLASH_SEEN, "1");
+        } catch {
+          // Storage refused: the splash just won't hold next time either.
+        }
+        setHolding(false);
+      },
+      splashSeen() ? 0 : SPLASH_MS,
+    );
+    return () => window.clearTimeout(id);
+  }, []);
+
+  if (!ready || target || holding) return <SplashScreen />;
 
   const tabScreen = !ENTRY_PATH.test(pathname) && !SETUP_PATH.test(pathname) && !OWED_PATH.test(pathname) && !/^\/m\/kit/.test(pathname);
   return (

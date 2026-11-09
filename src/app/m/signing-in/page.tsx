@@ -9,8 +9,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { SplashBody } from "@/components/mobile/account/parts";
-import { Screen } from "@/components/mobile/screen";
+import { SplashScreen } from "@/components/mobile/screen";
 import { accountOf, providerSignIn, readAccounts } from "@/lib/account/auth";
 import {
   afterPhoneSignIn,
@@ -64,8 +63,6 @@ export default function SigningInPage() {
   }, [router]);
 
   return (
-    <Screen>
-      <SplashBody text="Signing you in…" />
-    </Screen>
+    <SplashScreen text="Signing you in…" />
   );
 }
