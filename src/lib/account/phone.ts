@@ -264,6 +264,8 @@ export type PhoneState = {
   explored: boolean;
   /** Saw the onboarding, or skipped it: signed out, the app opens on Welcome from then on. */
   onboarded: boolean;
+  /** Logged in without Remember me: the sign-in lasts while this tab does, and the next cold start signs out. */
+  forgetSession: boolean;
   /** The Face ID offer was made on this phone (it is made once). */
   faceIdOffered: boolean;
   /** Show the Face ID offer on the next screen (set by the first sign-in here). */
@@ -281,6 +283,7 @@ export function normalizePhone(raw: unknown): PhoneState {
   return {
     explored: r.explored === true,
     onboarded: r.onboarded === true,
+    forgetSession: r.forgetSession === true,
     faceIdOffered: r.faceIdOffered === true,
     faceIdPending: r.faceIdPending === true,
     cameraAsked: r.cameraAsked === true,
@@ -294,6 +297,25 @@ export function readPhone(): PhoneState {
   return normalizePhone(parseStored(readStoredKey(PHONE_KEY)).value);
 }
 
+/** This tab's mark that the app is open: a sign-in without Remember me lives while it does. */
+export const ALIVE_KEY = "ideeza:m:alive";
+
+export function markAlive(): void {
+  try {
+    window.sessionStorage.setItem(ALIVE_KEY, "1");
+  } catch {
+    // Storage refused: the sign-in simply ends with this page.
+  }
+}
+
+export function isAlive(): boolean {
+  try {
+    return window.sessionStorage.getItem(ALIVE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
 export function updatePhone(patch: Partial<PhoneState>): WriteResult {
   return writeStoredKey(PHONE_KEY, { ...readPhone(), ...patch });
 }
@@ -304,9 +326,13 @@ export function usePhone(): { hydrated: boolean; phone: PhoneState } {
 }
 
 /** After a sign-in: the Face ID offer, once per phone. */
-export function afterPhoneSignIn(): void {
+/** After any sign-in on the phone: the Face ID offer once, and Remember me —
+ *  `remember` false (Log In with the box unticked) makes this sign-in last
+ *  only while the tab does; every other way in is remembered. */
+export function afterPhoneSignIn(remember = true): void {
   const p = readPhone();
-  if (!p.faceIdOffered) updatePhone({ faceIdPending: true });
+  updatePhone({ ...(!p.faceIdOffered ? { faceIdPending: true } : null), forgetSession: !remember });
+  markAlive();
 }
 
 // ─────────────────────────── a provider's answer, between its sheet and "Signing you in" ───────────────────────────

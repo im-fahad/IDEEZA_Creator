@@ -37,6 +37,11 @@ import { HomeIndicator } from "../home-indicator";
 import { T } from "../type";
 import { FOOT_ATTR, LAYER_ATTR } from "./toast";
 
+/** A screen that wears one theme whatever the phone's (the way-in screens are
+ *  always on the night): its sheets open in that theme too, though they are
+ *  portalled out of it. */
+export const ForcedThemeContext = React.createContext<"dark" | null>(null);
+
 const APP_ID = "m-app";
 
 /** Open layers, oldest first: only the top one answers Escape, only the bottom one draws the scrim. */
@@ -121,6 +126,7 @@ function Layer({
   children: (panel: React.RefObject<HTMLDivElement | null>) => React.ReactNode;
 }) {
   const panel = React.useRef<HTMLDivElement>(null);
+  const forced = React.useContext(ForcedThemeContext);
   const base = useLayer(open, onClose);
   const keyboard = useVisibleViewport();
   useDialogFocus(open, panel);
@@ -128,6 +134,7 @@ function Layer({
   return createPortal(
     <div
       {...{ [LAYER_ATTR]: "" }}
+      data-theme={forced ?? undefined}
       className="fixed inset-0 z-sheet flex flex-col justify-end font-sans"
       style={keyboard ? { top: keyboard.top, height: keyboard.height, bottom: "auto" } : undefined}
     >

@@ -31,7 +31,7 @@ function waysInOrder(): Way[] {
 }
 
 /** A29 Brand Icon (Apple, Google) and the icon set's Facebook and mail, at 20. */
-function WayMark({ way }: { way: Way }) {
+export function WayMark({ way }: { way: Way }) {
   if (way === "apple")
     return (
       <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden>

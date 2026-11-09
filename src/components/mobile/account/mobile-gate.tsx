@@ -15,12 +15,12 @@
 
 import * as React from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { SESSION_KEY, useAuth } from "@/lib/account/auth";
-import { ENTRY_PATH, SETUP_PATH, mobileNext, readPhone, updatePhone, updatePhoneAccount, usePhone } from "@/lib/account/phone";
+import { SESSION_KEY, signOut, useAuth } from "@/lib/account/auth";
+import { ENTRY_PATH, SETUP_PATH, isAlive, mobileNext, readPhone, updatePhone, updatePhoneAccount, usePhone } from "@/lib/account/phone";
 import { owedOf, readDeviceId, useSecurity } from "@/lib/account/security";
 import { parseStored, useStoredKey } from "@/lib/key-store";
 import { Button } from "@/components/ideeza/button";
-import { Sheet } from "../kit/sheet";
+import { ForcedThemeContext, Sheet } from "../kit/sheet";
 import { SplashScreen } from "../screen";
 
 /** The screens a sign-in may owe before the app opens. */
@@ -107,7 +107,25 @@ export function MobileGate({ children }: { children: React.ReactNode }) {
     return () => window.clearTimeout(id);
   }, []);
 
-  if (!ready || target || holding) return <SplashScreen />;
+  // Logged in without Remember me: a cold start (a new tab) ends that sign-in.
+  const forget = ready && signedIn && phone.forgetSession && !isAlive();
+  React.useEffect(() => {
+    if (!forget) return;
+    void signOut().then(() => window.location.replace("/m/welcome"));
+  }, [forget]);
+
+  if (!ready || target || holding || forget) return <SplashScreen />;
+
+  // The way-in screens are on the night, as the owner's design draws them, whatever the phone's theme.
+  if (ENTRY_PATH.test(pathname)) {
+    return (
+      <ForcedThemeContext.Provider value="dark">
+        <div data-theme="dark" className="flex h-full min-h-0 flex-col bg-bg-page text-text-primary">
+          {children}
+        </div>
+      </ForcedThemeContext.Provider>
+    );
+  }
 
   const tabScreen = !ENTRY_PATH.test(pathname) && !SETUP_PATH.test(pathname) && !OWED_PATH.test(pathname) && !/^\/m\/kit/.test(pathname);
   return (
