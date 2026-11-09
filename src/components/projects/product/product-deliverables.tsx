@@ -162,7 +162,7 @@ function Covers({
 
 // ───────────────────────── downloads ─────────────────────────
 
-type DownloadFile = { label: string; filename: string; type: string; text: () => string };
+export type DownloadFile = { label: string; filename: string; type: string; text: () => string };
 
 function fileSlug(title: string): string {
   return (
@@ -182,7 +182,7 @@ function csv(rows: (string | number)[][]): string {
 }
 
 /** The piece's file, made from this product's own parts — the same builders the previews draw from. */
-function fileFor(kind: BuildItemKind, product: ArtifactSource): DownloadFile | null {
+export function fileFor(kind: BuildItemKind, product: ArtifactSource): DownloadFile | null {
   const base = fileSlug(product.title);
   switch (kind) {
     case "code": {
@@ -216,7 +216,7 @@ function fileFor(kind: BuildItemKind, product: ArtifactSource): DownloadFile | n
   }
 }
 
-function save(file: DownloadFile) {
+export function save(file: DownloadFile) {
   const url = URL.createObjectURL(new Blob([file.text()], { type: file.type }));
   const a = document.createElement("a");
   a.href = url;

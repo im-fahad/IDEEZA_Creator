@@ -1,0 +1,280 @@
+"use client";
+
+// A contract's Staking Options (Figma "Stacking" 227865) and the Stake sheet
+// (227896 not connected, 227999 connected, 228108 with an amount) and its
+// success (228221). Each option: its name and Est. APR, Lockup Period,
+// Reward Token, Stake. The sheet lists the option's terms (Stake Details),
+// then the amount: Connect Wallet until a wallet is connected, then the
+// balance with Max, the wallet's address, and the reward the amount earns
+// over the lock-up; every check from lib/wallet/staking.ts. Stake goes
+// through the wallet sheet; once it confirms, the success sheet offers the
+// Stake tab's activity or the new stake's rewards.
+
+import * as React from "react";
+import { useRouter } from "next/navigation";
+import { Tick02Icon } from "@hugeicons/core-free-icons";
+import { IdzCoin } from "@/components/balance/idz-coin";
+import { Icon } from "@/components/dashboard/icon";
+import { Banner } from "@/components/ideeza/banner";
+import { Button } from "@/components/ideeza/button";
+import { TestnetDemoBadge } from "@/components/ideeza/testnet-demo-badge";
+import { TextInput } from "@/components/ideeza/text-input";
+import { StateCard } from "@/components/ideeza/state-card";
+import { estimateGas } from "@/lib/commerce/gas";
+import { cn } from "@/lib/utils";
+import { availableOf } from "@/lib/wallet/balances";
+import { demoAddress } from "@/lib/wallet/demo-wallet";
+import { formatWhen } from "@/lib/wallet/idz";
+import { formatAmount } from "@/lib/wallet/money";
+import { networkLabelOf } from "@/lib/wallet/request-view";
+import {
+  STAKE_TIME_LINE,
+  STATUS_WORDS,
+  aprText,
+  contractOf,
+  contractStatusOf,
+  daysText,
+  maxStakeOf,
+  stakeBlockOf,
+  stakeCheckOf,
+  stakeRequestOf,
+  stakedInOptionOf,
+  type StakeContract,
+  type StakeOption,
+} from "@/lib/wallet/staking";
+import { useStakeAdmin } from "@/lib/wallet/use-earn-stores";
+import { Sheet } from "../kit/sheet";
+import { Screen } from "../screen";
+import { TopBar } from "../top-bar";
+import { CARD, ConnectSheet, CopyChip, InfoRow, SECTION_TITLE, useEarnState } from "./parts";
+import { useWalletSheet } from "./wallet-sheet";
+
+export function StakeContractScreen({ contractId }: { contractId: string }) {
+  const router = useRouter();
+  const c = contractOf(contractId);
+  const admin = useStakeAdmin();
+  const { now } = useEarnState();
+  const [picked, setPicked] = React.useState<StakeOption | null>(null);
+  const [done, setDone] = React.useState<{ stakeId: string | null; amount: string } | null>(null);
+
+  if (!c) {
+    return (
+      <Screen top={<TopBar back title="Staking" />} className="px-8 pb-8 pt-4">
+        <StateCard tone="empty" className="w-full" icon={<Icon icon={Tick02Icon} size={32} />} title="This contract isn’t here" body="It may have been taken off the Stake List." />
+      </Screen>
+    );
+  }
+  const status = contractStatusOf(admin, c.id);
+
+  return (
+    <Screen top={<TopBar back title={c.name} />} className="px-8 pb-8 pt-4">
+      <div className="flex flex-col gap-8">
+        <h2 className={SECTION_TITLE}>Staking Options</h2>
+        {status !== "active" && <Banner tone={status === "blocked" ? "error" : "attention"}>{`${STATUS_WORDS[status]}. ${status === "blocked" ? "Nothing can be staked in it." : "Staking opens again when it resumes."}`}</Banner>}
+        <ul className="flex flex-col gap-8">
+          {c.options.map((o) => {
+            const block = stakeBlockOf(o, status, now);
+            const noteId = `option-${o.id}`;
+            return (
+              <li key={o.id} className={cn(CARD, "flex flex-col gap-4 p-8")}>
+                <dl className="flex flex-col gap-3">
+                  <InfoRow label={o.name}>
+                    <span className="text-md leading-md text-text-success">{aprText(o.aprBps)}</span> Est. APR
+                  </InfoRow>
+                  <InfoRow label="Lockup Period:">{daysText(o.lockDays)}</InfoRow>
+                  <InfoRow label="Reward Token:">
+                    <IdzCoin height={18} /> IDZ
+                  </InfoRow>
+                </dl>
+                <div className="flex items-center justify-between gap-6">
+                  <span id={noteId} className="text-sm leading-sm text-text-secondary">
+                    {block && status === "active" ? block : ""}
+                  </span>
+                  <Button size="md" className="w-[96px] shrink-0" disabled={!!block} aria-describedby={block ? noteId : undefined} onClick={() => setPicked(o)}>
+                    Stake
+                  </Button>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+        <p className="text-sm leading-sm text-text-secondary">{STAKE_TIME_LINE}</p>
+      </div>
+      {picked && (
+        <StakeSheet
+          contract={c}
+          option={picked}
+          onClose={() => setPicked(null)}
+          onStaked={(stakeId, amount) => {
+            setPicked(null);
+            setDone({ stakeId, amount });
+          }}
+        />
+      )}
+      <Sheet
+        open={!!done}
+        onClose={() => setDone(null)}
+        title={done ? `You staked ${formatAmount(done.amount, "IDZ")}` : "Staked"}
+        description="Its rewards unlock once per reward interval. Claim them on the stake as they do."
+        actions={
+          <>
+            <Button size="xl" className="w-full" onClick={() => router.push("/m/earn/stake")}>
+              View Transaction Activity
+            </Button>
+            <Button hierarchy="secondary" size="xl" className="w-full" disabled={!done?.stakeId} onClick={() => done?.stakeId && router.push(`/m/earn/staked/${done.stakeId}`)}>
+              Let’s Start Claiming Reward
+            </Button>
+          </>
+        }
+      >
+        <span aria-hidden className="inline-flex size-[56px] items-center justify-center self-center rounded-full bg-bg-success-subtle text-text-success">
+          <Icon icon={Tick02Icon} size={28} />
+        </span>
+      </Sheet>
+    </Screen>
+  );
+}
+
+function StakeSheet({
+  contract: c,
+  option: o,
+  onClose,
+  onStaked,
+}: {
+  contract: StakeContract;
+  option: StakeOption;
+  onClose: () => void;
+  onStaked: (stakeId: string | null, amount: string) => void;
+}) {
+  const { wallet, market, now, id, connected } = useEarnState();
+  const admin = useStakeAdmin();
+  const sheet = useWalletSheet();
+  const [text, setText] = React.useState("");
+  const [touched, setTouched] = React.useState(false);
+  const [connecting, setConnecting] = React.useState(false);
+  const [note, setNote] = React.useState<string | null>(null);
+  const errId = React.useId();
+  const gas = estimateGas(c.network);
+  const ctx = { wallet, market, now };
+  const available = id && connected ? availableOf(id, "IDZ", c.network, ctx) : "0";
+  const staked = id ? stakedInOptionOf(wallet, id, c.id, o.id) : "0";
+  const check = stakeCheckOf(text, {
+    option: o,
+    network: c.network,
+    status: contractStatusOf(admin, c.id),
+    now,
+    available,
+    gas: id ? availableOf(id, gas.native, c.network, ctx) : "0",
+    staked,
+  });
+  const shown = touched || check.error?.field === "form" ? check.error : null;
+
+  const stake = async () => {
+    if (!connected) return setConnecting(true);
+    if (check.error || !check.amount) return setTouched(true);
+    setNote(null);
+    const amount = check.amount;
+    const result = await sheet.request(stakeRequestOf(c, o, amount), {
+      recheck: () => stakeBlockOf(o, contractStatusOf(admin, c.id), Date.now()),
+    });
+    if (result.ok) onStaked(result.proof.txHash ?? null, amount);
+    else setNote(result.reason === "rejected" ? "Stake cancelled in the wallet. Nothing changed." : (result.message ?? "The stake didn’t go through. Nothing changed."));
+  };
+
+  const rows: { label: string; value: React.ReactNode }[] = [
+    { label: "Config Name", value: o.name },
+    { label: "Contract", value: <CopyChip value={c.address} what="Contract address" /> },
+    { label: "Chain", value: networkLabelOf(c.network) },
+    { label: "Start Time", value: formatWhen(o.startsAt) },
+    { label: "End Time", value: formatWhen(o.endsAt) },
+    { label: "Reward Interval", value: daysText(o.intervalDays) },
+    { label: "Lock-up Period", value: daysText(o.lockDays) },
+    { label: "Grace Time", value: daysText(o.graceDays) },
+    { label: "Wallet Limit", value: formatAmount(o.walletLimit, "IDZ") },
+    { label: "Est. APR", value: aprText(o.aprBps) },
+  ];
+
+  return (
+    <>
+      <Sheet
+        open
+        onClose={onClose}
+        title="Staking Options"
+        actions={
+          <Button size="xl" className="w-full aria-disabled:cursor-not-allowed aria-disabled:opacity-60" aria-disabled={(connected && !!check.error) || undefined} loading={sheet.busy} onClick={stake}>
+            Stake
+          </Button>
+        }
+      >
+        <p className="flex items-center justify-between gap-4 text-lg font-medium leading-lg text-text-primary">
+          Stake Details
+          <TestnetDemoBadge />
+        </p>
+        <dl className="flex flex-col gap-4 rounded-xl bg-bg-subtle p-8">
+          {rows.map((r) => (
+            <InfoRow key={r.label} label={r.label}>
+              {r.value}
+            </InfoRow>
+          ))}
+        </dl>
+        <div className="flex items-center justify-between gap-6">
+          <label htmlFor={`${errId}-amount`} className="text-lg font-medium leading-lg text-text-primary">
+            Stake Amount
+          </label>
+          {connected ? (
+            <span className="flex items-center gap-3 text-md leading-md text-text-primary">
+              Balance {formatAmount(available, "IDZ")}
+              <button
+                type="button"
+                onClick={() => {
+                  const max = maxStakeOf(o, { available, staked });
+                  setText(max === "0" ? "" : max);
+                  setTouched(true);
+                }}
+                className="rounded-xs font-medium text-text-brand outline-none focus-visible:ring-2 focus-visible:ring-border-focus"
+              >
+                Max
+              </button>
+            </span>
+          ) : (
+            <button type="button" onClick={() => setConnecting(true)} className="rounded-xs text-lg leading-lg text-text-brand outline-none focus-visible:ring-2 focus-visible:ring-border-focus">
+              Connect Wallet
+            </button>
+          )}
+        </div>
+        <TextInput
+          id={`${errId}-amount`}
+          size="xl"
+          inputMode="decimal"
+          autoComplete="off"
+          placeholder="eg. 100 IDZ"
+          value={text}
+          onValueChange={(v) => {
+            setText(v);
+            setTouched(true);
+          }}
+          invalid={!!shown && shown.field === "amount"}
+          aria-describedby={shown ? errId : undefined}
+        />
+        {shown && (
+          <p id={errId} className="text-sm leading-sm text-text-error">
+            {shown.text}
+          </p>
+        )}
+        {connected && id && (
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <CopyChip value={demoAddress(id)} what="Wallet address" />
+            {check.reward && !check.error && (
+              <span className="text-md leading-md text-text-primary">
+                Reward <span className="font-medium text-text-success">{formatAmount(check.reward, "IDZ")}</span> in {daysText(o.lockDays)}
+              </span>
+            )}
+          </div>
+        )}
+        {note && <Banner tone="info">{note}</Banner>}
+      </Sheet>
+      <ConnectSheet open={connecting} onClose={() => setConnecting(false)} description="Your stake and its rewards go to it. This is the testnet demo wallet — test funds only." />
+      {sheet.sheet}
+    </>
+  );
+}

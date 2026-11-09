@@ -6,6 +6,7 @@ to build and how to check it is done, and links to its Jira ticket.
 
 | CL | Change | In the prototype | Jira | Production |
 | --- | --- | --- | --- | --- |
+| [CL-008](#cl-008-mobile-app-create-flow-the-image-first-the-3d-as-the-result) | Mobile app create flow: the image first, the 3D as the result | 9 Nov 2026 | Not created yet | Not started |
 | [CL-007](#cl-007-landing-page-events-section-moments-from-ideeza) | Landing page: Events section, Moments From IDEEZA | 8 Nov 2026 | [PR-9089](https://ideeza.atlassian.net/browse/PR-9089) | Ready for development |
 | [CL-006](#cl-006-coupon-codes-when-buying-a-plan) | Coupon codes when buying a plan | 5 Nov 2026 | [PR-9062](https://ideeza.atlassian.net/browse/PR-9062) | Ready for development |
 | [CL-005](#cl-005-each-account-has-its-own-work-a-new-account-starts-fresh) | Each account has its own work; a new account starts fresh | 4 Nov 2026 | None: prototype only | Nothing to build |
@@ -35,6 +36,67 @@ state, mobile); Design (DS components and tokens); Before → After screenshots.
 No code: no file names, functions or commit hashes. Screenshots go in
 docs/changelog/ as <date>-<short-name>-before.png / -after.png.
 -->
+
+---
+
+## CL-008 Mobile app create flow: the image first, the 3D as the result
+
+**In the prototype:** 9 November 2026 · **Jira:** not created yet (a Story under PR-9008 once Jira is connected) · **Production:** Not started
+
+**Screen:** the mobile app's AI Product Generate chat (`/m/ai`, then the chat), in
+the phone prototype at `/m`. This release brings the `/m` mobile prototype to the
+live prototype; this entry covers only the create flow the owner approved
+(design sample "create-flow round 2"): what the maker sees once concepts are
+drawn, while the build runs, and when it is done.
+
+### What to build
+
+**Concepts ready**
+- [ ] With two or more products, a switcher on top: one chip per product with its thumbnail, name and state — *Drawing…*, *Couldn't draw*, *Always built* (the main product), *In this build*, *Not in this build*.
+- [ ] The chosen product's concept is the page: a big 4:3 image with its state badge (*Ready*, *Reading the parts*, *Doesn't fit its size*) and a full-screen button; under it the name, one line of up to three facts, and **Change**.
+- [ ] **Change** opens one bottom sheet: the description, the fact chips, the prompt (with Copy), **Refine** (with its credit price), **Regenerate**, **Edit spec** (*View spec* once built).
+- [ ] The prompt box gives way once concepts are on the page; the **Build** bar is pinned at the foot: *N products · X credits*, *Quality · About N min · Options*, and **Build** / **Build N products**.
+- [ ] **Options** opens a bottom sheet: each product with a tick (the main product is always built), its credits and **Quality · …** (Low / Medium / High); the total and **Done**.
+
+**While it builds**
+- [ ] The concept stays big, with the build badge (no percentage), the project name and *N products · M pieces each*.
+- [ ] One stage line — *Step k of n · Building the PCB* (or *Waiting in the build queue* / *Paused*) — and one bar. No per-piece percentage anywhere.
+- [ ] *Runs in the background. You can leave, and we'll notify you when it's ready.*
+- [ ] Each product's pieces behind one **Pieces · d of n ready** button (a bottom sheet; each row opens its deliverable).
+- [ ] A failed piece stays on the page: *Wiring didn't finish* + why, and **Retry Wiring · Free**.
+
+**Finished**
+- [ ] The result is the page: a big 3D of the product (the Assembly, else the 3D Module) with **3D / Concept image**, one-tap **Explode** / **Put together**, and **Layers** (a sheet to show or hide each system, **Show all**).
+- [ ] **Pieces · N ready** under it. With two or more products the switcher stays on top (*Ready · 6 pieces*).
+- [ ] **Save project** (*Save project · 2 products*, *Add to {project}*, *Save version N*) is pinned at the foot with one helper line; once saved, **View project**.
+
+**A piece failed — save what's ready**
+- [ ] The build still opens on its result: badge *5 of 6 ready*, the failed piece with **Retry · Free**, **Pieces · 5 of 6 ready**.
+- [ ] The foot says **Save what's ready** (*Save what's ready · 11 of 12 pieces* with two products; *Add what's ready to {project}* when joining) and *Wiring stays “Not built”. You can retry it after saving.*
+- [ ] Saving keeps every product; the failed piece can be retried later from the chat or the product.
+
+**A product left out of the build**
+- [ ] A product unticked in Options shows in the finished switcher as *Drawn · not built*.
+- [ ] Its card: the concept image, *Not in this build*, **You left this one out**, *Its concept stays in {project}. Build it any time, no need to draw it again.*, and **Build {product} · N credits**.
+- [ ] Building it adds it to the same build, from its concept (no new drawing), charged on its own; the other product stays *Ready*. Short of credits → Buy credits; a size that doesn't fit → its spec opens to fix it.
+- [ ] Until it is built, Save says *Saves {built product} and keeps the {left-out product} concept in {project}.* A project already saved gets the new product too.
+
+### Design
+
+- Mobile design system only; every popup is the mobile bottom sheet (handle, title, ✕). Text uses the mobile type scale (section, meta, body, row title).
+- Switcher chips: surface card, 38 px thumbnail, border/brand 2 px when chosen, a red dot on a failed product.
+- Concept and result frames: radius XL, bg/subtle behind the image; 3D stage 260 px tall on the result.
+- Build bar and Save: primary XL button at the foot, helper in Caption.
+
+### Before → After
+
+| Before | After |
+| --- | --- |
+| ![Before: the concept is a small thumbnail](docs/changelog/2026-11-09-m-concept-before.png) | ![After: the concept is the page, Change and the pinned Build bar](docs/changelog/2026-11-09-m-concept-after.png) |
+| ![Before: a percentage on every piece](docs/changelog/2026-11-09-m-building-before.png) | ![After: one stage line, no percentage](docs/changelog/2026-11-09-m-building-after.png) |
+| ![Before: a finished list, no 3D](docs/changelog/2026-11-09-m-finished-before.png) | ![After: the 3D is the result, Explode and Layers](docs/changelog/2026-11-09-m-finished-after.png) |
+| — | ![After: a failed piece, Save what's ready](docs/changelog/2026-11-09-m-partial-after.png) |
+| — | ![After: a product left out, Build it later](docs/changelog/2026-11-09-m-left-out-after.png) |
 
 ---
 

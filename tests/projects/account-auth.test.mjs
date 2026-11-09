@@ -260,6 +260,10 @@ test("the pre-paint gate lets a signed-in visitor through and sends others on, a
   assert.equal(run("/sign-up"), null);
   assert.equal(run("/landing"), null);
   assert.equal(run("/events/hardware-hackathon"), null);
+  // The mobile prototype runs its own way in (Welcome, guest Feed).
+  assert.equal(run("/m"), null);
+  assert.equal(run("/m/profile"), null);
+  assert.equal(run("/mobile"), auth.signedOutPath("/mobile", "", []));
   store.set(auth.ACCOUNTS_KEY, JSON.stringify([{ email: "a@b.co", verifiedAt: NOW }]));
   assert.equal(run("/projects", "?tab=draft"), "/sign-in?next=%2Fprojects%3Ftab%3Ddraft");
   assert.equal(run("/"), "/landing");
