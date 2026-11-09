@@ -37,7 +37,7 @@ export default function ResetPage() {
   const [email, setEmail] = React.useState(params.get("email") ?? "");
   const [emailLeft, setEmailLeft] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
-  const [inbox, setInbox] = React.useState(false);
+  const [inbox, setInbox] = React.useState(0);
   const [password, setPassword] = React.useState("");
   const [confirm, setConfirm] = React.useState("");
   const [confirmLeft, setConfirmLeft] = React.useState(false);
@@ -83,7 +83,7 @@ export default function ResetPage() {
         top={<TopBar back title="Reset password" />}
         footer={
           <BottomBar>
-            <Button hierarchy="secondary" size="xl" className="w-full" onClick={() => setInbox(true)}>
+            <Button hierarchy="secondary" size="xl" className="w-full" onClick={() => setInbox((n) => n + 1)}>
               Open email app
             </Button>
           </BottomBar>
@@ -98,7 +98,7 @@ export default function ResetPage() {
             change={{ label: "Use another email", onClick: () => setStep("email") }}
             offlineBody="The code is kept. We’ll check it when you’re back online."
             onDone={() => setStep("password")}
-            inbox={{ open: inbox, onClose: () => setInbox(false) }}
+            inbox={inbox}
           />
         </div>
       </Screen>

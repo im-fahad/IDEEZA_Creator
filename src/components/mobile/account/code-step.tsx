@@ -6,18 +6,22 @@
 // it expired (Resend code). Five wrong codes lock the step for 10 minutes
 // (an M01 alert counts down). Offline keeps the code and checks it on Try
 // again. Resend waits 30 s after each code. The code itself comes from the
-// prototype's Demo email (Open email app), as the web's Demo email does.
+// prototype's Demo email, shown on the page as the web's is (owner
+// 2026-11-04): its button types the code in by itself, digit by digit, and
+// the 6th digit checks it — no reading, no typing. "Open email app" does the
+// same.
 
 import * as React from "react";
 import { CheckmarkCircle02Icon } from "@hugeicons/core-free-icons";
 import { Icon } from "@/components/dashboard/icon";
 import { Spinner } from "@/components/ideeza/spinner";
+import { IdeezaLogo } from "@/components/brand/ideeza-logo";
+import { motionReduced } from "@/lib/settings/appearance";
 import { accountOf, normalizeEmail, readAccounts } from "@/lib/account/auth";
 import { checkCode, clockOf, issueCode, readCode, resendWait, saveCode, useCode, type CodePurpose } from "@/lib/account/phone";
 import { Badge } from "@/components/ideeza/badge";
 import { Button } from "@/components/ideeza/button";
 import { CodeCells } from "../kit/code-cells";
-import { Sheet } from "../kit/sheet";
 import { useOnline } from "../kit/states";
 import { AccountAlert, AccountHeading, type AlertSpec } from "./parts";
 import { TEXT_LINK } from "../kit/bottom-bar";
@@ -36,6 +40,7 @@ function useNow(ticking: boolean): number {
 }
 
 const CHECK_MS = 700;
+const TYPE_MS = 140;
 
 export function CodeStep({
   purpose,
@@ -59,8 +64,9 @@ export function CodeStep({
   offlineBody: string;
   /** The code was right: go on. */
   onDone: () => void | Promise<void>;
-  /** Opens the Demo email (the bar's "Open email app"). */
-  inbox: { open: boolean; onClose: () => void };
+  /** How many times the bar's "Open email app" was pressed: each press fills
+   *  the code in from the Demo email. */
+  inbox: number;
 }) {
   const e = normalizeEmail(email);
   const { hydrated, code } = useCode();
@@ -113,6 +119,45 @@ export function CodeStep({
     setValue("");
     setPhase("typing");
   };
+
+  // The Demo email's code: only for an address that would get one.
+  const demoCode = record && (purpose === "verify" || accountOf(readAccounts(), e)) ? record.code : null;
+  // Each press of the Demo email's button (or "Open email app") types it in.
+  const [fills, setFills] = React.useState(0);
+  const fill = () => {
+    if (demoCode) setFills((n) => n + 1);
+  };
+  const [seenInbox, setSeenInbox] = React.useState(inbox);
+  if (inbox !== seenInbox) {
+    setSeenInbox(inbox);
+    if (demoCode) setFills((n) => n + 1);
+  }
+  const codeNow = React.useRef(demoCode);
+  const changeNow = React.useRef(change_);
+  React.useEffect(() => {
+    codeNow.current = demoCode;
+    changeNow.current = change_;
+  });
+  React.useEffect(() => {
+    const c = codeNow.current;
+    if (!fills || !c) return;
+    if (motionReduced()) {
+      changeNow.current(c);
+      return;
+    }
+    let n = 0;
+    const id = window.setInterval(() => {
+      // A new code (Resend) stops the old one typing in.
+      if (codeNow.current !== c) {
+        window.clearInterval(id);
+        return;
+      }
+      n += 1;
+      changeNow.current(c.slice(0, n));
+      if (n >= c.length) window.clearInterval(id);
+    }, TYPE_MS);
+    return () => window.clearInterval(id);
+  }, [fills]);
 
   const alert: AlertSpec | null = locked
     ? { tone: "error", title: "Too many tries", body: `Try again in ${clockOf(record!.lockedUntil - now)}.` }
@@ -176,61 +221,46 @@ export function CodeStep({
           </button>
         </div>
       )}
-      <DemoInbox
-        open={inbox.open}
-        onClose={inbox.onClose}
-        email={e}
-        code={record && (purpose === "verify" || accountOf(readAccounts(), e)) ? record.code : null}
-        onUse={(c) => {
-          inbox.onClose();
-          change_(c);
-        }}
-      />
+      {phase !== "done" && !locked && <DemoEmailCard purpose={purpose} code={demoCode} busy={busy} onFill={fill} />}
     </div>
   );
 }
 
-/** Prototype only: the email the code would arrive in ("Open email app"). */
-function DemoInbox({
-  open,
-  onClose,
-  email,
-  code,
-  onUse,
-}: {
-  open: boolean;
-  onClose: () => void;
-  email: string;
-  code: string | null;
-  onUse: (code: string) => void;
-}) {
+/** Prototype only: the email the code would arrive in, on the page as the
+ *  web's Demo email is. Its button types the code in by itself. */
+function DemoEmailCard({ purpose, code, busy, onFill }: { purpose: CodePurpose; code: string | null; busy: boolean; onFill: () => void }) {
+  const titleId = React.useId();
   return (
-    <Sheet
-      open={open}
-      onClose={onClose}
-      title="Demo email"
-      description={`What ${email} would get. A real phone opens its email app.`}
-      actions={
-        code ? (
-          <Button size="xl" className="w-full" onClick={() => onUse(code)}>
-            Use this code
-          </Button>
-        ) : undefined
-      }
-    >
-      <Badge tone="warning" className="self-start">
-        Demo
-      </Badge>
-      {code ? (
-        <div className="flex flex-col gap-2 rounded-xl border-[length:var(--border-width-1)] border-solid border-border-subtle bg-bg-surface-raised p-8">
-          <p className="text-sm leading-sm text-text-tertiary">From IDEEZA · just now</p>
-          <p className="text-lg font-semibold leading-lg text-text-primary">Your IDEEZA code</p>
-          <p className="text-md leading-md text-text-secondary">Enter this code in the app. It works for 10 minutes.</p>
-          <p className="text-4xl font-semibold leading-4xl tracking-widest text-text-primary tabular-nums">{code}</p>
+    <section aria-labelledby={titleId} className="flex flex-col gap-6 rounded-xl border-[length:var(--border-width-1)] border-solid border-border-subtle bg-bg-surface p-8">
+      <div className="flex items-center gap-4">
+        <IdeezaLogo mark height={24} decorative />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold leading-sm text-text-primary">IDEEZA</p>
+          <p className="text-sm leading-sm text-text-tertiary">Demo email, shown here instead of your inbox</p>
         </div>
+        <Badge tone="warning">Demo</Badge>
+      </div>
+      {code ? (
+        <>
+          <div className="flex flex-col gap-2">
+            <h2 id={titleId} className="text-lg font-semibold leading-lg text-text-primary">
+              {purpose === "verify" ? "Verify your email" : "Reset your password"}
+            </h2>
+            <p className="text-md leading-md text-text-secondary">
+              {purpose === "verify"
+                ? "Confirm this is your email to finish creating your IDEEZA account."
+                : "Someone asked to reset your IDEEZA password. If it was you, set a new one."}
+            </p>
+          </div>
+          <Button hierarchy="ai" size="xl" className="w-full" disabled={busy} onClick={onFill}>
+            {purpose === "verify" ? "Verify email" : "Set a new password"}
+          </Button>
+        </>
       ) : (
-        <p className="text-md leading-md text-text-secondary">No email came. If an account exists for this address, the code is on its way.</p>
+        <p id={titleId} className="text-md leading-md text-text-secondary">
+          No email came. If an account exists for this address, the code is on its way.
+        </p>
       )}
-    </Sheet>
+    </section>
   );
 }

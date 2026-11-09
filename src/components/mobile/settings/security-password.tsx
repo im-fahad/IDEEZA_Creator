@@ -200,7 +200,7 @@ function AddPassword({ email, via }: { email: string; via: keyof typeof PROVIDER
   const online = useOnline();
   const ids = useFieldIds(["password", "confirm", "rules"] as const);
   const [step, setStep] = React.useState<AddStep>("email");
-  const [inbox, setInbox] = React.useState(false);
+  const [inbox, setInbox] = React.useState(0);
   const [password, setPassword] = React.useState("");
   const [confirm, setConfirm] = React.useState("");
   const [confirmLeft, setConfirmLeft] = React.useState(false);
@@ -215,7 +215,7 @@ function AddPassword({ email, via }: { email: string; via: keyof typeof PROVIDER
         top={top}
         footer={
           <BottomBar>
-            <Button hierarchy="secondary" size="xl" className="w-full" onClick={() => setInbox(true)}>
+            <Button hierarchy="secondary" size="xl" className="w-full" onClick={() => setInbox((n) => n + 1)}>
               Open email app
             </Button>
           </BottomBar>
@@ -230,7 +230,7 @@ function AddPassword({ email, via }: { email: string; via: keyof typeof PROVIDER
             change={{ label: "Cancel", onClick: () => leaveTo(router, BACK) }}
             offlineBody="The code is kept. We’ll check it when you’re back online."
             onDone={() => setStep("password")}
-            inbox={{ open: inbox, onClose: () => setInbox(false) }}
+            inbox={inbox}
           />
         </div>
       </Screen>

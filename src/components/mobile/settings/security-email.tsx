@@ -40,7 +40,7 @@ export function EmailSettings() {
   const [wrong, setWrong] = React.useState(false);
   const [taken, setTaken] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
-  const [inbox, setInbox] = React.useState(false);
+  const [inbox, setInbox] = React.useState(0);
   const [failed, setFailed] = React.useState(false);
 
   const n = normalizeEmail(next);
@@ -91,7 +91,7 @@ export function EmailSettings() {
         top={<TopBar back={BACK} title="Change email" />}
         footer={
           <BottomBar>
-            <Button hierarchy="secondary" size="xl" className="w-full" onClick={() => setInbox(true)}>
+            <Button hierarchy="secondary" size="xl" className="w-full" onClick={() => setInbox((n) => n + 1)}>
               Open email app
             </Button>
           </BottomBar>
@@ -106,7 +106,7 @@ export function EmailSettings() {
             change={{ label: "Use another email", onClick: () => setStep("form") }}
             offlineBody="The code is kept. We’ll check it when you’re back online."
             onDone={finish}
-            inbox={{ open: inbox, onClose: () => setInbox(false) }}
+            inbox={inbox}
           />
         </div>
       </Screen>

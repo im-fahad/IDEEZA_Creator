@@ -21,7 +21,7 @@ export default function VerifyPage() {
   const params = useSearchParams();
   const next = mobileNext(params.get("next"));
   const { waiting } = useAuth();
-  const [inbox, setInbox] = React.useState(false);
+  const [inbox, setInbox] = React.useState(0);
   // Kept once the code is right: verifying ends the wait, and the page must not
   // take that for "nothing to verify" while it goes on to Name and handle.
   const [email, setEmail] = React.useState<string | null>(null);
@@ -46,7 +46,7 @@ export default function VerifyPage() {
       top={<TopBar back title="" />}
       footer={
         <BottomBar>
-          <Button hierarchy="secondary" size="xl" className="w-full" onClick={() => setInbox(true)}>
+          <Button hierarchy="secondary" size="xl" className="w-full" onClick={() => setInbox((n) => n + 1)}>
             Open email app
           </Button>
         </BottomBar>
@@ -68,7 +68,7 @@ export default function VerifyPage() {
           doneLabel="Email verified"
           offlineBody="Check your connection. The code is kept."
           onDone={verified}
-          inbox={{ open: inbox, onClose: () => setInbox(false) }}
+          inbox={inbox}
         />
       </div>
     </Screen>
