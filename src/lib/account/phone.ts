@@ -262,6 +262,8 @@ export const PHONE_KEY = "ideeza:m:phone";
 export type PhoneState = {
   /** Chose Explore first: the app opens on the guest Feed, not Welcome, until a sign-out. */
   explored: boolean;
+  /** Saw the onboarding, or skipped it: signed out, the app opens on Welcome from then on. */
+  onboarded: boolean;
   /** The Face ID offer was made on this phone (it is made once). */
   faceIdOffered: boolean;
   /** Show the Face ID offer on the next screen (set by the first sign-in here). */
@@ -278,6 +280,7 @@ export function normalizePhone(raw: unknown): PhoneState {
   const r = isObj(raw) ? raw : {};
   return {
     explored: r.explored === true,
+    onboarded: r.onboarded === true,
     faceIdOffered: r.faceIdOffered === true,
     faceIdPending: r.faceIdPending === true,
     cameraAsked: r.cameraAsked === true,
@@ -351,7 +354,7 @@ export function relayAddress(random: () => number = Math.random): string {
 // ─────────────────────────── where to go ───────────────────────────
 
 /** The way-in screens: open to anyone signed out. */
-export const ENTRY_PATH = /^\/m\/(welcome|sign-in|sign-up|verify|reset|signing-in|add-email|link)(\/|$)/;
+export const ENTRY_PATH = /^\/m\/(onboarding|welcome|sign-in|sign-up|verify|reset|signing-in|add-email|link)(\/|$)/;
 /** After sign-up: name and handle, the profile steps and the Welcome map. */
 export const SETUP_PATH = /^\/m\/(handle|setup|welcome-map)(\/|$)/;
 

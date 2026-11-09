@@ -117,7 +117,7 @@ function SplashSteps() {
 }
 
 /** The night behind the splash: a violet wash from the top, two soft glows and faint circuit traces. */
-function SplashBackdrop() {
+export function SplashBackdrop() {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
       <div className="absolute inset-0 bg-[radial-gradient(120%_65%_at_50%_0%,var(--color-violet-950)_0%,transparent_75%)]" />
