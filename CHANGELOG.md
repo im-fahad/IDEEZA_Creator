@@ -100,6 +100,13 @@ us and the markup to add, and every price in credits is worked out.
 - [ ] Errors under their field: *Enter an amount*, *Enter a number, like 0.04*, *Enter more than 0, up to 100*, *Enter 0 to 1000*, *Enter 0 to 90*, *Enter 0 to 500*, *Enter a whole number*. A wrong setting stops every price (*Waiting on settings*).
 - [ ] **Review and publish** is disabled with its reason: *Fix the credit value and markup settings first.*, *Fix the fields marked in red first.*, *Fix the credit packs first.*, *Nothing has changed since the last publish.*
 
+**Maker preview** (`/admin/maker-preview`, its own item in the admin sidebar: how makers see the prices)
+- [ ] Read only. *Show the prices*: **After you publish** (default) or **Live now**, with *What makers get once you publish the N changes waiting.* While Publish is blocked, After you publish shows today's prices under *The changes waiting can't be shown yet* and the reason.
+- [ ] Each example sits in a dashed frame tagged *Makers see*, with where the maker meets it.
+- [ ] **Credit packs:** the shown packs, cheapest first, as Buy credits draws them (*Popular*, *8,640 credits (7,860 + 780 bonus)*), and *Custom amount* when Custom credit is on; the chosen one says what it costs in USDT and IDZ. Hidden packs are named under it.
+- [ ] **Build quality:** the Quality menu (each level's line and price) and the Build button with the level's price; a card per level makers can pick, with its daily limit (*Up to 3 Free builds a day*). Levels that are off aren't shown, and a note names them.
+- [ ] **AI services:** every service but the product builds, grouped, each with the maker's price badge. Product builds are priced by quality level.
+
 **Info tips** (every table's column headings, and the names of every AI service, service group and quality level)
 - [ ] An ⓘ after each one opens one or two plain sentences on what it is and what it does to the price, e.g. Markup: *How much to add on top of our cost, as a percent of the cost: 50% makes a $1.00 run cost the maker $1.50. Leave it empty to use the markup set above.* The texts are in `lib/admin/credit-help.ts`; the services' are written from their names and need the backend team's check.
 - [ ] Tables: AI services, Product build quality, Availability and daily limits, Credit packs, Bonus by pack price, and the Publish dialog's changes. A pack's name has none: the admin types it.

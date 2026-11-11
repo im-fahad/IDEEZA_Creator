@@ -9,7 +9,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowLeft01Icon, CoinsDollarIcon, PackageIcon } from "@hugeicons/core-free-icons";
+import { ArrowLeft01Icon, CoinsDollarIcon, PackageIcon, ViewIcon } from "@hugeicons/core-free-icons";
 import { IdeezaLogo } from "@/components/brand/ideeza-logo";
 import { Icon, type IconValue } from "@/components/dashboard/icon";
 import { Badge } from "@/components/ideeza/badge";
@@ -26,6 +26,12 @@ const NAV: readonly { href: string; label: string; icon: IconValue }[] = [
     href: "/admin/credit-packs",
     label: "Credit packs",
     icon: PackageIcon,
+  },
+  // How makers see the prices above (owner, 2026-11-11).
+  {
+    href: "/admin/maker-preview",
+    label: "Maker preview",
+    icon: ViewIcon,
   },
 ];
 
