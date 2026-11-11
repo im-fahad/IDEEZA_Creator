@@ -33,6 +33,9 @@ ideeza-creator-panel/
    │  │                      · and others)
    │  ├─ (auth)/             the demo sign-in, outside the shell: sign-up/ (+ check-email/,
    │  │                      welcome/: the one question) and sign-in/ (+ Forgot password)
+   │  ├─ admin/              the admin prototype, outside the shell: its own sidebar and <main>;
+   │  │                      ai-credits/ "/admin/ai-credits" — AI credit pricing;
+   │  │                      credit-packs/ "/admin/credit-packs" — its Credit packs tab
    │  ├─ (dashboard)/        Home + Parts + Innovations
    │  │   ├─ page.tsx                 "/"  — dashboard home (AI prompt hero)
    │  │   ├─ parts/                   "/parts" — Parts & Agile Module library
@@ -58,6 +61,9 @@ ideeza-creator-panel/
    │                                       /project/<slug>/<step>) + pcb-editor.css
    │
    ├─ components/            UI, grouped by module/area
+   │  ├─ admin/              the admin's sidebar and demo sign-in; credit-pricing/ — AI credit pricing (settings,
+   │  │                      price tables, Custom credit, the Credit packs tab, summary, Review
+   │  │                      and publish, history, info-tip.tsx — the ⓘ tips on headings and names)
    │  ├─ app-chrome/         profile dropdown (shared chrome)
    │  ├─ auth/               the demo sign-in's pages (sign up, check email, the one question,
    │  │                      sign in), the 3D stage beside them, the Demo email, AuthGate +
@@ -166,6 +172,9 @@ ideeza-creator-panel/
    │  ├─ notifications/      the notice model: sources (builds, Blog, Messages, market, credits,
    │  │                      videos, comments), filter (heard or quiet, count, quiet hours, pop-up
    │  │                      mode, hidden words), popups (daily summary, browser pop-ups), read state; withdrawal-method notices
+   │  ├─ admin/              AI credit pricing: credit-pricing.ts (the formula, pure), credit-packs.ts
+   │  │                      (a pack's credits from its price), credit-format.ts, credit-help.ts
+   │  │                      (the info tips' texts), and the store (ideeza:admin:credit-pricing)
    │  ├─ account/            the account: the demo sign-in (auth.ts: ideeza:accounts, ideeza:session, ideeza:verify,
    │  │                      the pre-paint gate; zone-countries.ts), payment token, invoices, summary,
    │  │                      your private identity (ideeza:account:identity: the legal name) and countries

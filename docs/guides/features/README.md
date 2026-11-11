@@ -22,5 +22,6 @@ Moved verbatim from `CLAUDE.md` §5 on 2026-09-29 and split by area; each sectio
 | Toolbars, exports, library window, menus, 3D menus, right/left/bottom panels, boolean geometry, context menus | [pcb-tools-menus-panels.md](pcb-tools-menus-panels.md) | Top toolbar · Right panel · Boolean / Combine geometry · Menu leaves · Right-click context menus · Left panel · Bottom panel · PCB module — misc |
 | The mobile prototype: `/m`, its phone frame, tab bar and Shared kit | [mobile-app.md](mobile-app.md) | Shell · Shared kit |
 | Code, 3D Module, Assembly (with its Wiring mode), Product Preview, the mint flow (the Brief) | [editor-modules.md](editor-modules.md) | Other editor modules |
+| Admin: `/admin`, its own shell, AI credit pricing from real costs and a profit (this browser only) | [admin.md](admin.md) | Admin shell · AI credit pricing |
 
 *Not yet inventoried:* the **Assembly** module (`src/components/assembly/`, step `assembly` in `FLOW_STEPS`) has no entry; add one once it is browser-verified.

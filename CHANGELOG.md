@@ -6,6 +6,7 @@ to build and how to check it is done, and links to its Jira ticket.
 
 | CL | Change | In the prototype | Jira | Production |
 | --- | --- | --- | --- | --- |
+| [CL-010](#cl-010-admin-ai-credit-pricing-from-real-costs-and-a-profit) | Admin: AI credit pricing from real costs and a profit | 10 Nov 2026 | Not created yet | Not started |
 | [CL-009](#cl-009-mobile-app-splash-onboarding-welcome-and-log-in) | Mobile app: splash, onboarding, Welcome and Log In | 9 Nov 2026 | Not created yet | Not started |
 | [CL-008](#cl-008-mobile-app-create-flow-the-image-first-the-3d-as-the-result) | Mobile app create flow: the image first, the 3D as the result | 9 Nov 2026 | Not created yet | Not started |
 | [CL-007](#cl-007-landing-page-events-section-moments-from-ideeza) | Landing page: Events section, Moments From IDEEZA | 8 Nov 2026 | [PR-9089](https://ideeza.atlassian.net/browse/PR-9089) | Ready for development |
@@ -37,6 +38,95 @@ state, mobile); Design (DS components and tokens); Before → After screenshots.
 No code: no file names, functions or commit hashes. Screenshots go in
 docs/changelog/ as <date>-<short-name>-before.png / -after.png.
 -->
+
+---
+
+## CL-010 Admin: AI credit pricing from real costs and a profit
+
+**In the prototype:** 10 November 2026 · **Jira:** not created yet (admin work has no epic yet) · **Production:** Not started
+
+**Screen:** Admin › AI credit pricing (`/admin/ai-credits`, and its Credit packs tab `/admin/credit-packs`), in place of today's
+Admin › AI Credit System, where every service's credits and the three currency
+rates are typed by hand. Here the admin types what each AI service really costs
+us and the markup to add, and every price in credits is worked out.
+
+### What to build
+
+**What a credit is worth**
+- [ ] **1 credit in US dollars** is typed (*$1 buys N credits* under it).
+- [ ] **USDT** has a switch *Follow the dollar*, on by default: 1 credit costs as many USDT as dollars. Off, *1 credit in USDT* is typed.
+- [ ] **IDZ** has a switch *Follow the IDZ price*, on by default: the field is *1 IDZ in US dollars*, and 1 credit in IDZ = the credit's dollar price ÷ the IDZ price. Off, *1 credit in IDZ* is typed.
+- [ ] Each shows *Current X → Y* (or *· no change*).
+
+**Markup** (a markup on cost, not a margin on price)
+- [ ] **Markup on our cost** (%), one for every service and level: *50% makes a $1.00 run cost the maker $1.50.*
+- [ ] **Calculate markup at**: *Lowest effective credit price* (default, recommended) or *List price*.
+- [ ] **Maximum credit discount** (%) and **Maximum pack bonus** (%): the lowest effective credit price = credit price × (1 − discount) ÷ (1 + bonus). Shown under them (*The lowest effective credit price is $X*), with a worked example for a $0.10 run (*a $0.10 run at 50% markup is N credits*).
+- [ ] **Round credits up to steps of** 1, 5 or 10.
+- [ ] Credits = round up(cost × (1 + markup) ÷ the credit price the markup is calculated at), never less than one step. Never rounded down.
+
+**AI services** (every service the backend charges for, grouped: Images · 3D · PCB · Parts · Edits to a finished design · Video and audio · Documents · Product builds, fallback price)
+- [ ] Columns: **AI service** · **Our cost per run** ($) · **Markup** (%; empty uses the markup above) · **Current credits** · **Calculated credits** · **Maker pays** (list price) · **Revenue at lowest price** · **Profit at lowest price** (dollars and % on cost) · **Pricing status**: *On target*, *Below target*, *Loses money*, *No cost yet*.
+- [ ] Headings wrap to two lines so all nine columns fit a 1440 px screen.
+- [ ] A service with no cost keeps its current credits.
+
+**Availability and daily limits** (a section of its own, above Product build quality)
+- [ ] Per product build quality level: **Offered to makers** (a switch, *Enabled* / *Disabled*) and **Daily limit per maker** (0 = no limit), with *Current On · No limit → …*. A level that's off keeps its price and reads *Off: makers can't pick it*. At least one level stays on (*Keep at least one level on, or makers can't start a build.*).
+- [ ] Backend: `AIQualityCost` needs an on/off field, and its `daily_limit` must count on every level (today only while `credit_cost` is 0).
+
+**Product build quality** (Free · Low · Medium · High · Max)
+- [ ] The same columns per level, headed **Quality level** and **Our cost per build**. Free is always 0 credits; its cost shows as ours (*Free to makers*).
+
+**Custom credit** (the live admin's Base Settings › Custom Credit)
+- [ ] An **Enabled** switch in the header; off shows *Custom credit is off, so makers can buy packs only.* and keeps the limits.
+- [ ] **Minimum purchase limit** and **Maximum purchase limit** in credits (*0 is no limit*), each with its cost at list price (*315 credits cost $1.00 at list price.*) and *Current X → Y*.
+- [ ] The minimum is 1 or more (*Enter 1 or more*); the maximum is 0 or at least the minimum (*Enter 0 for no limit, or 315 or more*). Changes wait for Publish.
+
+**Two tabs**
+- [ ] *Prices* (`/admin/ai-credits`, everything above) and *Credit packs* (`/admin/credit-packs`), under the page header, each with its own address and its own item in the admin sidebar. The summary, Review and publish and the history are on both and count both.
+
+**Credit packs** (the live admin's AI Credit System › Credit Packs, with the credits worked out instead of typed)
+- [ ] **Add new pack** (12 at most) opens *Add a credit pack*: **Pack name** and **Pack price** (US dollars) only. The base, bonus and total credits show as the admin types (*Base credits 78,610 · Bonus (15%) +11,790 · Total 90,400 credits · $0.00277 a credit, 13% under the list price.*). Edit opens the same dialog; Delete asks first (*Delete the Team pack?*).
+- [ ] Base credits = round down(price ÷ the list price of a credit, to the step); bonus = round down(base × the tier's %, to the step); total = base + bonus.
+- [ ] **Bonus by pack price**: tiers, the first from $0.00, at most 6 (demo: 0% · from $10 5% · from $25 10% · from $50 15%); a pack takes the last tier its price reaches. No tier above the **Maximum pack bonus** under Markup (*Enter 0 to 15: the maximum pack bonus is 15%*), so every markup holds on a pack's credits; a bigger pack never gets a smaller bonus (*Enter 5 or more: a bigger pack never gets a smaller bonus*). **Round pack credits down to steps of** 1 · 10 · 50 · 100.
+- [ ] Table, cheapest first: **Pack name** (*New*) · **Most popular** (a star; one pack at most) · **Pack price** · **Base credits** · **Bonus** (+n, %) · **Total credits** (*Current n* when it changes) · **Price per credit** (*n% off list*) · **Shown to makers** (switch) · ⋮ Edit / Delete.
+- [ ] Checks: *Enter a name*, *Use 32 characters or fewer*, *Another pack has this name*, *Enter a price*, *Enter more than $0, up to $10,000.00*, *Enter dollars and cents, like 9.99*; at least 10 base credits, and a shown pack's base at least the Custom credit minimum (*Fewer than 315 credits, the minimum purchase. Raise the price to $1.02 or more, or hide the pack.*), which a hidden pack only notes; with Custom credit off, one pack shown (*Makers can't buy credits: show a pack, or turn Custom credit on.*).
+- [ ] Changes wait for Publish and go in the history: *Starter pack: Not sold → $5.00 for 1,570 credits*, *Basic pack: $10.00 for 3,290 credits → $12.00 for 3,950 credits*, *Pack name*, *Shown → Hidden*, *Removed*, *Most popular pack: Pro → Lab*.
+- [ ] Backend: `/ai-credit-packages/` takes `credit_amount` and `bonus_credits` as typed numbers; it needs the tiers and the step to work them out from the price. Not in this prototype: the live packs' validity in months and their own USDT and IDZ prices.
+
+**Summary, errors and publishing**
+- [ ] Stats: *Changes waiting to publish*, *Prices with a real cost* (N of 21), *Last published*.
+- [ ] Banners: *N prices lose money at the lowest price* (error), *N prices make less than the target at the lowest price* (attention), *N prices have no cost yet and keep their current credits when you publish* (info).
+- [ ] Errors under their field: *Enter an amount*, *Enter a number, like 0.04*, *Enter more than 0, up to 100*, *Enter 0 to 1000*, *Enter 0 to 90*, *Enter 0 to 500*, *Enter a whole number*. A wrong setting stops every price (*Waiting on settings*).
+- [ ] **Review and publish** is disabled with its reason: *Fix the credit value and markup settings first.*, *Fix the fields marked in red first.*, *Fix the credit packs first.*, *Nothing has changed since the last publish.*
+
+**Info tips** (every table's column headings, and the names of every AI service, service group and quality level)
+- [ ] An ⓘ after each one opens one or two plain sentences on what it is and what it does to the price, e.g. Markup: *How much to add on top of our cost, as a percent of the cost: 50% makes a $1.00 run cost the maker $1.50. Leave it empty to use the markup set above.* The texts are in `lib/admin/credit-help.ts`; the services' are written from their names and need the backend team's check.
+- [ ] Tables: AI services, Product build quality, Availability and daily limits, Credit packs, Bonus by pack price, and the Publish dialog's changes. A pack's name has none: the admin types it.
+- [ ] Opens on hover, on keyboard focus and on a tap; Escape, a scroll, leaving, moving focus or a tap elsewhere closes it. Above the icon (below when there's no room), never clipped by the table's scroll box, and over the Publish dialog. A screen reader hears it as the button's description (*About Markup*), not as part of the heading.
+- [ ] The dialog *Publish new prices* lists every change (Current → New) with the same warnings; **Publish N changes** makes them what makers are charged. The table's headings (Price · Current · New) stay in view while the list scrolls; the table fits the dialog's width on a phone (a long change wraps) rather than scrolling sideways.
+- [ ] **Publish history**, newest first: when, who, what it was worked out on (*50% markup at the lowest effective credit price, $X a credit, rounded up to whole credits*) and every change.
+- [ ] Mobile: the settings stack, the tables scroll sideways inside their card.
+
+Demo stand-ins (prototype only): everything is kept in this browser and reaches no maker; the page opens on demo data (a cost and a markup for every service and level, five packs from $5 to $100, two earlier publishes by made-up admins, four changes waiting) and *Reset demo data* goes back to it; any signed-in account can open the admin, and a visitor who opens `/admin` signed out is signed in as *Demo Admin* with no Sign up or Sign in (the sidebar's foot says *Signed in as Demo Admin*; publishes record that name). The real admin needs real sign-in and an admin role.
+
+### Design
+
+- Design system only: Page and Page Header, Section cards with H4 headings, Text Input with prefix and unit, Toggle, Segmented, Banner (error, attention, info, good), Badge (success, warning, error, neutral, info), Modal and Confirm dialog, the table pattern of the purchase table.
+- Token colours throughout; light and dark.
+
+### Before → After
+
+| Before | After |
+| --- | --- |
+| — | ![After: AI credit pricing with every cost filled, four changes waiting and two earlier publishes](docs/changelog/2026-11-10-admin-credit-pricing-after.png) |
+| — | ![After: Publish new prices](docs/changelog/2026-11-10-admin-credit-pricing-publish-after.png) |
+| — | ![After: a wrong credit value stops Publish](docs/changelog/2026-11-10-admin-credit-pricing-error-after.png) |
+| — | ![After: phone width, dark](docs/changelog/2026-11-10-admin-credit-pricing-phone-dark-after.png) |
+| Credit packs: name, price, credits and bonus all typed | ![After: the Credit packs tab, five packs with their credits worked out, and the bonus tiers](docs/changelog/2026-11-10-admin-credit-pricing-packs-after.png) |
+| — | ![After: Add a credit pack, the credits shown as the price is typed](docs/changelog/2026-11-10-admin-credit-pricing-pack-dialog-after.png) |
+| — | ![After: a shown pack below the minimum purchase can't be saved](docs/changelog/2026-11-10-admin-credit-pricing-pack-minimum-after.png) |
+| Column headings with no explanation | ![After: an info icon on every heading and service name, the Markup tip open](docs/changelog/2026-11-10-admin-credit-pricing-info-tip-after.png) |
 
 ---
 
