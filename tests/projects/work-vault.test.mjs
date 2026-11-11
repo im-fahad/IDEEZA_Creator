@@ -59,6 +59,20 @@ test("the browser keeps the accounts, the session, the offer, the tester and the
   for (const k of [PROJECTS, CREDITS, PROFILE_KEY, "ideeza:tour", "ideeza:account:plan", "ideeza:wallet:demo", "ideeza:migrations"]) assert.equal(vault.isWorkKey(k), true, k);
 });
 
+test("the admin's AI credit pricing is the platform's, kept for the whole browser: a sign-out and the demo admin's sign-in leave it", async () => {
+  const PRICING = "ideeza:admin:credit-pricing";
+  assert.equal(vault.isWorkKey(PRICING), false);
+  await join("Asha", "asha@example.com");
+  store.set(PRICING, '{"v":2}');
+  store.set(PROJECTS, '["smart lamp"]');
+  await auth.signOut();
+  assert.equal(store.get(PRICING), '{"v":2}', "not parked with Asha's work");
+  assert.equal(await auth.signInDemoAdmin(NOW + 1), "new");
+  assert.equal(store.get(PRICING), '{"v":2}', "not dropped as a loose key");
+  assert.equal(store.get(PROJECTS), undefined, "the demo admin starts from its own work");
+  assert.equal(store.get(`${vault.parkedPrefix("asha@example.com")}${PROJECTS}`), '["smart lamp"]', "Asha's waits for Asha");
+});
+
 test("sign out, make a new account: it starts from nothing; sign back in: all your work is there", async () => {
   await join("Asha", "asha@example.com");
   store.set(PROJECTS, '["smart lamp"]');

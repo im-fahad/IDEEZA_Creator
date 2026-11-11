@@ -16,6 +16,12 @@ const nextConfig: NextConfig = {
   devIndicators: {
     position: "bottom-right",
   },
+  // The admin opens on AI credit pricing before anything renders. Its page's own redirect()
+  // (app/admin/page.tsx, kept for "/admin/") threw in development: React's render timing
+  // ("'AdminHome' cannot have a negative time stamp"), a red issue on a reviewer's first page.
+  async redirects() {
+    return [{ source: "/admin", destination: "/admin/ai-credits", permanent: false }];
+  },
   async rewrites() {
     return [
       { source: "/ixp/static/:path*", destination: `${posthogAssets}/static/:path*` },

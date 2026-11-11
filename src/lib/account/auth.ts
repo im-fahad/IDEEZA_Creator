@@ -186,6 +186,13 @@ export function isMobilePath(pathname: string): boolean {
   return /^\/m(\/|$)/.test(pathname);
 }
 
+/** The admin prototype (/admin) runs its own way in too (owner 2026-11-11: "if browse /admin then
+ *  if not logged in make a demo login", so a reviewer skips Sign up): the web's gate leaves its
+ *  pages alone, and a signed-out visitor is signed in as the demo admin (`signInDemoAdmin`). */
+export function isAdminPath(pathname: string): boolean {
+  return /^\/admin(\/|$)/.test(pathname);
+}
+
 /** The one question is asked once, right after verifying, when the link didn't say. */
 export function needsSourceQuestion(account: Account): boolean {
   return !account.source && !account.sourceSkipped;
@@ -472,6 +479,15 @@ export async function providerSignIn(email: string, name: { first: string; last:
   return startSession(e, now).ok ? "new" : "refused";
 }
 
+/** The account the admin prototype signs a signed-out visitor in as. */
+export const DEMO_ADMIN = { email: "demo.admin@ideeza.test", first: "Demo", last: "Admin" } as const;
+
+/** Signs the demo admin in, made the first time like a provider's account: verified, with a
+ *  password nobody knows. Its own work comes in as any account's does; the caller reloads. */
+export function signInDemoAdmin(now: number): Promise<"in" | "new" | "refused"> {
+  return providerSignIn(DEMO_ADMIN.email, { first: DEMO_ADMIN.first, last: DEMO_ADMIN.last }, now);
+}
+
 /** Whether `password` is the account's password now (Reset: "That's your current password"). */
 export async function isCurrentPassword(email: string, password: string): Promise<boolean> {
   const account = accountOf(readAccounts(), email);
@@ -661,7 +677,7 @@ export function useAuth(): {
 /** Runs in <head> before the first paint, so no page flashes before the
  *  gate: the same rule as `currentAccount` and `signedOutPath`. A signed-out
  *  visitor to Home's own address (nothing but utm_ tags) sees the landing page;
- *  to any other page but the open ones (`isOpenPath`) and the mobile
- *  prototype's (`isMobilePath`), Sign in, or Sign up when this browser has no
- *  account, carrying the page they opened (`next`). */
-export const AUTH_PREPAINT = `(function(){try{var p=location.pathname;if(/^\\/(sign-up|sign-in|landing|events|m)(\\/|$)/.test(p))return;var a=JSON.parse(localStorage.getItem("${ACCOUNTS_KEY}")||"[]"),s=JSON.parse(localStorage.getItem("${SESSION_KEY}")||"null");if(!Array.isArray(a))a=[];var e=s&&typeof s.email==="string"?s.email.trim().toLowerCase():"";for(var i=0;i<a.length;i++)if(a[i]&&e&&a[i].email===e&&a[i].verifiedAt)return;document.documentElement.style.visibility="hidden";var q=location.search,t=!q||q.slice(1).split("&").every(function(k){return k.indexOf("utm_")===0});location.replace(p==="/"&&t?"/landing"+q:(a.length?"/sign-in":"/sign-up")+"?next="+encodeURIComponent(p+q));}catch(x){}})();`;
+ *  to any other page but the open ones (`isOpenPath`) and the mobile and admin
+ *  prototypes' (`isMobilePath`, `isAdminPath`), Sign in, or Sign up when this
+ *  browser has no account, carrying the page they opened (`next`). */
+export const AUTH_PREPAINT = `(function(){try{var p=location.pathname;if(/^\\/(sign-up|sign-in|landing|events|m|admin)(\\/|$)/.test(p))return;var a=JSON.parse(localStorage.getItem("${ACCOUNTS_KEY}")||"[]"),s=JSON.parse(localStorage.getItem("${SESSION_KEY}")||"null");if(!Array.isArray(a))a=[];var e=s&&typeof s.email==="string"?s.email.trim().toLowerCase():"";for(var i=0;i<a.length;i++)if(a[i]&&e&&a[i].email===e&&a[i].verifiedAt)return;document.documentElement.style.visibility="hidden";var q=location.search,t=!q||q.slice(1).split("&").every(function(k){return k.indexOf("utm_")===0});location.replace(p==="/"&&t?"/landing"+q:(a.length?"/sign-in":"/sign-up")+"?next="+encodeURIComponent(p+q));}catch(x){}})();`;

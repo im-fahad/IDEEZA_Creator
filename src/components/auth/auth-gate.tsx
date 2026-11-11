@@ -4,11 +4,13 @@
 // you signed in (`signedOutPath`): signed out, Home's own address shows the
 // landing page and any other page asks you in, carrying where you were going
 // (`next`). AUTH_PREPAINT does it before the first paint; this catches what
-// happens after: signing out here or in another tab. Renders nothing.
+// happens after: signing out here or in another tab. Renders nothing. The
+// mobile and admin prototypes run their own way in (`isMobilePath`,
+// `isAdminPath`: the admin signs a signed-out visitor in as the demo admin).
 
 import * as React from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { isMobilePath, isOpenPath, signOut, signedOutPath, useAuth } from "@/lib/account/auth";
+import { isAdminPath, isMobilePath, isOpenPath, signOut, signedOutPath, useAuth } from "@/lib/account/auth";
 
 // Set while Sign out takes you to Sign in itself, so the gate doesn't race it there.
 let signingOut = false;
@@ -19,7 +21,7 @@ export function AuthGate() {
   const { hydrated, accounts, signedIn } = useAuth();
 
   React.useEffect(() => {
-    if (isOpenPath(pathname) || isMobilePath(pathname)) {
+    if (isOpenPath(pathname) || isMobilePath(pathname) || isAdminPath(pathname)) {
       signingOut = false;
       return;
     }

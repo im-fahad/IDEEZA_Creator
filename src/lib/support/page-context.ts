@@ -173,6 +173,11 @@ export function pageRefFor(pathname: string, search = ""): PageRef {
       return b ? { page: "Event", route: "/events/[slug]" } : { page: "Events", route: "/events" };
     case "balance":
       return b === "buy" ? { page: "Balance › Buy IDZ", route: "/balance/buy" } : { page: "Balance", route: "/balance" };
+    case "admin":
+      // /admin sends on to AI credit pricing; its Credit packs tab is a page of its own.
+      if (!b || b === "ai-credits") return { page: "Admin › AI credit pricing", route: "/admin/ai-credits" };
+      if (b === "credit-packs") return { page: "Admin › AI credit pricing › Credit packs", route: "/admin/credit-packs" };
+      return { page: `Admin › ${humanize(b)}`, route: `/admin/${b}` };
     case "sign-in":
       return { page: "Sign in", route: "/sign-in" };
     case "sign-up":

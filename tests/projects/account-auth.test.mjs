@@ -273,3 +273,42 @@ test("the pre-paint gate lets a signed-in visitor through and sends others on, a
   store.set(auth.ACCOUNTS_KEY, JSON.stringify([{ email: "a@b.co", verifiedAt: null }]));
   assert.equal(run("/projects"), "/sign-in?next=%2Fprojects");
 });
+
+test("the admin prototype runs its own way in: the gates leave /admin alone", () => {
+  for (const p of ["/admin", "/admin/", "/admin/ai-credits", "/admin/credit-packs"]) assert.equal(auth.isAdminPath(p), true, p);
+  for (const p of ["/administrator", "/adminx", "/settings/admin", "/"]) assert.equal(auth.isAdminPath(p), false, p);
+  assert.equal(auth.isOpenPath("/admin"), false, "not a public page: after Sign in, next=/admin still goes there");
+  assert.equal(auth.safeNext("/admin/credit-packs"), "/admin/credit-packs");
+  const run = (path) => {
+    let went = null;
+    new Function("location", "localStorage", "document", auth.AUTH_PREPAINT)(
+      { pathname: path, search: "", replace: (u) => (went = u) },
+      globalThis.localStorage,
+      { documentElement: { style: {} } },
+    );
+    return went;
+  };
+  assert.equal(run("/admin"), null);
+  assert.equal(run("/admin/credit-packs"), null);
+  assert.equal(run("/adminx"), auth.signedOutPath("/adminx", "", []));
+});
+
+test("a signed-out visitor to the admin is signed in as the demo admin: made verified the first time, the same account after", async () => {
+  assert.equal(await auth.signInDemoAdmin(NOW), "new");
+  const me = auth.currentAccount(auth.readAccounts(), auth.readSession());
+  assert.equal(me.email, auth.DEMO_ADMIN.email);
+  assert.equal(`${me.firstName} ${me.lastName}`, "Demo Admin");
+  assert.equal(me.verifiedAt, NOW);
+  assert.equal(auth.showsSourceNudge(me), false, "Home shows no Finish your profile card");
+  await auth.signOut();
+  assert.equal(signedIn(), false);
+  assert.equal(await auth.signInDemoAdmin(NOW + 1), "in");
+  assert.equal(auth.readAccounts().length, 1, "one demo admin, however often");
+  // Another account in this browser, signed out: the admin still signs the demo admin in.
+  await auth.signOut();
+  assert.equal(await auth.createAccount(INPUT, "", NOW + 2), "ok");
+  assert.equal((await auth.verifyEmail(NOW + 2)).ok, true);
+  await auth.signOut();
+  assert.equal(await auth.signInDemoAdmin(NOW + 3), "in");
+  assert.equal(auth.readSession().email, auth.DEMO_ADMIN.email);
+});
