@@ -60,6 +60,7 @@ us and the markup to add, and every price in credits is worked out.
 
 **Markup** (a markup on cost, not a margin on price)
 - [ ] **Markup on our cost** (%), one for every service and level: *50% makes a $1.00 run cost the maker $1.50.*
+- [ ] A markup has no top, on Markup on our cost or a row (David, 2026-11-11: "remove the limit of 1000%"): 0% or more. A price too big to store shows *More credits than a price can hold* on its row.
 - [ ] **Calculate markup at**: *Lowest effective credit price* (default, recommended) or *List price*.
 - [ ] **Maximum credit discount** (%) and **Maximum pack bonus** (%): the lowest effective credit price = credit price × (1 − discount) ÷ (1 + bonus). Shown under them (*The lowest effective credit price is $X*), with a worked example for a $0.10 run (*a $0.10 run at 50% markup is N credits*).
 - [ ] **Round credits up to steps of** 1, 5 or 10.

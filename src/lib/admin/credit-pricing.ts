@@ -509,11 +509,16 @@ function readHistoryEntry(raw: unknown): HistoryEntry[] {
   ];
 }
 
-const PERCENT = {
+const PERCENT_REQUIRED = "Enter a percent";
+
+/** A markup has no top (David, 2026-11-11: "remove the limit of 1000%"). A
+ *  price too big to store is still caught, on its row, as "More credits than a
+ *  price can hold". A typed number is never negative, so `range` can't show. */
+const MARKUP = {
   min: 0,
-  max: 1000,
-  required: "Enter a percent",
-  range: "Enter 0 to 1000",
+  max: Number.POSITIVE_INFINITY,
+  required: PERCENT_REQUIRED,
+  range: "Enter 0 or more",
 };
 
 // ── The rates ───────────────────────────────────────────────────────────────
@@ -562,11 +567,12 @@ export function checkSettings(s: PricingSettings): {
           range: "Enter more than 0",
         }),
       );
-  const profitPct = pick("profitPct", checkNumber(s.profitPct, PERCENT));
+  const profitPct = pick("profitPct", checkNumber(s.profitPct, MARKUP));
   const discount = pick(
     "maxDiscountPct",
     checkNumber(s.maxDiscountPct, {
-      ...PERCENT,
+      min: 0,
+      required: PERCENT_REQUIRED,
       max: 90,
       range: "Enter 0 to 90",
     }),
@@ -574,7 +580,8 @@ export function checkSettings(s: PricingSettings): {
   const bonus = pick(
     "maxBonusPct",
     checkNumber(s.maxBonusPct, {
-      ...PERCENT,
+      min: 0,
+      required: PERCENT_REQUIRED,
       max: 500,
       range: "Enter 0 to 500",
     }),
@@ -650,7 +657,7 @@ function priceRow(
         range: "Enter 0 to 10,000",
       });
   const own = draft.profit.trim() !== "";
-  const profit = own ? checkNumber(draft.profit, PERCENT) : { value: rates?.profitPct ?? null, error: null };
+  const profit = own ? checkNumber(draft.profit, MARKUP) : { value: rates?.profitPct ?? null, error: null };
   const base: PriceRow = {
     id,
     label,

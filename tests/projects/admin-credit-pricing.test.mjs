@@ -125,6 +125,18 @@ test("a service's own profit wins over the global one", () => {
   assert.equal(r.next, 200);
 });
 
+test("a markup has no top (David, 2026-11-11): 5000% on a row or for all, priced as typed", () => {
+  const own = row(P.pricingPlan(doc(pipe(withSettings({ creditUsd: "0.01", basis: "list" }), withCost("ai_patent", "1", "5000")))), "ai_patent");
+  assert.equal(own.profitError, null);
+  assert.equal(own.next, 5100);
+  const all = P.pricingPlan(doc(pipe(withSettings({ creditUsd: "0.01", basis: "list", profitPct: "2500" }), withCost("ai_patent", "1"))));
+  assert.deepEqual(all.errors, {});
+  assert.equal(row(all, "ai_patent").next, 2600);
+  const huge = row(P.pricingPlan(doc(withCost("ai_patent", "1", "99999999999999"))), "ai_patent");
+  assert.equal(huge.profitError, null);
+  assert.equal(huge.costError, "More credits than a price can hold", "a price too big to store is still caught");
+});
+
 test("USDT follows the dollar and IDZ the IDZ price, unless set by hand", () => {
   const auto = P.checkSettings(doc(withSettings({ creditUsd: "0.01", idzUsd: "0.025" })).draft.settings).rates;
   assert.equal(auto.usdtPerCredit, 0.01);
